@@ -8,7 +8,7 @@ namespace ST.Core
     /// <summary>
     /// 
     /// </summary>
-    public class Shaders : MonoBehaviour
+    public class Shaders
     {
 
     }
