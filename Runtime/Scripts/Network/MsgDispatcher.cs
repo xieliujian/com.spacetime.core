@@ -10,8 +10,18 @@ using FlatBuffers;
 
 namespace ST.Core.Network
 {
-    public class MsgDispatcher : IMsgDispatcher
+    public class MsgDispatcher : IManager
     {
+        /// <summary>
+        /// 
+        /// </summary>
+        static MsgDispatcher s_Instance;
+
+        /// <summary>
+        /// 
+        /// </summary>
+        IMsgType m_MsgType = IMsgType.Protobuf;
+
         /// <summary>
         /// fb消息句柄
         /// </summary>
@@ -24,9 +34,17 @@ namespace ST.Core.Network
         Dictionary<ulong, IProtobufProcFun> m_PbMsgProcDict = new Dictionary<ulong, IProtobufProcFun>(CommonDefine.s_ListConst_100);
 
         /// <summary>
+        /// 
+        /// </summary>
+        public static MsgDispatcher S
+        {
+            get { return s_Instance; }
+        }
+
+        /// <summary>
         /// flatBufferBuilder
         /// </summary>
-        public override FlatBuffers.FlatBufferBuilder flatBufferBuilder
+        public FlatBuffers.FlatBufferBuilder flatBufferBuilder
         {
             get
             {
@@ -38,18 +56,9 @@ namespace ST.Core.Network
         /// <summary>
         /// 
         /// </summary>
-        /// <param name="msgid"></param>
-        /// <param name="bytearray"></param>
-        public override void Dispatcher(ulong msgid, byte[] bytearray)
+        public MsgDispatcher()
         {
-            if (m_MsgType == IMsgType.FlatBuffer)
-            {
-                DispatcherFbMsg(msgid, bytearray);
-            }
-            else if (m_MsgType == IMsgType.Protobuf)
-            {
-                DispatcherPbMsg(msgid, bytearray);
-            }
+            s_Instance = this;
         }
 
         /// <summary>
@@ -65,7 +74,7 @@ namespace ST.Core.Network
         /// </summary>
         public override void DoInit()
         {
-            
+
         }
 
         /// <summary>
@@ -73,7 +82,7 @@ namespace ST.Core.Network
         /// </summary>
         public override void DoUpdate()
         {
-            
+
         }
 
         /// <summary>
@@ -81,7 +90,33 @@ namespace ST.Core.Network
         /// </summary>
         public override void DoLateUpdate()
         {
-            
+
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="msgtype"></param>
+        public void RegisterMsgType(IMsgType msgtype)
+        {
+            m_MsgType = msgtype;
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="msgid"></param>
+        /// <param name="bytearray"></param>
+        public void Dispatcher(ulong msgid, byte[] bytearray)
+        {
+            if (m_MsgType == IMsgType.FlatBuffer)
+            {
+                DispatcherFbMsg(msgid, bytearray);
+            }
+            else if (m_MsgType == IMsgType.Protobuf)
+            {
+                DispatcherPbMsg(msgid, bytearray);
+            }
         }
 
         /// <summary>
@@ -89,7 +124,7 @@ namespace ST.Core.Network
         /// </summary>
         /// <typeparam name="T"></typeparam>
         /// <param name="fbfunc"></param>
-        public override void RegisterFBMsg<T>(MsgProcDelegate<T> fbfunc)
+        public void RegisterFBMsg<T>(MsgProcDelegate<T> fbfunc) where T : struct, FlatBuffers.IFlatbufferObject
         {
             Type type = typeof(T);
             FieldInfo fieldInfo = type.GetField("HashID", BindingFlags.Static | BindingFlags.Public);
@@ -111,8 +146,8 @@ namespace ST.Core.Network
         /// </summary>
         /// <typeparam name="T"></typeparam>
         /// <param name="fbfunc"></param>
-        public override void UnRegisterFBMsg<T>(MsgProcDelegate<T> fbfunc)
-        {
+        public void UnRegisterFBMsg<T>(MsgProcDelegate<T> fbfunc) where T : struct, FlatBuffers.IFlatbufferObject
+{
             Type type = typeof(T);
             FieldInfo fieldInfo = type.GetField("HashID");
             ulong hashid = (ulong)fieldInfo.GetValue(null);
@@ -125,7 +160,7 @@ namespace ST.Core.Network
         /// </summary>
         /// <typeparam name="T"></typeparam>
         /// <param name="pbfunc"></param>
-        public override void RegisterPBMsg<T>(MsgProcDelegate<T> pbfunc)
+        public void RegisterPBMsg<T>(MsgProcDelegate<T> pbfunc) where T : pb::IMessage
         {
             Type type = typeof(T);
             FieldInfo fieldInfo = type.GetField("HashID", BindingFlags.Static | BindingFlags.Public);
@@ -147,7 +182,7 @@ namespace ST.Core.Network
         /// </summary>
         /// <typeparam name="T"></typeparam>
         /// <param name="pbfunc"></param>
-        public override void UnRegisterPBMsg<T>(MsgProcDelegate<T> pbfunc)
+        public void UnRegisterPBMsg<T>(MsgProcDelegate<T> pbfunc) where T : pb::IMessage
         {
             Type type = typeof(T);
             FieldInfo fieldInfo = type.GetField("HashID");
@@ -161,7 +196,7 @@ namespace ST.Core.Network
         /// </summary>
         /// <param name="msgid"></param>
         /// <param name="message"></param>
-        public override void SendPBMsg(ulong msgid, pb.IMessage message)
+        public void SendPBMsg(ulong msgid, pb.IMessage message)
         {
             ByteBuffer buff = new ByteBuffer();
 
@@ -194,7 +229,7 @@ namespace ST.Core.Network
         /// </summary>
         /// <param name="msgid"></param>
         /// <param name="builder"></param>
-        public override void SendFBMsg(ulong msgid, FlatBufferBuilder builder)
+        public void SendFBMsg(ulong msgid, FlatBufferBuilder builder)
         {
             // 这里做了优化处理，不从flatbuffer里面复制一份数据出来， 而是直接取数据, 减少一次拷贝
             int msgpos = builder.DataBuffer.Position;

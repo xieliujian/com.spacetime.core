@@ -18,7 +18,7 @@ namespace ST.Core.Test
         /// 
         /// </summary>
         NetManager m_NetManager = new NetManager();
-        IMsgDispatcher m_MsgDispatcher = new MsgDispatcher();
+        MsgDispatcher m_MsgDispatcher = new MsgDispatcher();
 
         /// <summary>
         /// 
@@ -79,7 +79,7 @@ namespace ST.Core.Test
                 "城中相识尽繁华，日夜经过赵李家。" +
                 "谁怜越女颜如玉，贫贱江头自浣纱。";
 
-            IMsgDispatcher.S.SendPBMsg(0x8b88ee5f49f79dc5, msg);
+            MsgDispatcher.S.SendPBMsg(ReqRegisterAccount.HashID, msg);
         }
 
         /// <summary>
@@ -108,7 +108,7 @@ namespace ST.Core.Test
             var orc = fbs.ReqLogin.EndReqLogin(builder);
             builder.Finish(orc.Value);
 
-            IMsgDispatcher.instance.SendFBMsg(fbs.ReqLogin.HashID, builder);
+            MsgDispatcher.instance.SendFBMsg(fbs.ReqLogin.HashID, builder);
 #endif
         }
 
@@ -124,7 +124,7 @@ namespace ST.Core.Test
             var orc = fbs.ReqChat.EndReqChat(builder);
             builder.Finish(orc.Value);
 
-            IMsgDispatcher.instance.SendFBMsg(fbs.ReqChat.HashID, builder);
+            MsgDispatcher.instance.SendFBMsg(fbs.ReqChat.HashID, builder);
 #endif
         }
     }
