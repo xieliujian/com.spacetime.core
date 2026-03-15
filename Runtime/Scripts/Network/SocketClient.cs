@@ -170,11 +170,12 @@ namespace ST.Core.Network
                 //分析数据包内容，抛给逻辑层
                 OnReceive(m_ByteBuffer, bytesRead);
 
-                lock (m_Client.GetStream())
+                var stream = m_Client.GetStream();
+                lock (stream)
                 {
                     //分析完，再次监听服务器发过来的新消息
                     Array.Clear(m_ByteBuffer, 0, m_ByteBuffer.Length);   //清空数组
-                    m_Client.GetStream().BeginRead(m_ByteBuffer, 0, NetworkDefine.s_MaxReadNum, new AsyncCallback(OnRead), null);
+                    stream.BeginRead(m_ByteBuffer, 0, NetworkDefine.s_MaxReadNum, new AsyncCallback(OnRead), null);
                 }
             }
             catch (Exception ex)

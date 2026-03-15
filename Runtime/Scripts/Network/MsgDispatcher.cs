@@ -10,89 +10,18 @@ using FlatBuffers;
 
 namespace ST.Core.Network
 {
-    /// <summary>
-    /// 
-    /// </summary>
-    /// <typeparam name="T"></typeparam>
-    public class ProtobufProcFun<T> : IProtobufProcFun where T : pb::IMessage
-    {
-        /// <summary>
-        /// 
-        /// </summary>
-        MsgProcDelegate<T> m_dlg;
-        pb.MessageParser m_parser;
-        T m_obj;
-
-        public ProtobufProcFun(MsgProcDelegate<T> dlg)
-        {
-            m_dlg = dlg;
-
-            Type type = typeof(T);
-            FieldInfo fieldInfo = type.GetField("_parser", BindingFlags.Static | BindingFlags.NonPublic);
-            if (fieldInfo != null)
-            {
-                m_parser = (pb.MessageParser)fieldInfo.GetValue(null);
-            }
-        }
-
-        public override void Invoke(byte[] bytearray)
-        {
-            m_obj = (T)m_parser.ParseFrom(bytearray);
-
-            try
-            {
-                if (m_obj != null)
-                {
-                    m_dlg.Invoke(m_obj);
-                }
-            }
-            catch (Exception e)
-            {
-                Debugger.Debugger.LogError("process protobuf msg error!" + typeof(T).FullName);
-                Debugger.Debugger.LogError(e.ToString());
-            }
-        }
-    }
-
-    /// <summary>
-    /// 
-    /// </summary>
-    /// <typeparam name="T"></typeparam>
-    public class FlatBufferProcFun<T> : IFlatBufferProcFun where T : struct, FlatBuffers.IFlatbufferObject
-    {
-        private MsgProcDelegate<T> m_dlg;
-
-        private T m_obj = default(T);
-
-        public FlatBufferProcFun(MsgProcDelegate<T> dlg)
-        {
-            m_dlg = dlg;
-        }
-
-        public override void Invoke(byte[] bytearray)
-        {
-            FlatBuffers.ByteBuffer buf = new FlatBuffers.ByteBuffer(bytearray);
-            m_obj.__init(buf.GetInt(buf.Position) + buf.Position, buf);
-            
-            try
-            {
-                m_dlg(m_obj);
-            }
-            catch (Exception e)
-            {
-                Debugger.Debugger.LogError("process flatbuffer msg error!" + typeof(T).FullName);
-                Debugger.Debugger.LogError(e.ToString());
-            }
-        }
-    }
-
     public class MsgDispatcher : IMsgDispatcher
     {
         /// <summary>
         /// fb消息句柄
         /// </summary>
-        Dictionary<ulong, IFlatBufferProcFun> m_fbMsgProcDict = new Dictionary<ulong, IFlatBufferProcFun>(CommonDefine.s_ListConst_100);
-        FlatBuffers.FlatBufferBuilder m_flatBufferBuilder = new FlatBuffers.FlatBufferBuilder(CommonDefine.s_ListConst_1024);
+        Dictionary<ulong, IFlatBufferProcFun> m_FbMsgProcDict = new Dictionary<ulong, IFlatBufferProcFun>(CommonDefine.s_ListConst_100);
+        FlatBuffers.FlatBufferBuilder m_FlatBufferBuilder = new FlatBuffers.FlatBufferBuilder(CommonDefine.s_ListConst_1024);
+
+        /// <summary>
+        /// pb消息句柄
+        /// </summary>
+        Dictionary<ulong, IProtobufProcFun> m_PbMsgProcDict = new Dictionary<ulong, IProtobufProcFun>(CommonDefine.s_ListConst_100);
 
         /// <summary>
         /// flatBufferBuilder
@@ -101,16 +30,16 @@ namespace ST.Core.Network
         {
             get
             {
-                m_flatBufferBuilder.Clear();
-                return m_flatBufferBuilder;
+                m_FlatBufferBuilder.Clear();
+                return m_FlatBufferBuilder;
             }
         }
 
         /// <summary>
-        /// pb消息句柄
+        /// 
         /// </summary>
-        Dictionary<ulong, IProtobufProcFun> m_pbMsgProcDict = new Dictionary<ulong, IProtobufProcFun>(CommonDefine.s_ListConst_100);
-
+        /// <param name="msgid"></param>
+        /// <param name="bytearray"></param>
         public override void Dispatcher(ulong msgid, byte[] bytearray)
         {
             if (m_MsgType == IMsgType.FlatBuffer)
@@ -123,16 +52,25 @@ namespace ST.Core.Network
             }
         }
 
+        /// <summary>
+        /// 
+        /// </summary>
         public override void DoClose()
         {
-            m_fbMsgProcDict.Clear();
+            m_FbMsgProcDict.Clear();
         }
 
+        /// <summary>
+        /// 
+        /// </summary>
         public override void DoInit()
         {
             
         }
 
+        /// <summary>
+        /// 
+        /// </summary>
         public override void DoUpdate()
         {
             
@@ -146,6 +84,11 @@ namespace ST.Core.Network
             
         }
 
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <typeparam name="T"></typeparam>
+        /// <param name="fbfunc"></param>
         public override void RegisterFBMsg<T>(MsgProcDelegate<T> fbfunc)
         {
             Type type = typeof(T);
@@ -153,25 +96,35 @@ namespace ST.Core.Network
             ulong hashid = (ulong)fieldInfo.GetValue(null);
 
             IFlatBufferProcFun exist;
-            if (m_fbMsgProcDict.TryGetValue(hashid, out exist))
+            if (m_FbMsgProcDict.TryGetValue(hashid, out exist))
             {
                 Debugger.Debugger.LogError("FBMsgProc Exist! " + type.Name);
             }
             else
             {
-                m_fbMsgProcDict.Add(hashid, new FlatBufferProcFun<T>(fbfunc));
+                m_FbMsgProcDict.Add(hashid, new FlatBufferProcFun<T>(fbfunc));
             }
         }
 
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <typeparam name="T"></typeparam>
+        /// <param name="fbfunc"></param>
         public override void UnRegisterFBMsg<T>(MsgProcDelegate<T> fbfunc)
         {
             Type type = typeof(T);
             FieldInfo fieldInfo = type.GetField("HashID");
             ulong hashid = (ulong)fieldInfo.GetValue(null);
 
-            m_fbMsgProcDict.Remove(hashid);
+            m_FbMsgProcDict.Remove(hashid);
         }
 
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <typeparam name="T"></typeparam>
+        /// <param name="pbfunc"></param>
         public override void RegisterPBMsg<T>(MsgProcDelegate<T> pbfunc)
         {
             Type type = typeof(T);
@@ -179,25 +132,35 @@ namespace ST.Core.Network
             ulong hashid = (ulong)fieldInfo.GetValue(null);
 
             IProtobufProcFun exist;
-            if (m_pbMsgProcDict.TryGetValue(hashid, out exist))
+            if (m_PbMsgProcDict.TryGetValue(hashid, out exist))
             {
                 Debugger.Debugger.LogError("PBMsgProc Exist! " + type.Name);
             }
             else
             {
-                m_pbMsgProcDict.Add(hashid, new ProtobufProcFun<T>(pbfunc));
+                m_PbMsgProcDict.Add(hashid, new ProtobufProcFun<T>(pbfunc));
             }
         }
 
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <typeparam name="T"></typeparam>
+        /// <param name="pbfunc"></param>
         public override void UnRegisterPBMsg<T>(MsgProcDelegate<T> pbfunc)
         {
             Type type = typeof(T);
             FieldInfo fieldInfo = type.GetField("HashID");
             ulong hashid = (ulong)fieldInfo.GetValue(null);
 
-            m_pbMsgProcDict.Remove(hashid);
+            m_PbMsgProcDict.Remove(hashid);
         }
 
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="msgid"></param>
+        /// <param name="message"></param>
         public override void SendPBMsg(ulong msgid, pb.IMessage message)
         {
             ByteBuffer buff = new ByteBuffer();
@@ -226,6 +189,11 @@ namespace ST.Core.Network
             }
         }
 
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="msgid"></param>
+        /// <param name="builder"></param>
         public override void SendFBMsg(ulong msgid, FlatBufferBuilder builder)
         {
             // 这里做了优化处理，不从flatbuffer里面复制一份数据出来， 而是直接取数据, 减少一次拷贝
@@ -250,31 +218,35 @@ namespace ST.Core.Network
             }
         }
 
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="msgid"></param>
+        /// <param name="bytearray"></param>
         void DispatcherFbMsg(ulong msgid, byte[] bytearray)
         {
             IFlatBufferProcFun procfunc;
-            if (m_fbMsgProcDict.TryGetValue(msgid, out procfunc))
+            if (m_FbMsgProcDict.TryGetValue(msgid, out procfunc))
             {
                 procfunc.Invoke(bytearray);
             }
         }
 
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="msgid"></param>
+        /// <param name="bytearray"></param>
         void DispatcherPbMsg(ulong msgid, byte[] bytearray)
         {
             IProtobufProcFun procfunc;
-            if (m_pbMsgProcDict.TryGetValue(msgid, out procfunc))
+            if (m_PbMsgProcDict.TryGetValue(msgid, out procfunc))
             {
                 procfunc.Invoke(bytearray);
             }
         }
     }
 }
-
-
-
-
-
-
 
 
 

@@ -12,16 +12,25 @@ namespace ST.Core
         /// </summary>
         Queue<GameEvent> m_TaskFunList = new Queue<GameEvent>(100);
 
+        /// <summary>
+        /// 
+        /// </summary>
         public override void DoClose()
         {
             
         }
 
+        /// <summary>
+        /// 
+        /// </summary>
         public override void DoInit()
         {
             
         }
 
+        /// <summary>
+        /// 
+        /// </summary>
         public override void DoUpdate()
         {
             lock(m_TaskFunList)
@@ -42,11 +51,18 @@ namespace ST.Core
             }
         }
 
+        /// <summary>
+        /// 
+        /// </summary>
         public override void DoLateUpdate()
         {
             
         }
 
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="func"></param>
         public override void AddTask(GameEvent func)
         {
             if (func == null)

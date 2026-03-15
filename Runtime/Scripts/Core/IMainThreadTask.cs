@@ -14,18 +14,31 @@ namespace ST.Core
     /// </summary>
     public abstract class IMainThreadTask : IManager
     {
-        public IMainThreadTask()
-        {
-            s_Instance = this;
-        }
-
+        /// <summary>
+        /// 
+        /// </summary>
         protected static IMainThreadTask s_Instance = null;
 
+        /// <summary>
+        /// 
+        /// </summary>
         public static IMainThreadTask S
         {
             get { return s_Instance; }
         }
 
+        /// <summary>
+        /// 
+        /// </summary>
+        public IMainThreadTask()
+        {
+            s_Instance = this;
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="func"></param>
         public abstract void AddTask(GameEvent func);
     }
 }

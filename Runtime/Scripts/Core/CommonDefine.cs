@@ -9,7 +9,7 @@ namespace ST.Core
     /// <summary>
     /// 
     /// </summary>
-    internal class CommonDefine
+    public class CommonDefine
     {
         /// <summary>
         /// 

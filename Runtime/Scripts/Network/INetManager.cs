@@ -11,21 +11,40 @@ namespace ST.Core.Network
     /// </summary>
     public abstract class INetManager : IManager
     {
-        public INetManager()
+        /// <summary>
+        /// 
+        /// </summary>
+        protected static INetManager s_Instance = null;
+        protected GameEvent m_OnConnectEvent = new GameEvent();
+
+        /// <summary>
+        /// 
+        /// </summary>
+        public Action<ulong, byte[]> onMsgEvent;
+
+        /// <summary>
+        /// 连接事件
+        /// </summary>
+        public GameEvent onConnectEvent
         {
-            s_Instance = this;
+            get { return m_OnConnectEvent; }
         }
 
-
-        protected static INetManager s_Instance = null;
-
-
+        /// <summary>
+        /// 
+        /// </summary>
         public static INetManager S
         {
             get { return s_Instance; }
         }
 
-
+        /// <summary>
+        /// 
+        /// </summary>
+        public INetManager()
+        {
+            s_Instance = this;
+        }
 
         //protected GameEvent<ulong, byte[]> m_onLuaMsgEvent = new GameEvent<ulong, byte[]>();
         ///// <summary>
@@ -36,18 +55,6 @@ namespace ST.Core.Network
         //    get { return m_onLuaMsgEvent; }
         //}
 
-        public Action<ulong, byte[]> onMsgEvent;
-
-
-        protected GameEvent m_onConnectEvent = new GameEvent();
-        /// <summary>
-        /// 连接事件
-        /// </summary>
-        public GameEvent onConnectEvent
-        {
-            get { return m_onConnectEvent; }
-        }
-
         /// <summary>
         /// 关闭
         /// </summary>
@@ -56,8 +63,8 @@ namespace ST.Core.Network
             //m_onLuaMsgEvent.RemoveAllListeners();
             //m_onLuaMsgEvent.Invoke(0, null);
 
-            m_onConnectEvent.RemoveAllListeners();
-            m_onConnectEvent.Invoke();
+            m_OnConnectEvent.RemoveAllListeners();
+            m_OnConnectEvent.Invoke();
         }
         
         /// <summary>

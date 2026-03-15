@@ -15,15 +15,12 @@ namespace ST.Core.Network
         /// <summary>
         /// 
         /// </summary>
-        public IMsgDispatcher()
-        {
-            s_Instance = this;
-        }
+        protected IMsgType m_MsgType = IMsgType.Protobuf;
 
         /// <summary>
         /// 
         /// </summary>
-        protected static IMsgDispatcher s_Instance = null;
+        protected static IMsgDispatcher s_Instance;
 
         /// <summary>
         /// 
@@ -36,7 +33,10 @@ namespace ST.Core.Network
         /// <summary>
         /// 
         /// </summary>
-        protected IMsgType m_MsgType = IMsgType.FlatBuffer;
+        public IMsgDispatcher()
+        {
+            s_Instance = this;
+        }
 
         /// <summary>
         /// 
