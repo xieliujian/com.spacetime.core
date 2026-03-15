@@ -119,7 +119,7 @@ namespace ST.Core.Network
         {
             if (MainThreadTask.S != null)
             {
-                MainThreadTask.S.AddTask(INetManager.S.onConnectEvent);
+                MainThreadTask.S.AddTask(NetManager.S.onConnectEvent);
             }
 
             m_NetStream = m_Client.GetStream();

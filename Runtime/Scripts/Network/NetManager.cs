@@ -8,18 +8,58 @@ namespace ST.Core.Network
     /// <summary>
     /// 
     /// </summary>
-    public class NetManager : INetManager
+    public class NetManager : IManager
     {
+        /// <summary>
+        /// 事件队列
+        /// </summary>
+        static NetManager s_Instance;
+        static Queue<KeyValuePair<ulong, byte[]>> m_EventQueue = new Queue<KeyValuePair<ulong, byte[]>>();
+
         /// <summary>
         /// Socket
         /// </summary>
         SocketClient m_SocketClient = new SocketClient();
+        GameEvent m_OnConnectEvent = new GameEvent();
 
         /// <summary>
-        /// 事件队列
+        /// 
         /// </summary>
-        static Queue<KeyValuePair<ulong, byte[]>> m_EventQueue = new Queue<KeyValuePair<ulong, byte[]>>();
-        
+        public Action<ulong, byte[]> onMsgEvent;
+
+        /// <summary>
+        /// 
+        /// </summary>
+        public static NetManager S
+        {
+            get { return s_Instance; }
+        }
+
+        /// <summary>
+        /// 连接事件
+        /// </summary>
+        public GameEvent onConnectEvent
+        {
+            get { return m_OnConnectEvent; }
+        }
+
+        //protected GameEvent<ulong, byte[]> m_onLuaMsgEvent = new GameEvent<ulong, byte[]>();
+        ///// <summary>
+        ///// lua事件回调
+        ///// </summary>
+        //public GameEvent<ulong, byte[]> onLuaMsgEvent
+        //{
+        //    get { return m_onLuaMsgEvent; }
+        //}
+
+        /// <summary>
+        /// 
+        /// </summary>
+        public NetManager()
+        {
+            s_Instance = this;
+        }
+
         /// <summary>
         /// 初始化
         /// </summary>
@@ -39,14 +79,23 @@ namespace ST.Core.Network
             UpdateEventQueue();
         }
 
+        /// <summary>
+        /// 
+        /// </summary>
         public override void DoLateUpdate()
         {
             
         }
 
+        /// <summary>
+        /// 
+        /// </summary>
         public override void DoClose()
         {
-            base.DoClose();
+            //m_onLuaMsgEvent.RemoveAllListeners();
+            //m_onLuaMsgEvent.Invoke(0, null);
+            m_OnConnectEvent.RemoveAllListeners();
+            m_OnConnectEvent.Invoke();
 
             if (m_SocketClient != null)
                 m_SocketClient.OnRemove();
@@ -55,7 +104,7 @@ namespace ST.Core.Network
         /// <summary>
         /// 发送链接请求
         /// </summary>
-        public override void SendConnect(string address, int port)
+        public void SendConnect(string address, int port)
         {
             m_SocketClient.Close();
             m_SocketClient.SendConnect(address, port);
@@ -64,7 +113,7 @@ namespace ST.Core.Network
         /// <summary>
         /// 关闭连接
         /// </summary>
-        public override void CloseSocket()
+        public void CloseSocket()
         {
             m_SocketClient.Close();
         }
@@ -73,7 +122,7 @@ namespace ST.Core.Network
         /// 是否连接
         /// </summary>
         /// <returns></returns>
-        public override bool IsConnected()
+        public bool IsConnected()
         {
             if (m_SocketClient == null)
                 return false;
@@ -84,7 +133,7 @@ namespace ST.Core.Network
         /// <summary>
         /// 发送SOCKET消息
         /// </summary>
-        public override void SendMessage(ByteBuffer buffer)
+        public void SendMessage(ByteBuffer buffer)
         {
             m_SocketClient.SendMessage(buffer);
         }
@@ -93,7 +142,7 @@ namespace ST.Core.Network
         /// 增加事件
         /// </summary>
         /// <param name="bytearray"></param>
-        public override void AddEvent(ulong msgid, byte[] bytearray)
+        public void AddEvent(ulong msgid, byte[] bytearray)
         {
             lock (m_EventQueue)
             {
@@ -104,7 +153,7 @@ namespace ST.Core.Network
         /// <summary>
         /// 刷新事件队列
         /// </summary>
-        private void UpdateEventQueue()
+        void UpdateEventQueue()
         {
             if (m_EventQueue.Count <= 0)
                 return;

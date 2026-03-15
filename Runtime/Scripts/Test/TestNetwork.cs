@@ -40,7 +40,7 @@ namespace ST.Core.Test
         {
             if (GUI.Button(new Rect(0, 0, 300, 100), "SendConnect"))
             {
-                Network.INetManager.S.SendConnect(ipAddress, 3580);
+                NetManager.S.SendConnect(ipAddress, 3580);
             }
 
             if (GUI.Button(new Rect(0, 100, 300, 100), "SendLoginMsg"))
