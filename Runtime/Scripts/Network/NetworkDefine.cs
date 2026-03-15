@@ -49,6 +49,9 @@ namespace ST.Core.Network
     /// </summary>
     public class NetworkDefine
     {
-
+        /// <summary>
+        /// 
+        /// </summary>
+        public static readonly int s_MaxReadNum = 8192;
     }
 }

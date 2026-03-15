@@ -28,7 +28,7 @@ namespace ST.Core.Test
         {
             if (GUI.Button(new Rect(0, 0, 300, 100), "SendConnect"))
             {
-                Network.INetManager.instance.SendConnect(ipaddress, 3580);
+                Network.INetManager.S.SendConnect(ipaddress, 3580);
             }
 
             if (GUI.Button(new Rect(0, 100, 300, 100), "SendLoginMsg"))
@@ -64,7 +64,7 @@ namespace ST.Core.Test
                 "城中相识尽繁华，日夜经过赵李家。" +
                 "谁怜越女颜如玉，贫贱江头自浣纱。";
 
-            IMsgDispatcher.instance.SendPBMsg(0x8b88ee5f49f79dc5, msg);
+            IMsgDispatcher.S.SendPBMsg(0x8b88ee5f49f79dc5, msg);
         }
 
         void SendLoginMsg()

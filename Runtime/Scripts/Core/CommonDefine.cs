@@ -14,11 +14,11 @@ namespace ST.Core
         /// <summary>
         /// 
         /// </summary>
-        public const int ListConst_8 = 8;
-        public const int ListConst_16 = 16;
-        public const int ListConst_32 = 32;
-        public const int ListConst_64 = 64;
-        public const int ListConst_100 = 100;
-        public const int ListConst_1024 = 1024;
+        public static readonly int s_ListConst_8 = 8;
+        public static readonly int s_ListConst_16 = 16;
+        public static readonly int s_ListConst_32 = 32;
+        public static readonly int s_ListConst_64 = 64;
+        public static readonly int s_ListConst_100 = 100;
+        public static readonly int s_ListConst_1024 = 1024;
     }
 }

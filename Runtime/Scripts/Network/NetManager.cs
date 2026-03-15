@@ -10,22 +10,16 @@ namespace ST.Core.Network
     /// </summary>
     public class NetManager : INetManager
     {
-        #region 变量
-
         /// <summary>
         /// Socket
         /// </summary>
-        private SocketClient m_SocketClient = new SocketClient();
+        SocketClient m_SocketClient = new SocketClient();
 
         /// <summary>
         /// 事件队列
         /// </summary>
-        private static Queue<KeyValuePair<ulong, byte[]>> m_EventQueue = new Queue<KeyValuePair<ulong, byte[]>>();
+        static Queue<KeyValuePair<ulong, byte[]>> m_EventQueue = new Queue<KeyValuePair<ulong, byte[]>>();
         
-        #endregion
-
-        #region 接口函数
-
         /// <summary>
         /// 初始化
         /// </summary>
@@ -107,10 +101,6 @@ namespace ST.Core.Network
             }
         }
 
-        #endregion
-
-        #region 函数
-
         /// <summary>
         /// 刷新事件队列
         /// </summary>
@@ -123,16 +113,14 @@ namespace ST.Core.Network
             {
                 KeyValuePair<ulong, byte[]> keyvaleupair = m_EventQueue.Dequeue();
 
-                if (MsgDispatcher.instance != null)
+                if (MsgDispatcher.S != null)
                 {
-                    MsgDispatcher.instance.Dispatcher(keyvaleupair.Key, keyvaleupair.Value);
+                    MsgDispatcher.S.Dispatcher(keyvaleupair.Key, keyvaleupair.Value);
                 }
 
                 onMsgEvent?.Invoke(keyvaleupair.Key, keyvaleupair.Value);
             }
         }
-
-        #endregion
     }
 }
 

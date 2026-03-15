@@ -23,43 +23,40 @@ namespace ST.Core.Network
             Disconnect,
         }
 
-        private const int MAX_READ = 8192;
-
         /// <summary>
         /// tcp client
         /// </summary>
-        private TcpClient m_Client = null;
+        TcpClient m_Client = null;
 
         /// <summary>
         /// network stream
         /// </summary>
-        private NetworkStream m_NetStream = null;
+        NetworkStream m_NetStream = null;
 
         /// <summary>
         /// memory stream
         /// </summary>
-        private MemoryStream m_MemStream = null;
+        MemoryStream m_MemStream = null;
 
         /// <summary>
         /// reader
         /// </summary>
-        private BinaryReader m_Reader = null;
+        BinaryReader m_Reader = null;
 
         /// <summary>
         /// 网络接收的数据
         /// </summary>
-        private byte[] m_ByteBuffer = new byte[MAX_READ];
+        byte[] m_ByteBuffer = new byte[NetworkDefine.s_MaxReadNum];
 
         /// <summary>
         /// ip
         /// </summary>
-        private string m_ip;
+        string m_ip;
 
         /// <summary>
         /// port
         /// </summary>
-        private int m_port;
-
+        int m_port;
 
         // Use this for initialization
         public SocketClient()
@@ -120,13 +117,13 @@ namespace ST.Core.Network
         /// </summary>
         void OnConnect(IAsyncResult asr)
         {
-            if (MainThreadTask.instance != null)
+            if (MainThreadTask.S != null)
             {
-                MainThreadTask.instance.AddTask(INetManager.instance.onConnectEvent);
+                MainThreadTask.S.AddTask(INetManager.S.onConnectEvent);
             }
 
             m_NetStream = m_Client.GetStream();
-            m_NetStream.BeginRead(m_ByteBuffer, 0, MAX_READ, new AsyncCallback(OnRead), null);
+            m_NetStream.BeginRead(m_ByteBuffer, 0, NetworkDefine.s_MaxReadNum, new AsyncCallback(OnRead), null);
 
             Debugger.Debugger.LogDebug("======连接=" + m_ip + "=" + m_port + "=======");
         }
@@ -177,7 +174,7 @@ namespace ST.Core.Network
                 {
                     //分析完，再次监听服务器发过来的新消息
                     Array.Clear(m_ByteBuffer, 0, m_ByteBuffer.Length);   //清空数组
-                    m_Client.GetStream().BeginRead(m_ByteBuffer, 0, MAX_READ, new AsyncCallback(OnRead), null);
+                    m_Client.GetStream().BeginRead(m_ByteBuffer, 0, NetworkDefine.s_MaxReadNum, new AsyncCallback(OnRead), null);
                 }
             }
             catch (Exception ex)
@@ -274,7 +271,7 @@ namespace ST.Core.Network
         /// <param name="ms"></param>
         void OnReceivedMessage(ulong msgid, byte[] bytearray)
         {
-            NetManager.instance.AddEvent(msgid, bytearray);
+            NetManager.S.AddEvent(msgid, bytearray);
         }
 
         /// <summary>

@@ -16,11 +16,12 @@ namespace ST.Core.Network
     /// <typeparam name="T"></typeparam>
     public class ProtobufProcFun<T> : IProtobufProcFun where T : pb::IMessage
     {
-        private MsgProcDelegate<T> m_dlg;
-
-        private pb.MessageParser m_parser;
-
-        private T m_obj;
+        /// <summary>
+        /// 
+        /// </summary>
+        MsgProcDelegate<T> m_dlg;
+        pb.MessageParser m_parser;
+        T m_obj;
 
         public ProtobufProcFun(MsgProcDelegate<T> dlg)
         {
@@ -42,7 +43,7 @@ namespace ST.Core.Network
             {
                 if (m_obj != null)
                 {
-                    m_dlg?.Invoke(m_obj);
+                    m_dlg.Invoke(m_obj);
                 }
             }
             catch (Exception e)
@@ -87,13 +88,11 @@ namespace ST.Core.Network
 
     public class MsgDispatcher : IMsgDispatcher
     {
-        #region 变量
-
         /// <summary>
         /// fb消息句柄
         /// </summary>
-        private Dictionary<ulong, IFlatBufferProcFun> m_fbMsgProcDict = new Dictionary<ulong, IFlatBufferProcFun>(CommonDefine.ListConst_100);
-        private FlatBuffers.FlatBufferBuilder m_flatBufferBuilder = new FlatBuffers.FlatBufferBuilder(CommonDefine.ListConst_1024);
+        Dictionary<ulong, IFlatBufferProcFun> m_fbMsgProcDict = new Dictionary<ulong, IFlatBufferProcFun>(CommonDefine.s_ListConst_100);
+        FlatBuffers.FlatBufferBuilder m_flatBufferBuilder = new FlatBuffers.FlatBufferBuilder(CommonDefine.s_ListConst_1024);
 
         /// <summary>
         /// flatBufferBuilder
@@ -110,11 +109,7 @@ namespace ST.Core.Network
         /// <summary>
         /// pb消息句柄
         /// </summary>
-        private Dictionary<ulong, IProtobufProcFun> m_pbMsgProcDict = new Dictionary<ulong, IProtobufProcFun>(CommonDefine.ListConst_100);
-
-        #endregion
-
-        #region 继承
+        Dictionary<ulong, IProtobufProcFun> m_pbMsgProcDict = new Dictionary<ulong, IProtobufProcFun>(CommonDefine.s_ListConst_100);
 
         public override void Dispatcher(ulong msgid, byte[] bytearray)
         {
@@ -225,9 +220,9 @@ namespace ST.Core.Network
             buff.WriteUlong(msgid);
             buff.WriteBytes(msgbytes);
 
-            if (NetManager.instance != null)
+            if (NetManager.S != null)
             {
-                NetManager.instance.SendMessage(buff);
+                NetManager.S.SendMessage(buff);
             }
         }
 
@@ -249,13 +244,13 @@ namespace ST.Core.Network
             buff.WriteUlong(msgid);
             buff.WriteBytes(builder.DataBuffer.RawBuffer, msgpos, msglen);
 
-            if (NetManager.instance != null)
+            if (NetManager.S != null)
             {
-                NetManager.instance.SendMessage(buff);
+                NetManager.S.SendMessage(buff);
             }
         }
 
-        private void DispatcherFbMsg(ulong msgid, byte[] bytearray)
+        void DispatcherFbMsg(ulong msgid, byte[] bytearray)
         {
             IFlatBufferProcFun procfunc;
             if (m_fbMsgProcDict.TryGetValue(msgid, out procfunc))
@@ -264,7 +259,7 @@ namespace ST.Core.Network
             }
         }
 
-        private void DispatcherPbMsg(ulong msgid, byte[] bytearray)
+        void DispatcherPbMsg(ulong msgid, byte[] bytearray)
         {
             IProtobufProcFun procfunc;
             if (m_pbMsgProcDict.TryGetValue(msgid, out procfunc))
@@ -272,12 +267,8 @@ namespace ST.Core.Network
                 procfunc.Invoke(bytearray);
             }
         }
-
-        #endregion
     }
 }
-
-
 
 
 

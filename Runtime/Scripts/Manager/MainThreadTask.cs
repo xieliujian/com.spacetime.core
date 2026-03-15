@@ -7,13 +7,10 @@ namespace ST.Core
 {
     public class MainThreadTask : IMainThreadTask
     {
-        #region 变量
-
-        private Queue<GameEvent> m_taskfunlist = new Queue<GameEvent>(100);
-
-        #endregion
-
-        #region 继承函数
+        /// <summary>
+        /// 
+        /// </summary>
+        Queue<GameEvent> m_TaskFunList = new Queue<GameEvent>(100);
 
         public override void DoClose()
         {
@@ -27,11 +24,11 @@ namespace ST.Core
 
         public override void DoUpdate()
         {
-            lock(m_taskfunlist)
+            lock(m_TaskFunList)
             {
-                while(m_taskfunlist.Count > 0)
+                while(m_TaskFunList.Count > 0)
                 {
-                    var fun = m_taskfunlist.Dequeue();
+                    var fun = m_TaskFunList.Dequeue();
 
                     try
                     {
@@ -55,12 +52,10 @@ namespace ST.Core
             if (func == null)
                 return;
 
-            lock(m_taskfunlist)
+            lock(m_TaskFunList)
             {
-                m_taskfunlist.Enqueue(func);
+                m_TaskFunList.Enqueue(func);
             }
         }
-
-        #endregion
     }
 }

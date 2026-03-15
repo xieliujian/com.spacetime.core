@@ -17,20 +17,20 @@ namespace ST.Core.Network
         /// </summary>
         public IMsgDispatcher()
         {
-            m_sInstance = this;
+            s_Instance = this;
         }
 
         /// <summary>
         /// 
         /// </summary>
-        protected static IMsgDispatcher m_sInstance = null;
+        protected static IMsgDispatcher s_Instance = null;
 
         /// <summary>
         /// 
         /// </summary>
-        public static IMsgDispatcher instance
+        public static IMsgDispatcher S
         {
-            get { return m_sInstance; }
+            get { return s_Instance; }
         }
 
         /// <summary>

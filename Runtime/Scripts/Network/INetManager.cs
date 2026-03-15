@@ -13,16 +13,16 @@ namespace ST.Core.Network
     {
         public INetManager()
         {
-            _instance = this;
+            s_Instance = this;
         }
 
 
-        protected static INetManager _instance = null;
+        protected static INetManager s_Instance = null;
 
 
-        public static INetManager instance
+        public static INetManager S
         {
-            get { return _instance; }
+            get { return s_Instance; }
         }
 
 

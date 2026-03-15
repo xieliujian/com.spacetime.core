@@ -16,14 +16,14 @@ namespace ST.Core
     {
         public IMainThreadTask()
         {
-            _instance = this;
+            s_Instance = this;
         }
 
-        protected static IMainThreadTask _instance = null;
+        protected static IMainThreadTask s_Instance = null;
 
-        public static IMainThreadTask instance
+        public static IMainThreadTask S
         {
-            get { return _instance; }
+            get { return s_Instance; }
         }
 
         public abstract void AddTask(GameEvent func);
