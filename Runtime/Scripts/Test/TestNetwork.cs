@@ -14,21 +14,33 @@ namespace ST.Core.Test
     /// </summary>
     public class TestNetwork : MonoBehaviour
     {
-        public string ipaddress = "127.0.0.1";
+        /// <summary>
+        /// 
+        /// </summary>
+        NetManager m_NetManager = new NetManager();
+        IMsgDispatcher m_MsgDispatcher = new MsgDispatcher();
 
-        NetManager netManager = new NetManager();
-        IMsgDispatcher m_msgDispatcher = new MsgDispatcher();
+        /// <summary>
+        /// 
+        /// </summary>
+        public string ipAddress = "127.0.0.1";
 
+        /// <summary>
+        /// 
+        /// </summary>
         private void Start()
         {
-            netManager.DoInit();
+            m_NetManager.DoInit();
         }
 
+        /// <summary>
+        /// 
+        /// </summary>
         private void OnGUI()
         {
             if (GUI.Button(new Rect(0, 0, 300, 100), "SendConnect"))
             {
-                Network.INetManager.S.SendConnect(ipaddress, 3580);
+                Network.INetManager.S.SendConnect(ipAddress, 3580);
             }
 
             if (GUI.Button(new Rect(0, 100, 300, 100), "SendLoginMsg"))
@@ -47,6 +59,9 @@ namespace ST.Core.Test
             }
         }
 
+        /// <summary>
+        /// 
+        /// </summary>
         void SendRegisterAccout()
         {
             ReqRegisterAccount msg = new ReqRegisterAccount();
@@ -67,6 +82,9 @@ namespace ST.Core.Test
             IMsgDispatcher.S.SendPBMsg(0x8b88ee5f49f79dc5, msg);
         }
 
+        /// <summary>
+        /// 
+        /// </summary>
         void SendLoginMsg()
         {
 #if false
