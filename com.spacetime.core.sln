@@ -1,0 +1,55 @@
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.5.2.0
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Runtime", "Runtime", "{B9B45A75-0C0F-0D50-E9F8-ABF69D9594D8}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Scripts", "Scripts", "{797FDD3A-512F-C037-2FF4-369370151123}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Middleware", "Middleware", "{63B6F02A-63F3-57DF-D15B-D2F4BEB53967}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "FlatBuffers (1)", "FlatBuffers (1)", "{63B62B9F-3802-B7F3-9813-C929DB88C483}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FlatBuffers.Core", "Runtime\Scripts\Middleware\FlatBuffers\FlatBuffers.Core.csproj", "{B00FA262-30B9-E97D-D8DB-ACC884D10091}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FlatBuffers", "Runtime\Scripts\Middleware\FlatBuffers\FlatBuffers.csproj", "{A60E1180-28EF-AF4E-F668-FE368B6FABFF}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Protobuf", "Protobuf", "{811C6FCD-0F7B-5F8D-0100-96A7195BCD6A}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Google.Protobuf", "Runtime\Scripts\Middleware\Protobuf\Google.Protobuf.csproj", "{00C7FDB1-EDC6-1684-FAD2-814003D12B8B}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{B00FA262-30B9-E97D-D8DB-ACC884D10091}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{B00FA262-30B9-E97D-D8DB-ACC884D10091}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{B00FA262-30B9-E97D-D8DB-ACC884D10091}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{B00FA262-30B9-E97D-D8DB-ACC884D10091}.Release|Any CPU.Build.0 = Release|Any CPU
+		{A60E1180-28EF-AF4E-F668-FE368B6FABFF}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{A60E1180-28EF-AF4E-F668-FE368B6FABFF}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{A60E1180-28EF-AF4E-F668-FE368B6FABFF}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{A60E1180-28EF-AF4E-F668-FE368B6FABFF}.Release|Any CPU.Build.0 = Release|Any CPU
+		{00C7FDB1-EDC6-1684-FAD2-814003D12B8B}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{00C7FDB1-EDC6-1684-FAD2-814003D12B8B}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{00C7FDB1-EDC6-1684-FAD2-814003D12B8B}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{00C7FDB1-EDC6-1684-FAD2-814003D12B8B}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{797FDD3A-512F-C037-2FF4-369370151123} = {B9B45A75-0C0F-0D50-E9F8-ABF69D9594D8}
+		{63B6F02A-63F3-57DF-D15B-D2F4BEB53967} = {797FDD3A-512F-C037-2FF4-369370151123}
+		{63B62B9F-3802-B7F3-9813-C929DB88C483} = {63B6F02A-63F3-57DF-D15B-D2F4BEB53967}
+		{B00FA262-30B9-E97D-D8DB-ACC884D10091} = {63B62B9F-3802-B7F3-9813-C929DB88C483}
+		{A60E1180-28EF-AF4E-F668-FE368B6FABFF} = {63B6F02A-63F3-57DF-D15B-D2F4BEB53967}
+		{811C6FCD-0F7B-5F8D-0100-96A7195BCD6A} = {63B6F02A-63F3-57DF-D15B-D2F4BEB53967}
+		{00C7FDB1-EDC6-1684-FAD2-814003D12B8B} = {811C6FCD-0F7B-5F8D-0100-96A7195BCD6A}
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {4D3B8384-935C-402B-B878-4FC50A8C1E14}
+	EndGlobalSection
+EndGlobal
