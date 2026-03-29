@@ -1,37 +1,67 @@
+using System.IO;
+using UnityEngine;
+
 namespace ST.Core.Logging
 {
     /// <summary>
-    /// 日志配置类
+    /// 默认日志配置
+    /// 支持链式配置
     /// </summary>
     public class LogConfig : ILogConfig
     {
-        public LogLevel MinLevel { get; private set; }
-        public ILogFormatter Formatter { get; private set; }
-        public ILogWriter Writer { get; private set; }
+        private string m_LogFilePath;
+        private bool m_IsLowMemoryDevice;
+        private int m_MaxFlushCount;
+        private long m_MaxFileSize;
+        private bool m_EnableBackup;
 
         public LogConfig()
         {
-            MinLevel = LogLevel.Debug;
-            Formatter = new DefaultLogFormatter();
-            Writer = null;
+            // 默认配置
+            m_LogFilePath = Path.Combine(Application.persistentDataPath, "Logs", "Output.txt");
+            m_IsLowMemoryDevice = SystemInfo.systemMemorySize < 2048; // 2GB
+            m_MaxFlushCount = m_IsLowMemoryDevice ? 20 : 100;
+            m_MaxFileSize = 20 * 1024 * 1024; // 20MB
+            m_EnableBackup = true;
         }
 
-        public ILogConfig SetMinLevel(LogLevel level)
+        // 链式配置方法
+        public LogConfig SetLogFilePath(string path)
         {
-            MinLevel = level;
+            m_LogFilePath = path;
             return this;
         }
 
-        public ILogConfig SetFormatter(ILogFormatter formatter)
+        public LogConfig SetLowMemoryDevice(bool isLowMemory)
         {
-            Formatter = formatter;
+            m_IsLowMemoryDevice = isLowMemory;
+            m_MaxFlushCount = isLowMemory ? 20 : 100;
             return this;
         }
 
-        public ILogConfig SetWriter(ILogWriter writer)
+        public LogConfig SetMaxFlushCount(int count)
         {
-            Writer = writer;
+            m_MaxFlushCount = count;
             return this;
         }
+
+        public LogConfig SetMaxFileSize(long size)
+        {
+            m_MaxFileSize = size;
+            return this;
+        }
+
+        public LogConfig SetEnableBackup(bool enable)
+        {
+            m_EnableBackup = enable;
+            return this;
+        }
+
+        // ILogConfig 实现
+        public string GetLogFilePath() => m_LogFilePath;
+        public bool IsLowMemoryDevice() => m_IsLowMemoryDevice;
+        public int GetMaxFlushCount() => m_MaxFlushCount;
+        public long GetMaxFileSize() => m_MaxFileSize;
+        public bool EnableBackup() => m_EnableBackup;
     }
 }
