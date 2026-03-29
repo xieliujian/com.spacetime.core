@@ -50,22 +50,6 @@ namespace ST.Core.Logging
             }
         }
 
-        public void EnableUnityLogCapture(bool enable)
-        {
-            if (m_UnityLogCaptureEnabled == enable) return;
-
-            m_UnityLogCaptureEnabled = enable;
-
-            if (enable)
-            {
-                Application.logMessageReceived += OnUnityLogCallback;
-            }
-            else
-            {
-                Application.logMessageReceived -= OnUnityLogCallback;
-            }
-        }
-
         public void Flush()
         {
             m_Writer?.Flush();
