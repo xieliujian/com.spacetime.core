@@ -8,11 +8,38 @@ namespace ST.Core.Logging
     /// </summary>
     public class DefaultLogFormatter : ILogFormatter
     {
-        public string Format(LogLevel level, string message)
+        public string Format(LogLevel level, string message, string stackTrace, DateTime timestamp)
         {
-            DateTime now = DateTime.Now;
-            string timestamp = $"{now.Day:D2} {now:HH:mm:ss} {now.Millisecond:D3}";
-            return $"[{level}][{timestamp}]{message}";
+            string timeStr = $"{timestamp.Day} {timestamp.Hour:D2}:{timestamp.Minute:D2}:{timestamp.Second:D2} {timestamp.Millisecond}";
+            string levelStr = GetLevelString(level);
+
+            if (string.IsNullOrEmpty(stackTrace))
+            {
+                return $"[{levelStr}][{timeStr}]{message}";
+            }
+            else
+            {
+                return $"[{levelStr}][{timeStr}]{message}\n at {stackTrace}";
+            }
+        }
+
+        private string GetLevelString(LogLevel level)
+        {
+            switch (level)
+            {
+                case LogLevel.Debug:
+                    return "Debug";
+                case LogLevel.Info:
+                    return "Log";
+                case LogLevel.Warning:
+                    return "LogWarning";
+                case LogLevel.Error:
+                    return "LogError";
+                case LogLevel.Exception:
+                    return "LogException";
+                default:
+                    return "Log";
+            }
         }
     }
 }
