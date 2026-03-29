@@ -63,18 +63,40 @@ namespace ST.Core.Logging
 
         public void EnableUnityLogCapture()
         {
-            // TODO: Implement in Task 11
+            if (!isUnityLogCaptureEnabled)
+            {
+                Application.logMessageReceived += OnUnityLogCallback;
+                isUnityLogCaptureEnabled = true;
+            }
         }
 
         private void OnUnityLogCallback(string condition, string stackTrace, LogType type)
         {
-            // TODO: Implement in Task 11
+            LogLevel level = ConvertUnityLogType(type);
+            string message = condition;
+
+            if (!string.IsNullOrEmpty(stackTrace))
+            {
+                message += "\n" + stackTrace;
+            }
+
+            Log(level, message);
         }
 
         private LogLevel ConvertUnityLogType(LogType type)
         {
-            // TODO: Implement in Task 11
-            return LogLevel.Debug;
+            switch (type)
+            {
+                case LogType.Error:
+                case LogType.Exception:
+                    return LogLevel.Error;
+                case LogType.Warning:
+                    return LogLevel.Warning;
+                case LogType.Log:
+                    return LogLevel.Info;
+                default:
+                    return LogLevel.Debug;
+            }
         }
     }
 }
