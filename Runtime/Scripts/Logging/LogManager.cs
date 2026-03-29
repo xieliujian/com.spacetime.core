@@ -5,82 +5,82 @@ namespace ST.Core.Logging
 {
     /// <summary>
     /// 日志管理器
+    /// 协调 Writer 和 Formatter，管理 Unity 日志捕获
     /// </summary>
     public class LogManager : ILogManager
     {
-        private ILogConfig config;
-        private bool isUnityLogCaptureEnabled;
+        private ILogWriter m_Writer;
+        private ILogFormatter m_Formatter;
+        private ILogConfig m_Config;
+        private bool m_UnityLogCaptureEnabled;
 
         public void Initialize(ILogConfig config)
         {
-            this.config = config;
-            this.isUnityLogCaptureEnabled = false;
+            m_Config = config;
+            m_Formatter = new DefaultLogFormatter();
+            m_Writer = new FileLogWriter(
+                config.GetLogFilePath(),
+                config.GetMaxFlushCount(),
+                config.GetMaxFileSize(),
+                config.EnableBackup()
+            );
         }
 
-        public void Log(LogLevel level, string message)
+        public void Log(LogLevel level, string message, string stackTrace = null)
         {
-            if (config == null)
+            if (m_Writer == null) return;
+
+            string formatted = m_Formatter.Format(level, message, stackTrace, DateTime.Now);
+            m_Writer.Write(formatted);
+        }
+
+        public void EnableUnityLogCapture(bool enable)
+        {
+            if (m_UnityLogCaptureEnabled == enable) return;
+
+            m_UnityLogCaptureEnabled = enable;
+
+            if (enable)
             {
-                return;
+                Application.logMessageReceived += OnUnityLogCallback;
             }
-
-            if (level < config.MinLevel)
+            else
             {
-                return;
+                Application.logMessageReceived -= OnUnityLogCallback;
             }
+        }
 
-            string formattedMessage = config.Formatter.Format(level, message);
+        public void EnableUnityLogCapture(bool enable)
+        {
+            if (m_UnityLogCaptureEnabled == enable) return;
 
-            if (config.Writer != null)
+            m_UnityLogCaptureEnabled = enable;
+
+            if (enable)
             {
-                config.Writer.Write(formattedMessage);
+                Application.logMessageReceived += OnUnityLogCallback;
             }
-
-            Debug.Log(formattedMessage);
+            else
+            {
+                Application.logMessageReceived -= OnUnityLogCallback;
+            }
         }
 
         public void Flush()
         {
-            if (config?.Writer != null)
-            {
-                config.Writer.Flush();
-            }
+            m_Writer?.Flush();
         }
 
         public void Close()
         {
-            if (isUnityLogCaptureEnabled)
-            {
-                Application.logMessageReceived -= OnUnityLogCallback;
-                isUnityLogCaptureEnabled = false;
-            }
-
-            if (config?.Writer != null)
-            {
-                config.Writer.Close();
-            }
-        }
-
-        public void EnableUnityLogCapture()
-        {
-            if (!isUnityLogCaptureEnabled)
-            {
-                Application.logMessageReceived += OnUnityLogCallback;
-                isUnityLogCaptureEnabled = true;
-            }
+            EnableUnityLogCapture(false);
+            m_Writer?.Close();
         }
 
         private void OnUnityLogCallback(string condition, string stackTrace, LogType type)
         {
             LogLevel level = ConvertUnityLogType(type);
-            string message = condition;
-
-            if (!string.IsNullOrEmpty(stackTrace))
-            {
-                message += "\n" + stackTrace;
-            }
-
-            Log(level, message);
+            Log(level, condition, stackTrace);
         }
 
         private LogLevel ConvertUnityLogType(LogType type)
@@ -88,14 +88,15 @@ namespace ST.Core.Logging
             switch (type)
             {
                 case LogType.Error:
-                case LogType.Exception:
                     return LogLevel.Error;
+                case LogType.Exception:
+                    return LogLevel.Exception;
                 case LogType.Warning:
                     return LogLevel.Warning;
-                case LogType.Log:
-                    return LogLevel.Info;
+                case LogType.Assert:
+                    return LogLevel.Error;
                 default:
-                    return LogLevel.Debug;
+                    return LogLevel.Info;
             }
         }
     }
