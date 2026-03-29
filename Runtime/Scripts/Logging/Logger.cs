@@ -21,9 +21,9 @@ namespace ST.Core.Logging
             manager = customManager;
         }
 
-        public static void EnableUnityLogCapture()
+        public static void EnableUnityLogCapture(bool enable)
         {
-            manager?.EnableUnityLogCapture();
+            manager?.EnableUnityLogCapture(enable);
         }
 
         public static void Log(string message)
