@@ -30,17 +30,64 @@ namespace ST.Core.Logging
 
         public void Write(string message)
         {
-            // TODO: Implement in Task 8
+            if (writer == null)
+            {
+                return;
+            }
+
+            try
+            {
+                byte[] messageBytes = encoding.GetBytes(message + Environment.NewLine);
+                long messageSize = messageBytes.Length;
+
+                if (currentFileSize + messageSize > maxFileSize)
+                {
+                    BackupFile();
+                    OpenFile();
+                }
+
+                writer.WriteLine(message);
+                currentFileSize += messageSize;
+            }
+            catch (Exception ex)
+            {
+                UnityEngine.Debug.LogError($"FileLogWriter Write failed: {ex.Message}");
+            }
         }
 
         public void Flush()
         {
-            // TODO: Implement in Task 8
+            if (writer != null)
+            {
+                try
+                {
+                    writer.Flush();
+                }
+                catch (Exception ex)
+                {
+                    UnityEngine.Debug.LogError($"FileLogWriter Flush failed: {ex.Message}");
+                }
+            }
         }
 
         public void Close()
         {
-            // TODO: Implement in Task 8
+            if (writer != null)
+            {
+                try
+                {
+                    writer.Flush();
+                    writer.Close();
+                }
+                catch (Exception ex)
+                {
+                    UnityEngine.Debug.LogError($"FileLogWriter Close failed: {ex.Message}");
+                }
+                finally
+                {
+                    writer = null;
+                }
+            }
         }
 
         private void OpenFile()
