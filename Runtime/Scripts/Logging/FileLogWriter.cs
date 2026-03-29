@@ -45,12 +45,49 @@ namespace ST.Core.Logging
 
         private void OpenFile()
         {
-            // TODO: Implement in Task 7
+            if (!Directory.Exists(logDirectory))
+            {
+                Directory.CreateDirectory(logDirectory);
+            }
+
+            currentFilePath = Path.Combine(logDirectory, logFileName);
+
+            if (File.Exists(currentFilePath))
+            {
+                FileInfo fileInfo = new FileInfo(currentFilePath);
+                currentFileSize = fileInfo.Length;
+
+                if (currentFileSize >= maxFileSize)
+                {
+                    BackupFile();
+                    currentFileSize = 0;
+                }
+            }
+            else
+            {
+                currentFileSize = 0;
+            }
+
+            writer = new StreamWriter(currentFilePath, true, encoding);
+            writer.AutoFlush = false;
         }
 
         private void BackupFile()
         {
-            // TODO: Implement in Task 7
+            if (writer != null)
+            {
+                writer.Close();
+                writer = null;
+            }
+
+            string timestamp = DateTime.Now.ToString("yyyyMMdd_HHmmss");
+            string backupFileName = Path.GetFileNameWithoutExtension(logFileName) + "_" + timestamp + Path.GetExtension(logFileName);
+            string backupFilePath = Path.Combine(logDirectory, backupFileName);
+
+            if (File.Exists(currentFilePath))
+            {
+                File.Move(currentFilePath, backupFilePath);
+            }
         }
     }
 }
