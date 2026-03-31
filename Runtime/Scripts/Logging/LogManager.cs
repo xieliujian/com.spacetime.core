@@ -4,16 +4,27 @@ using UnityEngine;
 namespace ST.Core.Logging
 {
     /// <summary>
-    /// 日志管理器
-    /// 协调 Writer 和 Formatter，管理 Unity 日志捕获
+    /// 日志管理器，实现 <see cref="ILogManager"/>
+    /// 协调 <see cref="ILogWriter"/> 和 <see cref="ILogFormatter"/>，并管理 Unity 日志捕获
     /// </summary>
     public class LogManager : ILogManager
     {
+        /// <summary>日志写入器，负责将格式化后的日志持久化</summary>
         private ILogWriter m_Writer;
+
+        /// <summary>日志格式化器，负责将日志内容转换为字符串</summary>
         private ILogFormatter m_Formatter;
+
+        /// <summary>日志配置，保存路径、文件大小等参数</summary>
         private ILogConfig m_Config;
+
+        /// <summary>标记当前是否已注册 Unity 日志回调，避免重复订阅</summary>
         private bool m_UnityLogCaptureEnabled;
 
+        /// <summary>
+        /// 根据配置初始化格式化器和文件写入器
+        /// </summary>
+        /// <param name="config">日志配置</param>
         public void Initialize(ILogConfig config)
         {
             m_Config = config;
@@ -26,6 +37,12 @@ namespace ST.Core.Logging
             );
         }
 
+        /// <summary>
+        /// 格式化并写入一条日志
+        /// </summary>
+        /// <param name="level">日志级别</param>
+        /// <param name="message">日志消息</param>
+        /// <param name="stackTrace">堆栈跟踪（可选）</param>
         public void Log(LogLevel level, string message, string stackTrace = null)
         {
             if (m_Writer == null) return;
@@ -34,6 +51,11 @@ namespace ST.Core.Logging
             m_Writer.Write(formatted);
         }
 
+        /// <summary>
+        /// 启用或禁用对 Unity <c>Application.logMessageReceived</c> 事件的监听
+        /// 重复设置相同状态时不做任何处理
+        /// </summary>
+        /// <param name="enable">true 表示开始监听，false 表示停止监听</param>
         public void EnableUnityLogCapture(bool enable)
         {
             if (m_UnityLogCaptureEnabled == enable) return;
@@ -50,23 +72,48 @@ namespace ST.Core.Logging
             }
         }
 
+        /// <summary>
+        /// 将缓存中的日志立即写入文件
+        /// </summary>
         public void Flush()
         {
-            m_Writer?.Flush();
+            if (m_Writer == null)
+            {
+                return;
+            }
+            m_Writer.Flush();
         }
 
+        /// <summary>
+        /// 停止 Unity 日志捕获并关闭写入器，释放文件句柄
+        /// </summary>
         public void Close()
         {
             EnableUnityLogCapture(false);
-            m_Writer?.Close();
+            if (m_Writer == null)
+            {
+                return;
+            }
+            m_Writer.Close();
         }
 
+        /// <summary>
+        /// Unity <c>Application.logMessageReceived</c> 回调，将 Unity 日志转发到日志系统
+        /// </summary>
+        /// <param name="condition">日志消息内容</param>
+        /// <param name="stackTrace">堆栈跟踪</param>
+        /// <param name="type">Unity 日志类型</param>
         private void OnUnityLogCallback(string condition, string stackTrace, LogType type)
         {
             LogLevel level = ConvertUnityLogType(type);
             Log(level, condition, stackTrace);
         }
 
+        /// <summary>
+        /// 将 Unity <see cref="LogType"/> 转换为 <see cref="LogLevel"/>
+        /// </summary>
+        /// <param name="type">Unity 日志类型</param>
+        /// <returns>对应的日志级别</returns>
         private LogLevel ConvertUnityLogType(LogType type)
         {
             switch (type)
@@ -85,4 +132,3 @@ namespace ST.Core.Logging
         }
     }
 }
-
