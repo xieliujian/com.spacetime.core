@@ -45,7 +45,8 @@ namespace ST.Core.Logging
         /// <param name="stackTrace">堆栈跟踪（可选）</param>
         public void Log(LogLevel level, string message, string stackTrace = null)
         {
-            if (m_Writer == null) return;
+            if (m_Writer == null)
+                return;
 
             string formatted = m_Formatter.Format(level, message, stackTrace, DateTime.Now);
             m_Writer.Write(formatted);
@@ -58,7 +59,8 @@ namespace ST.Core.Logging
         /// <param name="enable">true 表示开始监听，false 表示停止监听</param>
         public void EnableUnityLogCapture(bool enable)
         {
-            if (m_UnityLogCaptureEnabled == enable) return;
+            if (m_UnityLogCaptureEnabled == enable)
+                return;
 
             m_UnityLogCaptureEnabled = enable;
 
@@ -78,9 +80,7 @@ namespace ST.Core.Logging
         public void Flush()
         {
             if (m_Writer == null)
-            {
                 return;
-            }
             m_Writer.Flush();
         }
 
@@ -91,9 +91,7 @@ namespace ST.Core.Logging
         {
             EnableUnityLogCapture(false);
             if (m_Writer == null)
-            {
                 return;
-            }
             m_Writer.Close();
         }
 

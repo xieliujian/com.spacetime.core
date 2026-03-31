@@ -39,9 +39,7 @@ namespace ST.Core.Logging
         public static void EnableUnityLogCapture(bool enable)
         {
             if (manager == null)
-            {
                 return;
-            }
             manager.EnableUnityLogCapture(enable);
         }
 
@@ -52,9 +50,7 @@ namespace ST.Core.Logging
         public static void Log(string message)
         {
             if (manager == null)
-            {
                 return;
-            }
             manager.Log(LogLevel.Info, message);
         }
 
@@ -65,9 +61,7 @@ namespace ST.Core.Logging
         public static void LogWarning(string message)
         {
             if (manager == null)
-            {
                 return;
-            }
             manager.Log(LogLevel.Warning, message);
         }
 
@@ -78,9 +72,7 @@ namespace ST.Core.Logging
         public static void LogError(string message)
         {
             if (manager == null)
-            {
                 return;
-            }
             manager.Log(LogLevel.Error, message);
         }
 
@@ -91,9 +83,7 @@ namespace ST.Core.Logging
         public static void LogDebug(string message)
         {
             if (manager == null)
-            {
                 return;
-            }
             manager.Log(LogLevel.Debug, message);
         }
 
@@ -103,9 +93,7 @@ namespace ST.Core.Logging
         public static void Flush()
         {
             if (manager == null)
-            {
                 return;
-            }
             manager.Flush();
         }
 
@@ -115,9 +103,7 @@ namespace ST.Core.Logging
         public static void Close()
         {
             if (manager == null)
-            {
                 return;
-            }
             manager.Close();
         }
     }

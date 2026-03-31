@@ -102,6 +102,41 @@ Based on the code review skill configuration:
 - **Methods**: Use PascalCase (e.g., `DoInit`, `SendConnect`)
 - **Namespace**: Core framework uses `ST.Core` namespace
 
+### Null Guard Style
+
+Null checks that immediately return must use the **two-line** form — condition on one line, `return` indented on the next, no curly braces:
+
+```csharp
+// Correct
+if (manager == null)
+    return;
+manager.DoSomething();
+
+// Wrong — do not use single-line form
+if (manager == null) return;
+
+// Wrong — do not use braces
+if (manager == null)
+{
+    return;
+}
+manager.DoSomething();
+```
+
+### Null-Conditional Operator (`?.`) — Forbidden
+
+Never use the `?.` null-conditional operator. Always replace it with an explicit `if` null check:
+
+```csharp
+// Correct
+if (manager == null)
+    return;
+manager.Flush();
+
+// Wrong — do not use
+manager?.Flush();
+```
+
 ## Key Dependencies
 
 - Unity 2022.3.35f1c1
