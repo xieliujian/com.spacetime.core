@@ -1,4 +1,4 @@
-﻿using UnityEngine;
+using UnityEngine;
 using System;
 using System.IO;
 using System.Net;
@@ -10,16 +10,18 @@ using ST.Core.Debugger;
 namespace ST.Core.Network
 {
     /// <summary>
-    /// 
+    /// 基于 <see cref="TcpClient"/> 的异步 TCP 客户端：负责连接、粘包拆包及将完整消息投递到 <see cref="NetManager.AddEvent"/>。
     /// </summary>
     public class SocketClient
     {
         /// <summary>
-        /// 
+        /// 连接断开原因分类，用于日志与断线处理分支。
         /// </summary>
         public enum DisType
         {
+            /// <summary>读循环异常导致的断开。</summary>
             Exception,
+            /// <summary>对端关闭或读取长度为 0。</summary>
             Disconnect,
         }
 
@@ -58,7 +60,7 @@ namespace ST.Core.Network
         /// </summary>
         int m_port;
 
-        // Use this for initialization
+        /// <summary>创建未连接的客户端实例。</summary>
         public SocketClient()
         {
         }

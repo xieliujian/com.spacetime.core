@@ -9,9 +9,16 @@ namespace ST.Core.Table
     /// </summary>
     public class DataStreamReader
     {
+        /// <summary>底层只读字节缓冲。</summary>
         byte[] m_Buffer;
+        /// <summary>当前读取位置（字节下标）。</summary>
         int m_Pos;
 
+        /// <summary>
+        /// 从指定起点构造读取器，后续读操作均相对 <paramref name="startPos"/>。
+        /// </summary>
+        /// <param name="data">完整表或消息字节</param>
+        /// <param name="startPos">起始偏移</param>
         public DataStreamReader(byte[] data, int startPos = 0)
         {
             if (data == null) throw new System.ArgumentNullException(nameof(data));

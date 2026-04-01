@@ -4,9 +4,9 @@ using System;
 using System.IO;
 
 namespace ST.Core.Network
-{  
+{
     /// <summary>
-    /// 
+    /// 网络单例管理器：维护 <see cref="SocketClient"/>、连接事件，并在主线程轮询处理消息队列后分发给 <see cref="MsgDispatcher"/> 与 <see cref="onMsgEvent"/>。
     /// </summary>
     public class NetManager : IManager
     {
@@ -23,13 +23,11 @@ namespace ST.Core.Network
         GameEvent m_OnConnectEvent = new GameEvent();
 
         /// <summary>
-        /// 
+        /// 主线程上、在 <see cref="MsgDispatcher.Dispatcher"/> 之后调用的可选回调，参数为消息 ID 与负载字节。
         /// </summary>
         public Action<ulong, byte[]> onMsgEvent;
 
-        /// <summary>
-        /// 
-        /// </summary>
+        /// <summary>全局网络管理器实例。</summary>
         public static NetManager S
         {
             get { return s_Instance; }
@@ -53,7 +51,7 @@ namespace ST.Core.Network
         //}
 
         /// <summary>
-        /// 
+        /// 构造时注册为全局 <see cref="S"/>，供套接字层等访问。
         /// </summary>
         public NetManager()
         {
@@ -80,7 +78,7 @@ namespace ST.Core.Network
         }
 
         /// <summary>
-        /// 
+        /// 当前无滞后帧逻辑，空实现。
         /// </summary>
         public override void DoLateUpdate()
         {
@@ -88,7 +86,7 @@ namespace ST.Core.Network
         }
 
         /// <summary>
-        /// 
+        /// 清空连接事件监听并关闭套接字客户端。
         /// </summary>
         public override void DoClose()
         {

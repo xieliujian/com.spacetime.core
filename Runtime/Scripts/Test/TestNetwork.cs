@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -10,32 +10,25 @@ using UnityEngine;
 namespace ST.Core.Test
 {
     /// <summary>
-    /// 
+    /// 网络模块示例：<see cref="OnGUI"/> 按钮触发连接与 Protobuf 注册消息发送，仅用于本地联调演示。
     /// </summary>
     public class TestNetwork : MonoBehaviour
     {
-        /// <summary>
-        /// 
-        /// </summary>
+        /// <summary>示例用网络管理器实例（未挂到全局生命周期时需自行 Update 驱动队列）。</summary>
         NetManager m_NetManager = new NetManager();
+        /// <summary>示例用消息分发器。</summary>
         MsgDispatcher m_MsgDispatcher = new MsgDispatcher();
 
-        /// <summary>
-        /// 
-        /// </summary>
+        /// <summary>连接目标 IP，可在 Inspector 中修改。</summary>
         public string ipAddress = "127.0.0.1";
 
-        /// <summary>
-        /// 
-        /// </summary>
+        /// <summary>初始化 <see cref="NetManager"/>。</summary>
         private void Start()
         {
             m_NetManager.DoInit();
         }
 
-        /// <summary>
-        /// 
-        /// </summary>
+        /// <summary>绘制测试按钮：连接、登录、聊天、注册等。</summary>
         private void OnGUI()
         {
             if (GUI.Button(new Rect(0, 0, 300, 100), "SendConnect"))
@@ -59,9 +52,7 @@ namespace ST.Core.Test
             }
         }
 
-        /// <summary>
-        /// 
-        /// </summary>
+        /// <summary>构造并发送 <see cref="ReqRegisterAccount"/> 测试包。</summary>
         void SendRegisterAccout()
         {
             ReqRegisterAccount msg = new ReqRegisterAccount();
@@ -82,9 +73,7 @@ namespace ST.Core.Test
             MsgDispatcher.S.SendPBMsg(ReqRegisterAccount.HashID, msg);
         }
 
-        /// <summary>
-        /// 
-        /// </summary>
+        /// <summary>登录消息示例（当前整段为 <c>#if false</c> 占位）。</summary>
         void SendLoginMsg()
         {
 #if false
@@ -112,6 +101,7 @@ namespace ST.Core.Test
 #endif
         }
 
+        /// <summary>聊天消息 FlatBuffers 示例（当前为 <c>#if false</c> 占位）。</summary>
         void SendChatMsg()
         {
 #if false
