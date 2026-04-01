@@ -54,7 +54,8 @@ namespace ST.Core.Logging
         /// <param name="formattedLog">已格式化的日志字符串</param>
         public void Write(string formattedLog)
         {
-            if (m_StreamWriter == null) return;
+            if (m_StreamWriter == null)
+                return;
 
             m_CacheList.Add(formattedLog);
 
@@ -70,7 +71,8 @@ namespace ST.Core.Logging
         /// </summary>
         public void Flush()
         {
-            if (m_StreamWriter == null || m_CacheList.Count == 0) return;
+            if (m_StreamWriter == null || m_CacheList.Count == 0)
+                return;
 
             try
             {

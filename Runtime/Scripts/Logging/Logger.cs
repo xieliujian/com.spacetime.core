@@ -40,6 +40,7 @@ namespace ST.Core.Logging
         {
             if (manager == null)
                 return;
+
             manager.EnableUnityLogCapture(enable);
         }
 
@@ -51,6 +52,7 @@ namespace ST.Core.Logging
         {
             if (manager == null)
                 return;
+
             manager.Log(LogLevel.Info, message);
         }
 
@@ -62,6 +64,7 @@ namespace ST.Core.Logging
         {
             if (manager == null)
                 return;
+
             manager.Log(LogLevel.Warning, message);
         }
 
@@ -73,6 +76,7 @@ namespace ST.Core.Logging
         {
             if (manager == null)
                 return;
+
             manager.Log(LogLevel.Error, message);
         }
 
@@ -84,6 +88,7 @@ namespace ST.Core.Logging
         {
             if (manager == null)
                 return;
+
             manager.Log(LogLevel.Debug, message);
         }
 
@@ -94,6 +99,7 @@ namespace ST.Core.Logging
         {
             if (manager == null)
                 return;
+
             manager.Flush();
         }
 
@@ -104,6 +110,7 @@ namespace ST.Core.Logging
         {
             if (manager == null)
                 return;
+
             manager.Close();
         }
     }

@@ -81,6 +81,7 @@ namespace ST.Core.Logging
         {
             if (m_Writer == null)
                 return;
+
             m_Writer.Flush();
         }
 
@@ -92,6 +93,7 @@ namespace ST.Core.Logging
             EnableUnityLogCapture(false);
             if (m_Writer == null)
                 return;
+
             m_Writer.Close();
         }
 

@@ -104,10 +104,18 @@ Based on the code review skill configuration:
 
 ### Null Guard Style
 
-Null checks that immediately return must use the **two-line** form — condition on one line, `return` indented on the next, no curly braces:
+Null checks that immediately return must use the **two-line** form — condition on one line, `return` indented on the next, no curly braces.
+
+**Always add a blank line after the return statement before continuing with code:**
 
 ```csharp
 // Correct
+if (manager == null)
+    return;
+
+manager.DoSomething();
+
+// Wrong — missing blank line
 if (manager == null)
     return;
 manager.DoSomething();
