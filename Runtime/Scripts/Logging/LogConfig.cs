@@ -4,25 +4,24 @@ using UnityEngine;
 namespace ST.Core.Logging
 {
     /// <summary>
-    /// 默认日志配置，实现 <see cref="ILogConfig"/>
-    /// 支持链式调用风格进行参数配置
+    /// 日志配置，支持链式调用风格进行参数配置
     /// </summary>
-    public class LogConfig : ILogConfig
+    public class LogConfig
     {
         /// <summary>日志文件输出路径</summary>
-        private string m_LogFilePath;
+        string m_LogFilePath;
 
         /// <summary>是否为低内存设备（系统内存小于 2GB）</summary>
-        private bool m_IsLowMemoryDevice;
+        bool m_IsLowMemoryDevice;
 
         /// <summary>触发自动刷新的缓存条目数量阈值</summary>
-        private int m_MaxFlushCount;
+        int m_MaxFlushCount;
 
         /// <summary>日志文件最大允许大小（字节），超出后执行轮转</summary>
-        private long m_MaxFileSize;
+        long m_MaxFileSize;
 
         /// <summary>超出大小限制时是否保留 .bak 备份文件</summary>
-        private bool m_EnableBackup;
+        bool m_EnableBackup;
 
         /// <summary>
         /// 构造函数，按设备内存情况自动初始化默认配置
@@ -93,19 +92,19 @@ namespace ST.Core.Logging
             return this;
         }
 
-        /// <inheritdoc/>
+        /// <summary>获取日志文件路径</summary>
         public string GetLogFilePath() => m_LogFilePath;
 
-        /// <inheritdoc/>
+        /// <summary>是否为低内存设备</summary>
         public bool IsLowMemoryDevice() => m_IsLowMemoryDevice;
 
-        /// <inheritdoc/>
+        /// <summary>获取最大刷新数量</summary>
         public int GetMaxFlushCount() => m_MaxFlushCount;
 
-        /// <inheritdoc/>
+        /// <summary>获取最大文件大小（字节）</summary>
         public long GetMaxFileSize() => m_MaxFileSize;
 
-        /// <inheritdoc/>
+        /// <summary>是否启用备份</summary>
         public bool EnableBackup() => m_EnableBackup;
     }
 }

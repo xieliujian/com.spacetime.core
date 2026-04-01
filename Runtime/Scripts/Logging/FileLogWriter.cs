@@ -5,31 +5,30 @@ using System.IO;
 namespace ST.Core.Logging
 {
     /// <summary>
-    /// 文件日志写入器，实现 <see cref="ILogWriter"/>
-    /// 采用内存缓存 + 批量刷新策略，支持文件轮转与备份
+    /// 文件日志写入器，采用内存缓存 + 批量刷新策略，支持文件轮转与备份
     /// </summary>
-    public class FileLogWriter : ILogWriter
+    public class FileLogWriter
     {
         /// <summary>日志文件完整路径</summary>
-        private readonly string m_FilePath;
+        readonly string m_FilePath;
 
         /// <summary>缓存中积累多少条日志后触发自动刷新</summary>
-        private readonly int m_MaxFlushCount;
+        readonly int m_MaxFlushCount;
 
         /// <summary>单个日志文件最大允许大小（字节）</summary>
-        private readonly long m_MaxFileSize;
+        readonly long m_MaxFileSize;
 
         /// <summary>文件超出大小限制时是否保留 .bak 备份</summary>
-        private readonly bool m_EnableBackup;
+        readonly bool m_EnableBackup;
 
         /// <summary>底层文件流，用于持久化日志数据</summary>
-        private FileStream m_FileStream;
+        FileStream m_FileStream;
 
         /// <summary>在 <see cref="m_FileStream"/> 之上的文本写入器</summary>
-        private StreamWriter m_StreamWriter;
+        StreamWriter m_StreamWriter;
 
         /// <summary>待写入文件的日志缓存列表</summary>
-        private List<string> m_CacheList = new List<string>();
+        List<string> m_CacheList = new List<string>();
 
         /// <summary>
         /// 构造函数，创建写入器并以覆盖模式打开日志文件
@@ -114,7 +113,7 @@ namespace ST.Core.Logging
         /// 若文件超出大小限制，先执行备份或删除再重新创建
         /// </summary>
         /// <param name="append">true 表示追加写入，false 表示清空重写</param>
-        private void OpenFile(bool append)
+        void OpenFile(bool append)
         {
             try
             {
@@ -163,7 +162,7 @@ namespace ST.Core.Logging
         /// 将当前日志文件重命名为 .bak 备份文件
         /// 若已存在旧备份文件，先将其删除再执行重命名
         /// </summary>
-        private void BackupFile()
+        void BackupFile()
         {
             try
             {

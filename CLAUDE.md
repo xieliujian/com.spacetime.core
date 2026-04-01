@@ -96,11 +96,27 @@ This project has several custom Claude Code skills configured in `.claude/skills
 ## Coding Conventions
 
 Based on the code review skill configuration:
-- **Private fields**: Use `m_` prefix (e.g., `m_SocketClient`)
+- **Private fields**: Use `m_` prefix with PascalCase (e.g., `m_SocketClient`, `m_Manager`)
 - **Static fields**: Use `s_` prefix (e.g., `s_Instance`)
 - **Properties**: Use camelCase (e.g., `onConnectEvent`)
 - **Methods**: Use PascalCase (e.g., `DoInit`, `SendConnect`)
 - **Namespace**: Core framework uses `ST.Core` namespace
+
+### Access Modifiers
+
+**Omit `private` keyword for private members** — it's the default and adds no value:
+
+```csharp
+// Correct
+static ILogManager s_Manager;
+ILogWriter m_Writer;
+void DoSomething() { }
+
+// Wrong — do not write explicit private
+private static ILogManager s_Manager;
+private ILogWriter m_Writer;
+private void DoSomething() { }
+```
 
 ### Null Guard Style
 

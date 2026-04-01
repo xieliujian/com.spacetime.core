@@ -3,10 +3,9 @@ using System;
 namespace ST.Core.Logging
 {
     /// <summary>
-    /// 默认日志格式化器，实现 <see cref="ILogFormatter"/>
-    /// 输出格式：[LogLevel][Day HH:MM:SS Millisecond]Message
+    /// 默认日志格式化器，输出格式：[LogLevel][Day HH:MM:SS Millisecond]Message
     /// </summary>
-    public class DefaultLogFormatter : ILogFormatter
+    public class DefaultLogFormatter
     {
         /// <summary>
         /// 将日志内容格式化为可读字符串
@@ -37,7 +36,7 @@ namespace ST.Core.Logging
         /// </summary>
         /// <param name="level">日志级别</param>
         /// <returns>对应的字符串标签</returns>
-        private string GetLevelString(LogLevel level)
+        string GetLevelString(LogLevel level)
         {
             switch (level)
             {

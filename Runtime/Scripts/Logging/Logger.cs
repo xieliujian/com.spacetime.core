@@ -2,34 +2,25 @@ namespace ST.Core.Logging
 {
     /// <summary>
     /// 日志静态门面，对外提供统一的日志调用入口
-    /// 内部委托给 <see cref="ILogManager"/> 实现，支持运行时替换管理器
+    /// 内部委托给 <see cref="LogManager"/> 实现
     /// </summary>
     public static class Logger
     {
-        /// <summary>当前日志管理器实例，由 Initialize 或 SetManager 赋值</summary>
-        private static ILogManager manager;
+        /// <summary>当前日志管理器实例，由 Initialize 赋值</summary>
+        static LogManager s_Manager;
 
         /// <summary>
         /// 使用指定配置初始化日志系统
         /// 若管理器尚未创建则自动构造默认的 <see cref="LogManager"/>
         /// </summary>
         /// <param name="config">日志配置</param>
-        public static void Initialize(ILogConfig config)
+        public static void Initialize(LogConfig config)
         {
-            if (manager == null)
+            if (s_Manager == null)
             {
-                manager = new LogManager();
+                s_Manager = new LogManager();
             }
-            manager.Initialize(config);
-        }
-
-        /// <summary>
-        /// 替换当前日志管理器，用于单元测试或自定义实现
-        /// </summary>
-        /// <param name="customManager">自定义日志管理器</param>
-        public static void SetManager(ILogManager customManager)
-        {
-            manager = customManager;
+            s_Manager.Initialize(config);
         }
 
         /// <summary>
@@ -38,10 +29,10 @@ namespace ST.Core.Logging
         /// <param name="enable">true 表示启用捕获，false 表示停止捕获</param>
         public static void EnableUnityLogCapture(bool enable)
         {
-            if (manager == null)
+            if (s_Manager == null)
                 return;
 
-            manager.EnableUnityLogCapture(enable);
+            s_Manager.EnableUnityLogCapture(enable);
         }
 
         /// <summary>
@@ -50,10 +41,10 @@ namespace ST.Core.Logging
         /// <param name="message">日志消息</param>
         public static void Log(string message)
         {
-            if (manager == null)
+            if (s_Manager == null)
                 return;
 
-            manager.Log(LogLevel.Info, message);
+            s_Manager.Log(LogLevel.Info, message);
         }
 
         /// <summary>
@@ -62,10 +53,10 @@ namespace ST.Core.Logging
         /// <param name="message">日志消息</param>
         public static void LogWarning(string message)
         {
-            if (manager == null)
+            if (s_Manager == null)
                 return;
 
-            manager.Log(LogLevel.Warning, message);
+            s_Manager.Log(LogLevel.Warning, message);
         }
 
         /// <summary>
@@ -74,10 +65,10 @@ namespace ST.Core.Logging
         /// <param name="message">日志消息</param>
         public static void LogError(string message)
         {
-            if (manager == null)
+            if (s_Manager == null)
                 return;
 
-            manager.Log(LogLevel.Error, message);
+            s_Manager.Log(LogLevel.Error, message);
         }
 
         /// <summary>
@@ -86,10 +77,10 @@ namespace ST.Core.Logging
         /// <param name="message">日志消息</param>
         public static void LogDebug(string message)
         {
-            if (manager == null)
+            if (s_Manager == null)
                 return;
 
-            manager.Log(LogLevel.Debug, message);
+            s_Manager.Log(LogLevel.Debug, message);
         }
 
         /// <summary>
@@ -97,10 +88,10 @@ namespace ST.Core.Logging
         /// </summary>
         public static void Flush()
         {
-            if (manager == null)
+            if (s_Manager == null)
                 return;
 
-            manager.Flush();
+            s_Manager.Flush();
         }
 
         /// <summary>
@@ -108,10 +99,10 @@ namespace ST.Core.Logging
         /// </summary>
         public static void Close()
         {
-            if (manager == null)
+            if (s_Manager == null)
                 return;
 
-            manager.Close();
+            s_Manager.Close();
         }
     }
 }
