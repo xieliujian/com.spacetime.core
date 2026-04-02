@@ -37,21 +37,6 @@ namespace ST.Core.Logging
         }
 
         /// <summary>
-        /// 格式化并写入一条日志
-        /// </summary>
-        /// <param name="level">日志级别</param>
-        /// <param name="message">日志消息</param>
-        /// <param name="stackTrace">堆栈跟踪（可选）</param>
-        public void Log(LogLevel level, string message, string stackTrace = null)
-        {
-            if (m_Writer == null)
-                return;
-
-            string formatted = m_Formatter.Format(level, message, stackTrace, DateTime.Now);
-            m_Writer.Write(formatted);
-        }
-
-        /// <summary>
         /// 启用或禁用对 Unity <c>Application.logMessageReceived</c> 事件的监听
         /// 重复设置相同状态时不做任何处理
         /// </summary>
@@ -106,6 +91,21 @@ namespace ST.Core.Logging
         {
             LogLevel level = ConvertUnityLogType(type);
             Log(level, condition, stackTrace);
+        }
+
+        /// <summary>
+        /// 格式化并写入一条日志
+        /// </summary>
+        /// <param name="level">日志级别</param>
+        /// <param name="message">日志消息</param>
+        /// <param name="stackTrace">堆栈跟踪（可选）</param>
+        void Log(LogLevel level, string message, string stackTrace = null)
+        {
+            if (m_Writer == null)
+                return;
+
+            string formatted = m_Formatter.Format(level, message, stackTrace, DateTime.Now);
+            m_Writer.Write(formatted);
         }
 
         /// <summary>
