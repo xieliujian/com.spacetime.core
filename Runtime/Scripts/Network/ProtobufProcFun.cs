@@ -55,8 +55,8 @@ namespace ST.Core.Network
             }
             catch (Exception e)
             {
-                Debugger.LogError("process protobuf msg error!" + typeof(T).FullName);
-                Debugger.LogError(e.ToString());
+                Logger.LogError("process protobuf msg error!" + typeof(T).FullName);
+                Logger.LogError(e.ToString());
             }
         }
     }

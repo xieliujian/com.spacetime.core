@@ -6,6 +6,7 @@ using System.Net.Sockets;
 using System.Collections;
 using System.Collections.Generic;
 using ST.Core.Logging;
+using Logger = ST.Core.Logging.Logger;
 
 namespace ST.Core.Network
 {
@@ -110,7 +111,7 @@ namespace ST.Core.Network
             catch (Exception e)
             {
                 Close();
-                Debugger.LogError(e.Message);
+                Logger.LogError(e.Message);
             }
         }
 
@@ -127,7 +128,7 @@ namespace ST.Core.Network
             m_NetStream = m_Client.GetStream();
             m_NetStream.BeginRead(m_ByteBuffer, 0, NetworkDefine.s_MaxReadNum, new AsyncCallback(OnRead), null);
 
-            Debugger.LogDebug("======连接=" + m_ip + "=" + m_port + "=======");
+            Logger.LogDebug("======连接=" + m_ip + "=" + m_port + "=======");
         }
 
         /// <summary>
@@ -141,7 +142,7 @@ namespace ST.Core.Network
             }
             else
             {
-                Debugger.LogError("client.connected----->>false");
+                Logger.LogError("client.connected----->>false");
             }
         }
 
@@ -192,8 +193,8 @@ namespace ST.Core.Network
         /// </summary>
         void OnDisconnected(DisType dis, string msg)
         {
-            Debugger.LogDebug("OnDisconnected" + msg);
-            Debugger.LogDebug("======断开连接========");
+            Logger.LogDebug("OnDisconnected" + msg);
+            Logger.LogDebug("======断开连接========");
             Close();   //关掉客户端链接
         }
 
@@ -209,7 +210,7 @@ namespace ST.Core.Network
                 returnStr += m_ByteBuffer[i].ToString("X2");
             }
 
-            Debugger.LogError(returnStr);
+            Logger.LogError(returnStr);
         }
 
         /// <summary>
@@ -223,7 +224,7 @@ namespace ST.Core.Network
             }
             catch (Exception ex)
             {
-                Debugger.LogError("OnWrite--->>>" + ex.Message);
+                Logger.LogError("OnWrite--->>>" + ex.Message);
             }
         }
 
@@ -297,7 +298,7 @@ namespace ST.Core.Network
 
                 m_Client = null;
 
-                Debugger.LogDebug("======关闭连接========");
+                Logger.LogDebug("======关闭连接========");
             }
         }
 

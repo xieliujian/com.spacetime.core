@@ -40,8 +40,8 @@ namespace ST.Core.Network
             }
             catch (Exception e)
             {
-                Debugger.LogError("process flatbuffer msg error!" + typeof(T).FullName);
-                Debugger.LogError(e.ToString());
+                Logger.LogError("process flatbuffer msg error!" + typeof(T).FullName);
+                Logger.LogError(e.ToString());
             }
         }
     }
