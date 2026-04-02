@@ -2,7 +2,8 @@ namespace ST.Core.Logging
 {
     /// <summary>
     /// 日志静态门面，对外提供统一的日志调用入口
-    /// 内部委托给 <see cref="LogManager"/> 实现
+    /// Log 函数委托给 <see cref="Debugger"/> 输出，文件写入通过 <see cref="LogManager"/> 监听
+    /// <c>Application.logMessageReceived</c> 回调实现
     /// </summary>
     public static class Logger
     {
@@ -42,11 +43,6 @@ namespace ST.Core.Logging
         public static void Log(string message)
         {
             Debugger.LogInfo(message);
-
-            if (s_Manager == null)
-                return;
-
-            s_Manager.Log(LogLevel.Info, message);
         }
 
         /// <summary>
@@ -56,11 +52,6 @@ namespace ST.Core.Logging
         public static void LogWarning(string message)
         {
             Debugger.LogWarning(message);
-
-            if (s_Manager == null)
-                return;
-
-            s_Manager.Log(LogLevel.Warning, message);
         }
 
         /// <summary>
@@ -70,11 +61,6 @@ namespace ST.Core.Logging
         public static void LogError(string message)
         {
             Debugger.LogError(message);
-
-            if (s_Manager == null)
-                return;
-
-            s_Manager.Log(LogLevel.Error, message);
         }
 
         /// <summary>
@@ -84,11 +70,6 @@ namespace ST.Core.Logging
         public static void LogDebug(string message)
         {
             Debugger.LogDebug(message);
-
-            if (s_Manager == null)
-                return;
-
-            s_Manager.Log(LogLevel.Debug, message);
         }
 
         /// <summary>

@@ -19,8 +19,6 @@ namespace ST.Core.Logging
         /// <param name="message">断言说明</param>
         public delegate void OnAssertFailDelegate(string message);
 
-        static bool s_IsInitialized;
-
         /// <summary>是否输出异常日志。</summary>
         public static bool isLogException = true;
 
@@ -46,22 +44,11 @@ namespace ST.Core.Logging
         public static bool writeToConsole { get; set; }
 
         /// <summary>
-        /// 初始化 Debugger，必须在调用 <see cref="SetAllIsLog"/> 之前执行。
-        /// </summary>
-        public static void Initialize()
-        {
-            s_IsInitialized = true;
-        }
-
-        /// <summary>
         /// 将所有级别开关设为同一值。须在 <see cref="Initialize"/> 之后调用才生效。
         /// </summary>
         /// <param name="isLog">true 表示全部打开，false 表示全部关闭</param>
         public static void SetAllIsLog(bool isLog)
         {
-            if (!s_IsInitialized)
-                return;
-
             isLogException = isLog;
             isLogError = isLog;
             isLogInfo = isLog;

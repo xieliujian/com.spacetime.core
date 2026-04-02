@@ -29,13 +29,6 @@ namespace ST.Core.Logging.Examples
             Logger.Log("Info message");
             Logger.LogWarning("Warning message");
             Logger.LogError("Error message");
-
-            // Unity 日志也会被捕获并写入文件
-            Debug.Log("Unity log message");
-            Debug.LogWarning("Unity warning");
-            Debug.LogError("Unity error");
-
-            Debug.Log($"Log file path: {config.GetLogFilePath()}");
         }
 
         /// <summary>
