@@ -2,6 +2,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using System;
+using ST.Core.Logging;
 
 namespace ST.Core
 {
@@ -40,7 +41,7 @@ namespace ST.Core
                     }
                     catch(Exception e)
                     {
-                        Debugger.Debugger.LogError(e.ToString());
+                        Debugger.LogError(e.ToString());
                     }
                 }
             }

@@ -5,7 +5,7 @@ using System.Net;
 using System.Net.Sockets;
 using System.Collections;
 using System.Collections.Generic;
-using ST.Core.Debugger;
+using ST.Core.Logging;
 
 namespace ST.Core.Network
 {
@@ -110,7 +110,7 @@ namespace ST.Core.Network
             catch (Exception e)
             {
                 Close();
-                Debugger.Debugger.LogError(e.Message);
+                Debugger.LogError(e.Message);
             }
         }
 
@@ -127,7 +127,7 @@ namespace ST.Core.Network
             m_NetStream = m_Client.GetStream();
             m_NetStream.BeginRead(m_ByteBuffer, 0, NetworkDefine.s_MaxReadNum, new AsyncCallback(OnRead), null);
 
-            Debugger.Debugger.LogDebug("======连接=" + m_ip + "=" + m_port + "=======");
+            Debugger.LogDebug("======连接=" + m_ip + "=" + m_port + "=======");
         }
 
         /// <summary>
@@ -141,7 +141,7 @@ namespace ST.Core.Network
             }
             else
             {
-                Debugger.Debugger.LogError("client.connected----->>false");
+                Debugger.LogError("client.connected----->>false");
             }
         }
 
@@ -192,8 +192,8 @@ namespace ST.Core.Network
         /// </summary>
         void OnDisconnected(DisType dis, string msg)
         {
-            Debugger.Debugger.LogDebug("OnDisconnected" + msg);
-            Debugger.Debugger.LogDebug("======断开连接========");
+            Debugger.LogDebug("OnDisconnected" + msg);
+            Debugger.LogDebug("======断开连接========");
             Close();   //关掉客户端链接
         }
 
@@ -209,7 +209,7 @@ namespace ST.Core.Network
                 returnStr += m_ByteBuffer[i].ToString("X2");
             }
 
-            Debugger.Debugger.LogError(returnStr);
+            Debugger.LogError(returnStr);
         }
 
         /// <summary>
@@ -223,7 +223,7 @@ namespace ST.Core.Network
             }
             catch (Exception ex)
             {
-                Debugger.Debugger.LogError("OnWrite--->>>" + ex.Message);
+                Debugger.LogError("OnWrite--->>>" + ex.Message);
             }
         }
 
@@ -297,7 +297,7 @@ namespace ST.Core.Network
 
                 m_Client = null;
 
-                Debugger.Debugger.LogDebug("======关闭连接========");
+                Debugger.LogDebug("======关闭连接========");
             }
         }
 

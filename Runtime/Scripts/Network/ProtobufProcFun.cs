@@ -5,6 +5,7 @@ using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
 using pb = Google.Protobuf;
+using ST.Core.Logging;
 
 namespace ST.Core.Network
 {
@@ -54,8 +55,8 @@ namespace ST.Core.Network
             }
             catch (Exception e)
             {
-                Debugger.Debugger.LogError("process protobuf msg error!" + typeof(T).FullName);
-                Debugger.Debugger.LogError(e.ToString());
+                Debugger.LogError("process protobuf msg error!" + typeof(T).FullName);
+                Debugger.LogError(e.ToString());
             }
         }
     }

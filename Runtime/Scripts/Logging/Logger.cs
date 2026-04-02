@@ -41,6 +41,8 @@ namespace ST.Core.Logging
         /// <param name="message">日志消息</param>
         public static void Log(string message)
         {
+            Debugger.LogInfo(message);
+
             if (s_Manager == null)
                 return;
 
@@ -53,6 +55,8 @@ namespace ST.Core.Logging
         /// <param name="message">日志消息</param>
         public static void LogWarning(string message)
         {
+            Debugger.LogWarning(message);
+
             if (s_Manager == null)
                 return;
 
@@ -65,6 +69,8 @@ namespace ST.Core.Logging
         /// <param name="message">日志消息</param>
         public static void LogError(string message)
         {
+            Debugger.LogError(message);
+
             if (s_Manager == null)
                 return;
 
@@ -77,6 +83,8 @@ namespace ST.Core.Logging
         /// <param name="message">日志消息</param>
         public static void LogDebug(string message)
         {
+            Debugger.LogDebug(message);
+
             if (s_Manager == null)
                 return;
 

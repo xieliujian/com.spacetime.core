@@ -3,10 +3,11 @@ using System.Diagnostics;
 using UnityEngine;
 
 
-namespace ST.Core.Debugger
+namespace ST.Core.Logging
 {
     /// <summary>
     /// 调试日志门面：在 Unity 控制台与可选标准输出之间切换，并支持致命与断言失败回调。
+    /// 使用前须调用 <see cref="Initialize"/> 完成初始化。
     /// </summary>
     public class Debugger
     {
@@ -17,6 +18,8 @@ namespace ST.Core.Debugger
         /// <summary>DEBUG 断言失败时由业务注册的处理。</summary>
         /// <param name="message">断言说明</param>
         public delegate void OnAssertFailDelegate(string message);
+
+        static bool s_IsInitialized;
 
         /// <summary>是否输出异常日志。</summary>
         public static bool isLogException = true;
@@ -43,11 +46,22 @@ namespace ST.Core.Debugger
         public static bool writeToConsole { get; set; }
 
         /// <summary>
-        /// 将所有级别开关设为同一值。
+        /// 初始化 Debugger，必须在调用 <see cref="SetAllIsLog"/> 之前执行。
+        /// </summary>
+        public static void Initialize()
+        {
+            s_IsInitialized = true;
+        }
+
+        /// <summary>
+        /// 将所有级别开关设为同一值。须在 <see cref="Initialize"/> 之后调用才生效。
         /// </summary>
         /// <param name="isLog">true 表示全部打开，false 表示全部关闭</param>
         public static void SetAllIsLog(bool isLog)
         {
+            if (!s_IsInitialized)
+                return;
+
             isLogException = isLog;
             isLogError = isLog;
             isLogInfo = isLog;
