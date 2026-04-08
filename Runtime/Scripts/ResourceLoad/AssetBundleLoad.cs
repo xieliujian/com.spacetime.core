@@ -9,11 +9,16 @@ namespace ST.Core
     /// </summary>
     public class AssetBundleLoad
     {
+        /// <summary>按 Bundle 名称索引的全局字典（key 与清单中名称一致）。</summary>
         Dictionary<string, Bundle> m_BundleDict = new Dictionary<string, Bundle>(CommonDefine.s_ListConst_1024);
+        /// <summary>从主清单包中读取的 <see cref="AssetBundleManifest"/>，用于获取依赖关系。</summary>
         AssetBundleManifest m_Manifest = null;
+        /// <summary>路径拼接工具，解析 StreamingAssets 根目录与 Bundle 完整路径。</summary>
         FilePathHelper m_FilePathHelper;
+        /// <summary>资源配置，提供 <see cref="IResourceConfig.bundleSuffix"/> 等参数。</summary>
         IResourceConfig m_Config;
 
+        /// <summary>创建加载中枢，注入路径与配置依赖。</summary>
         /// <param name="filePathHelper">清单与 Bundle 文件路径解析。</param>
         /// <param name="config">后缀名、应用名等配置。</param>
         public AssetBundleLoad(FilePathHelper filePathHelper, IResourceConfig config)
@@ -36,6 +41,7 @@ namespace ST.Core
             return bundle;
         }
 
+        /// <summary>同步加载包内全部资产。</summary>
         /// <param name="respath">逻辑资源路径（不含 <see cref="IResourceConfig.bundleSuffix"/>，内部会拼接）。</param>
         public object[] LoadAllSync(string respath)
         {
@@ -45,7 +51,10 @@ namespace ST.Core
             return bundle.LoadAllSync();
         }
 
+        /// <summary>同步按名称与类型加载包内单个资产。</summary>
+        /// <param name="respath">逻辑路径（不含后缀）。</param>
         /// <param name="filename">包内资源名。</param>
+        /// <param name="type">目标类型。</param>
         public object LoadSync(string respath, string filename, Type type)
         {
             var fullpath = respath + m_Config.bundleSuffix;
@@ -72,6 +81,7 @@ namespace ST.Core
             bundle.LoadSceneAsync(filename, progress, complete);
         }
 
+        /// <summary>加载主清单包，遍历所有 Bundle 名称并构建 <see cref="m_BundleDict"/>，完成后卸载清单包。</summary>
         void InitAllBundle()
         {
             string manifestPath = m_FilePathHelper.GetFilePath() + m_Config.appName + "/" + m_Config.appName;

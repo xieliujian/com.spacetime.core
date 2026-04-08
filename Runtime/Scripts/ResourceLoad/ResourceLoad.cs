@@ -13,7 +13,9 @@ namespace ST.Core
         /// <summary>为 <c>true</c> 时编辑器也使用 AssetBundle 路径加载（用于本地验证包体）。</summary>
         public static bool useAssetBundle = false;
 
+        /// <summary>编辑器模式（非 AssetBundle）加载器。</summary>
         EditorResourceLoad m_EditorResLoad;
+        /// <summary>AssetBundle 模式加载器。</summary>
         AssetBundleLoad m_AssetBundleLoad;
 
         /// <summary>无额外关闭逻辑。</summary>

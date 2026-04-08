@@ -9,14 +9,30 @@ namespace ST.Core
     /// </summary>
     public class Bundle
     {
-        enum State { Unloaded, Loading, Loaded }
+        /// <summary>Bundle 文件加载阶段。</summary>
+        enum State
+        {
+            /// <summary>尚未加载。</summary>
+            Unloaded,
+            /// <summary>异步加载中。</summary>
+            Loading,
+            /// <summary>已加载完毕（同步或异步皆可到达此状态）。</summary>
+            Loaded
+        }
 
+        /// <summary>当前加载阶段。</summary>
         State m_State = State.Unloaded;
+        /// <summary>该包在清单中的相对路径（同时作为 <see cref="AssetBundleLoad"/> 字典 key）。</summary>
         string m_Path;
+        /// <summary>所属加载中枢，用于按名称查找依赖包。</summary>
         AssetBundleLoad m_Load;
+        /// <summary>磁盘完整路径拼接工具。</summary>
         FilePathHelper m_FilePathHelper;
+        /// <summary>此包的直接依赖包列表。</summary>
         List<Bundle> m_DependList = new List<Bundle>(CommonDefine.s_ListConst_8);
+        /// <summary>已加载完成的原生 Unity AssetBundle 对象。</summary>
         AssetBundle m_AssetBundle;
+        /// <summary>本包异步加载完成前挂起的资产/场景请求，完成后统一提交给任务管理器。</summary>
         List<AsyncTask> m_PendingLoadList = new List<AsyncTask>(CommonDefine.s_ListConst_8);
 
         /// <summary>所属 <see cref="AssetBundleLoad"/>，用于按名查找依赖包。</summary>
@@ -161,6 +177,10 @@ namespace ST.Core
             return m_AssetBundle.LoadAssetAsync(resname, type);
         }
 
+        /// <summary>
+        /// <see cref="AsyncBundleRequest"/> 完成后的回调：更新状态、缓存 <see cref="m_AssetBundle"/>，
+        /// 并将 <see cref="m_PendingLoadList"/> 中所有挂起任务提交给 <see cref="BaseAsyncTaskManager"/>。
+        /// </summary>
         void OnAsyncLoaded(object obj)
         {
             if (obj == null) return;

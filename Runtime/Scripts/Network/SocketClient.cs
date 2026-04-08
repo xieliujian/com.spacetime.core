@@ -26,39 +26,25 @@ namespace ST.Core.Network
             Disconnect,
         }
 
-        /// <summary>
-        /// tcp client
-        /// </summary>
+        /// <summary>底层 TCP 连接句柄。</summary>
         TcpClient m_Client = null;
 
-        /// <summary>
-        /// network stream
-        /// </summary>
+        /// <summary>TCP 连接上的网络数据流，用于异步读写字节。</summary>
         NetworkStream m_NetStream = null;
 
-        /// <summary>
-        /// memory stream
-        /// </summary>
+        /// <summary>粘包拆包用的内存缓冲，持续追加接收到的碎片数据。</summary>
         MemoryStream m_MemStream = null;
 
-        /// <summary>
-        /// reader
-        /// </summary>
+        /// <summary>从 <see cref="m_MemStream"/> 读取完整消息帧的二进制读取器。</summary>
         BinaryReader m_Reader = null;
 
-        /// <summary>
-        /// 网络接收的数据
-        /// </summary>
+        /// <summary>单次异步读取的原始字节接收缓冲（大小由 <see cref="NetworkDefine.s_MaxReadNum"/> 决定）。</summary>
         byte[] m_ByteBuffer = new byte[NetworkDefine.s_MaxReadNum];
 
-        /// <summary>
-        /// ip
-        /// </summary>
+        /// <summary>当前连接的服务器 IP 地址。</summary>
         string m_ip;
 
-        /// <summary>
-        /// port
-        /// </summary>
+        /// <summary>当前连接的服务器端口。</summary>
         int m_port;
 
         /// <summary>创建未连接的客户端实例。</summary>
@@ -66,18 +52,14 @@ namespace ST.Core.Network
         {
         }
 
-        /// <summary>
-        /// 注册代理
-        /// </summary>
+        /// <summary>初始化内存流与 <see cref="BinaryReader"/>，在 <see cref="NetManager.DoInit"/> 中调用。</summary>
         public void OnRegister()
         {
             m_MemStream = new MemoryStream();
             m_Reader = new BinaryReader(m_MemStream);
         }
 
-        /// <summary>
-        /// 移除代理
-        /// </summary>
+        /// <summary>关闭 TCP 连接并释放内存流与读取器，在 <see cref="NetManager.DoClose"/> 中调用。</summary>
         public void OnRemove()
         {
             Close();
@@ -90,9 +72,7 @@ namespace ST.Core.Network
 
         }
 
-        /// <summary>
-        /// 连接服务器
-        /// </summary>
+        /// <summary>创建 <see cref="TcpClient"/> 并异步 <c>BeginConnect</c>，连接结果回调 <see cref="OnConnect"/>。</summary>
         void ConnectServer(string host, int port)
         {
             m_ip = host;
@@ -115,9 +95,7 @@ namespace ST.Core.Network
             }
         }
 
-        /// <summary>
-        /// 连接上服务器
-        /// </summary>
+        /// <summary>TCP 连接成功回调：触发连接事件、获取网络流并启动首次异步读取。</summary>
         void OnConnect(IAsyncResult asr)
         {
             if (MainThreadTask.S != null)
@@ -131,9 +109,7 @@ namespace ST.Core.Network
             Logger.LogDebug("======连接=" + m_ip + "=" + m_port + "=======");
         }
 
-        /// <summary>
-        /// 写数据
-        /// </summary>
+        /// <summary>向网络流异步写入消息字节，连接断开时记录错误。</summary>
         void WriteMessage(byte[] message)
         {
             if (IsConnected())
@@ -146,9 +122,7 @@ namespace ST.Core.Network
             }
         }
 
-        /// <summary>
-        /// 读取消息
-        /// </summary>
+        /// <summary>异步读取回调：将收到的字节交给 <see cref="OnReceive"/> 拆包，然后继续投递下一次读取。</summary>
         void OnRead(IAsyncResult asr)
         {
             int bytesRead = 0;
@@ -188,9 +162,7 @@ namespace ST.Core.Network
             }
         }
 
-        /// <summary>
-        /// 丢失链接
-        /// </summary>
+        /// <summary>断线处理：记录日志并关闭客户端。</summary>
         void OnDisconnected(DisType dis, string msg)
         {
             Logger.LogDebug("OnDisconnected" + msg);
@@ -198,10 +170,7 @@ namespace ST.Core.Network
             Close();   //关掉客户端链接
         }
 
-        /// <summary>
-        /// 打印字节
-        /// </summary>
-        /// <param name="bytes"></param>
+        /// <summary>将接收缓冲中的全部字节以十六进制格式打印到日志（调试用）。</summary>
         void PrintBytes()
         {
             string returnStr = string.Empty;
@@ -213,9 +182,7 @@ namespace ST.Core.Network
             Logger.LogError(returnStr);
         }
 
-        /// <summary>
-        /// 向链接写入数据流
-        /// </summary>
+        /// <summary>异步写完成回调：调用 <c>EndWrite</c> 完成写入并捕获异常。</summary>
         void OnWrite(IAsyncResult r)
         {
             try
@@ -228,9 +195,7 @@ namespace ST.Core.Network
             }
         }
 
-        /// <summary>
-        /// 接收到消息
-        /// </summary>
+        /// <summary>将新收到的字节追加到 <see cref="m_MemStream"/> 并循环解析完整消息帧（2 字节长度 + 8 字节 msgid + 负载）。</summary>
         void OnReceive(byte[] bytes, int length)
         {
             m_MemStream.Seek(0, SeekOrigin.End);
@@ -261,34 +226,25 @@ namespace ST.Core.Network
             m_MemStream.Write(leftover, 0, leftover.Length);
         }
 
-        /// <summary>
-        /// 剩余的字节
-        /// </summary>
+        /// <summary>返回 <see cref="m_MemStream"/> 当前位置到末尾的未读字节数。</summary>
         private long RemainingBytes()
         {
             return m_MemStream.Length - m_MemStream.Position;
         }
 
-        /// <summary>
-        /// 接收到消息
-        /// </summary>
-        /// <param name="ms"></param>
+        /// <summary>将解包后的完整消息投递到 <see cref="NetManager.AddEvent"/> 主线程队列。</summary>
         void OnReceivedMessage(ulong msgid, byte[] bytearray)
         {
             NetManager.S.AddEvent(msgid, bytearray);
         }
 
-        /// <summary>
-        /// 会话发送
-        /// </summary>
+        /// <summary>将已序列化的字节帧提交给 <see cref="WriteMessage"/> 异步发送。</summary>
         void SessionSend(byte[] bytes)
         {
             WriteMessage(bytes);
         }
 
-        /// <summary>
-        /// 关闭链接
-        /// </summary>
+        /// <summary>关闭并置空 <see cref="TcpClient"/>；已断开时无操作。</summary>
         public void Close()
         {
             if (m_Client != null)
@@ -302,17 +258,16 @@ namespace ST.Core.Network
             }
         }
 
-        /// <summary>
-        /// 发送连接请求
-        /// </summary>
+        /// <summary>发起连接请求（代理至 <see cref="ConnectServer"/>）。</summary>
+        /// <param name="address">服务器 IP 或域名。</param>
+        /// <param name="port">端口号。</param>
         public void SendConnect(string address, int port)
         {
             ConnectServer(address, port);
         }
 
-        /// <summary>
-        /// 发送消息
-        /// </summary>
+        /// <summary>将 <see cref="ByteBuffer"/> 内容序列化为字节数组后异步发送，发送后关闭缓冲。</summary>
+        /// <param name="buffer">已写好包体的缓冲实例。</param>
         public void SendMessage(ByteBuffer buffer)
         {
             if (!IsConnected())
@@ -322,10 +277,7 @@ namespace ST.Core.Network
             buffer.Close();
         }
 
-        /// <summary>
-        /// 是否连接
-        /// </summary>
-        /// <returns></returns>
+        /// <summary>是否处于已连接状态。</summary>
         public bool IsConnected()
         {
             return (m_Client != null && m_Client.Connected);

@@ -18,13 +18,16 @@ namespace ST.Core
 #endif
         }
 
+        /// <inheritdoc />
         protected override void OnEnd()
         {
             m_CompleteEvent?.Invoke(m_Asset);
         }
 
+        /// <inheritdoc />
         protected override void OnStart() { }
 
+        /// <inheritdoc />
         protected override ETaskState OnUpdate()
         {
             return ETaskState.Completed;

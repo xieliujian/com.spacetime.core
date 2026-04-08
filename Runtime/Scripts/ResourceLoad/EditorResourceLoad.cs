@@ -8,15 +8,20 @@ namespace ST.Core
     /// </summary>
     public class EditorResourceLoad
     {
+        /// <summary>资源配置，提供编辑器路径前缀等参数。</summary>
         readonly IResourceConfig m_Config;
 
+        /// <summary>创建编辑器加载器并注入配置。</summary>
         /// <param name="config">资源配置。</param>
         public EditorResourceLoad(IResourceConfig config)
         {
             m_Config = config;
         }
 
+        /// <summary>同步加载编辑器内资产（非 Editor 平台下始终返回 <c>null</c>）。</summary>
         /// <param name="realpath">相对 <see cref="IResourceConfig.editorPathPrefix"/> 的逻辑路径。</param>
+        /// <param name="suffix">资源扩展名。</param>
+        /// <param name="type">目标类型。</param>
         public object LoadSync(string realpath, string suffix, Type type)
         {
 #if UNITY_EDITOR

@@ -7,6 +7,7 @@ namespace ST.Core
     /// </summary>
     public class FilePathHelper
     {
+        /// <summary>资源配置，提供 <see cref="IResourceConfig.appName"/> 等参数。</summary>
         readonly IResourceConfig m_Config;
 
         /// <summary>使用资源配置构造路径帮助类。</summary>
@@ -16,7 +17,11 @@ namespace ST.Core
             m_Config = config;
         }
 
-        /// <summary>获取 Bundle 根目录（StreamingAssets 下）。</summary>
+        /// <summary>
+        /// 获取 Bundle 根目录：Editor 和非 Windows 运行时返回 <c>StreamingAssets/</c>；
+        /// Windows 独立包返回 <c>dataPath/StreamingAssets/</c>。
+        /// </summary>
+        /// <returns>以 <c>/</c> 结尾的根目录路径。</returns>
         public string GetFilePath()
         {
 #if UNITY_EDITOR
@@ -28,7 +33,11 @@ namespace ST.Core
 #endif
         }
 
-        /// <summary>获取指定相对路径的 Bundle 完整路径。</summary>
+        /// <summary>
+        /// 拼接 Bundle 完整磁盘路径：<c>GetFilePath() + appName + "/" + respath</c>。
+        /// </summary>
+        /// <param name="respath">Bundle 在应用子目录内的相对路径（来自清单 key）。</param>
+        /// <returns>可直接传入 <c>AssetBundle.LoadFromFile</c> 的完整路径。</returns>
         public string GetBundleFullPath(string respath)
         {
             return GetFilePath() + m_Config.appName + "/" + respath;

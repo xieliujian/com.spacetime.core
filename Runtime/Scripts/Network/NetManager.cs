@@ -17,6 +17,7 @@ namespace ST.Core.Network
 
         /// <summary>底层 TCP 客户端实现。</summary>
         SocketClient m_SocketClient = new SocketClient();
+        /// <summary>TCP 连接成功后触发的事件，由 <see cref="SocketClient"/> 回调到主线程。</summary>
         GameEvent m_OnConnectEvent = new GameEvent();
 
         /// <summary>
@@ -30,9 +31,7 @@ namespace ST.Core.Network
             get { return s_Instance; }
         }
 
-        /// <summary>
-        /// 连接事件
-        /// </summary>
+        /// <summary>TCP 建立成功后触发的事件（主线程投递，由 <see cref="MainThreadTask"/> 派发）。</summary>
         public GameEvent onConnectEvent
         {
             get { return m_OnConnectEvent; }
@@ -55,9 +54,7 @@ namespace ST.Core.Network
             s_Instance = this;
         }
 
-        /// <summary>
-        /// 初始化
-        /// </summary>
+        /// <summary>初始化网络模块：向 <see cref="SocketClient"/> 注册读写流。</summary>
         public override void DoInit()
         {
             if (m_SocketClient == null)
@@ -66,9 +63,7 @@ namespace ST.Core.Network
             m_SocketClient.OnRegister();
         }
 
-        /// <summary>
-        /// 刷新
-        /// </summary>
+        /// <summary>每帧驱动 <see cref="UpdateEventQueue"/>，将消息队列分发给 <see cref="MsgDispatcher"/> 与 <see cref="onMsgEvent"/>。</summary>
         public override void DoUpdate()
         {
             UpdateEventQueue();
@@ -96,27 +91,22 @@ namespace ST.Core.Network
                 m_SocketClient.OnRemove();
         }
 
-        /// <summary>
-        /// 发送链接请求
-        /// </summary>
+        /// <summary>先关闭旧连接再发起新的 TCP 连接请求。</summary>
+        /// <param name="address">服务器 IP 或域名。</param>
+        /// <param name="port">端口号。</param>
         public void SendConnect(string address, int port)
         {
             m_SocketClient.Close();
             m_SocketClient.SendConnect(address, port);
         }
 
-        /// <summary>
-        /// 关闭连接
-        /// </summary>
+        /// <summary>主动关闭底层 TCP 连接。</summary>
         public void CloseSocket()
         {
             m_SocketClient.Close();
         }
 
-        /// <summary>
-        /// 是否连接
-        /// </summary>
-        /// <returns></returns>
+        /// <summary>返回底层 TCP 连接是否处于已连接状态。</summary>
         public bool IsConnected()
         {
             if (m_SocketClient == null)
@@ -125,18 +115,16 @@ namespace ST.Core.Network
             return m_SocketClient.IsConnected();
         }
 
-        /// <summary>
-        /// 发送SOCKET消息
-        /// </summary>
+        /// <summary>将 <see cref="ByteBuffer"/> 内容通过 <see cref="SocketClient"/> 异步发送到服务器。</summary>
+        /// <param name="buffer">已写入包体的缓冲实例，发送后自动关闭。</param>
         public void SendMessage(ByteBuffer buffer)
         {
             m_SocketClient.SendMessage(buffer);
         }
 
-        /// <summary>
-        /// 增加事件
-        /// </summary>
-        /// <param name="bytearray"></param>
+        /// <summary>将网络线程收到的消息以线程安全方式入队，等待主线程在 <see cref="DoUpdate"/> 中消费。</summary>
+        /// <param name="msgid">消息 ID。</param>
+        /// <param name="bytearray">消息体字节。</param>
         public void AddEvent(ulong msgid, byte[] bytearray)
         {
             lock (m_EventQueue)
@@ -145,9 +133,7 @@ namespace ST.Core.Network
             }
         }
 
-        /// <summary>
-        /// 刷新事件队列
-        /// </summary>
+        /// <summary>逐条出队并依次调用 <see cref="MsgDispatcher.Dispatcher"/> 与 <see cref="onMsgEvent"/>。</summary>
         void UpdateEventQueue()
         {
             if (m_EventQueue.Count <= 0)
