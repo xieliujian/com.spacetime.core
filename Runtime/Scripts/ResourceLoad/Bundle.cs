@@ -4,6 +4,9 @@ using UnityEngine;
 
 namespace ST.Core
 {
+    /// <summary>
+    /// 单个 AssetBundle 的逻辑封装：维护依赖列表、同步/异步加载、以及依赖未就绪时挂起的子任务队列。
+    /// </summary>
     public class Bundle
     {
         enum State { Unloaded, Loading, Loaded }
@@ -16,22 +19,26 @@ namespace ST.Core
         AssetBundle m_AssetBundle;
         List<AsyncTask> m_PendingLoadList = new List<AsyncTask>(CommonDefine.s_ListConst_8);
 
+        /// <summary>所属 <see cref="AssetBundleLoad"/>，用于按名查找依赖包。</summary>
         public AssetBundleLoad load
         {
             get { return m_Load; }
             set { m_Load = value; }
         }
 
+        /// <summary>已加载的 Unity <see cref="AssetBundle"/>。</summary>
         public AssetBundle assetBundle
         {
             get { return m_AssetBundle; }
         }
 
+        /// <summary>是否已完成同步或异步加载并持有 <see cref="assetBundle"/>。</summary>
         public bool isLoaded
         {
             get { return m_State == State.Loaded; }
         }
 
+        /// <summary>所有依赖包是否均已 <see cref="isLoaded"/>。</summary>
         public bool dependIsLoaded
         {
             get
@@ -45,12 +52,15 @@ namespace ST.Core
             }
         }
 
+        /// <param name="path">在清单中的 Bundle 相对路径。</param>
+        /// <param name="filePathHelper">磁盘完整路径解析。</param>
         public Bundle(string path, FilePathHelper filePathHelper)
         {
             m_Path = path;
             m_FilePathHelper = filePathHelper;
         }
 
+        /// <summary>根据清单解析依赖并缓存依赖包引用（通过 <see cref="load"/> 按名查表）。</summary>
         public void InitDependencies(AssetBundleManifest manifest)
         {
             if (m_Load == null || manifest == null)
@@ -68,6 +78,7 @@ namespace ST.Core
             }
         }
 
+        /// <summary>异步加载本包及依赖（先递归依赖 <see cref="LoadBundleAsync"/>，再提交 <see cref="AsyncBundleRequest"/>）。</summary>
         public void LoadBundleAsync()
         {
             if (m_State == State.Unloaded)
@@ -85,6 +96,7 @@ namespace ST.Core
             }
         }
 
+        /// <summary>同步加载本包及依赖链。</summary>
         public void LoadBundleSync()
         {
             if (m_State == State.Unloaded)
@@ -102,6 +114,7 @@ namespace ST.Core
             }
         }
 
+        /// <summary>同步加载包后读取其中全部资源。</summary>
         public object[] LoadAllSync()
         {
             LoadBundleSync();
@@ -109,6 +122,7 @@ namespace ST.Core
             return m_AssetBundle.LoadAllAssets();
         }
 
+        /// <summary>同步按名与类型加载单个资源。</summary>
         public object LoadSync(string resname, Type type)
         {
             LoadBundleSync();
@@ -116,6 +130,7 @@ namespace ST.Core
             return m_AssetBundle.LoadAsset(resname, type);
         }
 
+        /// <summary>异步加载资源；若本包未就绪则将 <see cref="AsyncAssetRequest"/> 加入挂起队列。</summary>
         public void LoadAsync(string resname, Type type, ResourceLoadComplete callback)
         {
             LoadBundleAsync();
@@ -127,6 +142,7 @@ namespace ST.Core
                 m_PendingLoadList.Add(asynctask);
         }
 
+        /// <summary>异步加载场景（逻辑同 <see cref="LoadAsync"/> 的挂起机制）。</summary>
         public void LoadSceneAsync(string resname, ResourceLoadProgress progress = null, ResourceLoadComplete complete = null)
         {
             LoadBundleAsync();
@@ -138,6 +154,7 @@ namespace ST.Core
                 m_PendingLoadList.Add(asynctask);
         }
 
+        /// <summary>在已加载的 <see cref="assetBundle"/> 上发起 Unity 异步资源请求。</summary>
         public AssetBundleRequest LoadAssetAsyncFromBundle(string resname, Type type)
         {
             if (m_AssetBundle == null) return null;

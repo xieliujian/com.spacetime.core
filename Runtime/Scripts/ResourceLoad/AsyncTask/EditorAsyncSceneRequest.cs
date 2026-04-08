@@ -6,11 +6,13 @@ using UnityEditor.SceneManagement;
 
 namespace ST.Core
 {
+    /// <summary>编辑器 Play 模式下通过 <see cref="EditorSceneManager.LoadSceneAsyncInPlayMode"/> 异步加载场景。</summary>
     public class EditorAsyncSceneRequest : AsyncTask
     {
         AsyncOperation m_Operation;
         string m_ScenePath;
 
+        /// <inheritdoc />
         public override float progress
         {
             get
@@ -21,6 +23,7 @@ namespace ST.Core
             }
         }
 
+        /// <param name="scenepath">场景资源路径（Assets/...）。</param>
         public EditorAsyncSceneRequest(string scenepath)
         {
             m_ScenePath = scenepath;

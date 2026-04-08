@@ -6,6 +6,9 @@ using UnityEditor;
 
 namespace ST.Core
 {
+    /// <summary>
+    /// 应用数据根路径、StreamingAssets 子目录、以及编辑器下构建目标与打包输出路径等跨平台工具。
+    /// </summary>
     public static class AppPlatform
     {
         /// <summary>数据根目录（Editor 下为工程目录，运行时因平台而异）。</summary>
@@ -23,13 +26,15 @@ namespace ST.Core
             }
         }
 
-        /// <summary>StreamingAssets 下的应用子目录路径。</summary>
+        /// <summary>StreamingAssets 下以应用名为子目录的完整路径（小写）。</summary>
+        /// <param name="appName">应用/游戏名称，与 <see cref="IResourceConfig.appName"/> 一致。</param>
         public static string GetStreamingAssetsPath(string appName)
         {
             return Application.streamingAssetsPath + "/" + appName.ToLower() + "/";
         }
 
 #if UNITY_EDITOR
+        /// <summary>根据当前编辑器宏推断活动 <see cref="BuildTarget"/>（无匹配时为 <see cref="BuildTarget.NoTarget"/>）。</summary>
         public static BuildTarget GetCurBuildTarget()
         {
             var target = BuildTarget.NoTarget;
@@ -45,6 +50,7 @@ namespace ST.Core
             return target;
         }
 
+        /// <summary>根据当前编辑器宏推断 <see cref="BuildTargetGroup"/>。</summary>
         public static BuildTargetGroup GetCurBuildTargetGroup()
         {
             var targetgroup = BuildTargetGroup.Standalone;
@@ -60,6 +66,9 @@ namespace ST.Core
             return targetgroup;
         }
 
+        /// <summary>编辑器下 AssetBundle 打包输出目录（工程外 <c>assetBundle/&lt;平台&gt;/&lt;应用名&gt;/</c>）。</summary>
+        /// <param name="target">目标平台。</param>
+        /// <param name="appName">应用名（小写子目录）。</param>
         public static string GetPackageResPath(BuildTarget target, string appName)
         {
             string platformpath = "";

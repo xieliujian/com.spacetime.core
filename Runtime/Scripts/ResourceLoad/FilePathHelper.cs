@@ -9,6 +9,8 @@ namespace ST.Core
     {
         readonly IResourceConfig m_Config;
 
+        /// <summary>使用资源配置构造路径帮助类。</summary>
+        /// <param name="config">非空资源配置，用于解析应用子目录名等。</param>
         public FilePathHelper(IResourceConfig config)
         {
             m_Config = config;

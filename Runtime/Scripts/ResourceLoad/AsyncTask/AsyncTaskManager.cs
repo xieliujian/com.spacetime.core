@@ -2,20 +2,27 @@ using System.Collections.Generic;
 
 namespace ST.Core
 {
+    /// <summary>
+    /// 默认的 <see cref="BaseAsyncTaskManager"/> 实现：在 <see cref="DoUpdate"/> 中遍历任务、调用 <see cref="AsyncTask.Update"/>，并移除已结束任务。
+    /// </summary>
     public class AsyncTaskManager : BaseAsyncTaskManager
     {
         List<AsyncTask> m_TaskList = new List<AsyncTask>(CommonDefine.s_ListConst_100);
         List<AsyncTask> m_TempTaskList = new List<AsyncTask>(CommonDefine.s_ListConst_16);
 
+        /// <inheritdoc />
         public override void AddTask(AsyncTask asynctask)
         {
             m_TaskList.Add(asynctask);
         }
 
+        /// <summary>无关闭清理。</summary>
         public override void DoClose() { }
 
+        /// <summary>无初始化。</summary>
         public override void DoInit() { }
 
+        /// <summary>更新所有任务并移除 <see cref="AsyncTask.isEnd"/> 为真的项。</summary>
         public override void DoUpdate()
         {
             m_TempTaskList.Clear();

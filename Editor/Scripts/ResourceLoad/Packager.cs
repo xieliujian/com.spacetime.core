@@ -7,12 +7,17 @@ using ST.Core;
 
 namespace ST.Core.Editor
 {
+    /// <summary>
+    /// AssetBundle 与 Lua 字节码打包编辑器工具：菜单位于 <c>ST/</c>，依赖业务侧通过 <see cref="RegisterConfig"/> 注入 <see cref="IResourceConfig"/>。
+    /// </summary>
     public class Packager
     {
+        /// <summary>预留的 Android 输出平台枚举。</summary>
         public enum EAndroidBuildPlatform { NoPlatform }
 
         static IResourceConfig s_Config;
 
+        /// <summary>由业务在 <c>InitializeOnLoad</c> 等时机注入，供菜单与路径替换使用。</summary>
         public static void RegisterConfig(IResourceConfig config)
         {
             s_Config = config;
@@ -37,6 +42,7 @@ namespace ST.Core.Editor
 
         static List<AssetBundleBuild> m_BundleBuildList = new List<AssetBundleBuild>();
 
+        /// <summary>切换 iOS 目标并构建资源到 StreamingAssets 应用子目录。</summary>
         [MenuItem("ST/Build iPhone Resource", false, 100)]
         public static void BuildiPhoneResource()
         {
@@ -46,6 +52,7 @@ namespace ST.Core.Editor
             BuildAssetResource(BuildTarget.iOS, AppPlatform.GetStreamingAssetsPath(s_Config.appName));
         }
 
+        /// <summary>切换 Android 目标并构建资源到 StreamingAssets 应用子目录。</summary>
         [MenuItem("ST/Build Android Resource", false, 101)]
         public static void BuildAndroidResource()
         {
@@ -53,6 +60,7 @@ namespace ST.Core.Editor
             BuildAssetResource(BuildTarget.Android, AppPlatform.GetStreamingAssetsPath(s_Config.appName));
         }
 
+        /// <summary>切换 Standalone 目标并构建资源到 StreamingAssets 应用子目录。</summary>
         [MenuItem("ST/Build Windows Resource", false, 102)]
         public static void BuildWindowsResource()
         {
@@ -60,6 +68,7 @@ namespace ST.Core.Editor
             BuildAssetResource(BuildTarget.StandaloneWindows, AppPlatform.GetStreamingAssetsPath(s_Config.appName));
         }
 
+        /// <summary>依次为 Win/Android/iOS 输出到工程外 <c>assetBundle</c> 目录，并恢复原先活动构建目标。</summary>
         [MenuItem("ST/Package All Resource", false, 103)]
         public static void PackageAllResource()
         {
@@ -72,6 +81,7 @@ namespace ST.Core.Editor
             EditorUserBuildSettings.SwitchActiveBuildTarget(curtargetgroup, curtarget);
         }
 
+        /// <summary>清空输出目录、生成 Lua 资产、收集 <see cref="AssetBundleBuild"/> 并调用 <see cref="BuildPipeline.BuildAssetBundles"/>。</summary>
         static void BuildAssetResource(BuildTarget target, string resPath)
         {
             m_BundleBuildList.Clear();
@@ -91,6 +101,7 @@ namespace ST.Core.Editor
             AssetDatabase.Refresh();
         }
 
+        /// <summary>追加一条打包映射到内部列表。</summary>
         static void AddAssetBundleBuild(string assetBundleName, string[] assetNames, string assetBundleVariant = "unity3d")
         {
             AssetBundleBuild build = new AssetBundleBuild();
@@ -100,6 +111,7 @@ namespace ST.Core.Editor
             m_BundleBuildList.Add(build);
         }
 
+        /// <summary>扫描字体子目录中的 <c>.ttf</c> 并登记为独立 Bundle。</summary>
         static void PackageFont(string rootpath)
         {
             foreach (var subdir in FontPackageDir)
@@ -116,6 +128,7 @@ namespace ST.Core.Editor
             AssetDatabase.Refresh();
         }
 
+        /// <summary>扫描音乐 <c>.mp3</c> 与音效 <c>.ogg</c> 并登记 Bundle。</summary>
         static void PackageAudio(string rootpath)
         {
             foreach (var subdir in AudioMusicPackageDir)
@@ -143,6 +156,7 @@ namespace ST.Core.Editor
             AssetDatabase.Refresh();
         }
 
+        /// <summary>扫描 UI 贴图目录下 <c>.png</c> 并登记 Bundle。</summary>
         static void PackageTexture(string rootpath)
         {
             foreach (var subdir in TexturePackageDir)
@@ -159,6 +173,7 @@ namespace ST.Core.Editor
             AssetDatabase.Refresh();
         }
 
+        /// <summary>扫描 Prefab 目录并登记 Bundle。</summary>
         static void PackagePrefab(string rootpath)
         {
             foreach (var subdir in PrefabPackageDir)
@@ -175,6 +190,7 @@ namespace ST.Core.Editor
             AssetDatabase.Refresh();
         }
 
+        /// <summary>扫描场景目录下 <c>.unity</c> 并登记 Bundle。</summary>
         static void PackageScene(string rootpath)
         {
             foreach (var subdir in SceneDir)
@@ -191,6 +207,7 @@ namespace ST.Core.Editor
             AssetDatabase.Refresh();
         }
 
+        /// <summary>将配置目录下 Lua 相关 <c>.asset</c> / <c>.bytes</c> 登记为 Bundle。</summary>
         static void PackageConfig_Lua(string rootpath)
         {
             DirectoryInfo dirInfo = new DirectoryInfo(rootpath + LuaPath);
@@ -211,6 +228,7 @@ namespace ST.Core.Editor
             AssetDatabase.Refresh();
         }
 
+        /// <summary>按类型依次调用各类 <c>Package*</c> 收集构建列表。</summary>
         static void AddAllAssetBundle(string rootpath)
         {
             PackageFont(rootpath);
@@ -221,6 +239,7 @@ namespace ST.Core.Editor
             PackageConfig_Lua(rootpath);
         }
 
+        /// <summary>调用外部 luac 编译 <c>Assets/Lua</c> 下脚本并写入 <see cref="LuaScriptableObject"/> 资产。</summary>
         public static void GenerateLuaScriptableObject()
         {
             string packagePathPrefix = "/Package/";
@@ -255,7 +274,7 @@ namespace ST.Core.Editor
                 exepath = Environment.CurrentDirectory + LuaCExeMacRelativePath;
 #endif
                 var args = " -o " + destFile + " " + srcFile;
-                if (!EditorUtil.ExecuteProcess(exepath, args))
+                if (!EditorUtils.ExecuteProcess(exepath, args))
                     continue;
 
                 var luacode = System.IO.File.ReadAllBytes(destFile);
@@ -267,6 +286,7 @@ namespace ST.Core.Editor
             AssetDatabase.SaveAssets();
         }
 
+        /// <summary>预留：根据平台枚举返回相对 APK 输出路径。</summary>
         static string GetAndroidBuildPath(EAndroidBuildPlatform platform)
         {
             string prefix = "../../gameapp/";
@@ -275,6 +295,7 @@ namespace ST.Core.Editor
             return "";
         }
 
+        /// <summary>返回 <see cref="EditorBuildSettings.scenes"/> 中已启用的场景路径列表。</summary>
         static List<string> GetAllScenes()
         {
             List<string> scenes = new List<string>();

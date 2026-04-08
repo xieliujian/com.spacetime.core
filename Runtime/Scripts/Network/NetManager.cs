@@ -10,15 +10,12 @@ namespace ST.Core.Network
     /// </summary>
     public class NetManager : IManager
     {
-        /// <summary>
-        /// 事件队列
-        /// </summary>
+        /// <summary>全局 <see cref="NetManager"/> 单例引用。</summary>
         static NetManager s_Instance;
+        /// <summary>主线程待处理的消息队列（消息 ID 与负载字节）。</summary>
         static Queue<KeyValuePair<ulong, byte[]>> m_EventQueue = new Queue<KeyValuePair<ulong, byte[]>>();
 
-        /// <summary>
-        /// Socket
-        /// </summary>
+        /// <summary>底层 TCP 客户端实现。</summary>
         SocketClient m_SocketClient = new SocketClient();
         GameEvent m_OnConnectEvent = new GameEvent();
 
