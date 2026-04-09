@@ -5,7 +5,7 @@ using System.Diagnostics;
 using UnityEngine;
 using UnityEditor;
 
-namespace ST.Core.Editor
+namespace ST.Core
 {
     /// <summary>
     /// 编辑器通用工具集：Assets 路径互转、路径格式化、MD5、外部进程启动与同步执行。

@@ -3,9 +3,7 @@ using System.IO;
 using System;
 using UnityEngine;
 using UnityEditor;
-using ST.Core;
-
-namespace ST.Core.Editor
+namespace ST.Core
 {
     /// <summary>
     /// AssetBundle 与 Lua 字节码打包编辑器工具：菜单位于 <c>ST/</c>，依赖业务侧通过 <see cref="RegisterConfig"/> 注入 <see cref="IResourceConfig"/>。
