@@ -7,7 +7,9 @@ namespace ST.Core
     /// </summary>
     public class AsyncTaskManager : BaseAsyncTaskManager
     {
+        /// <summary>当前所有活跃任务列表。</summary>
         List<AsyncTask> m_TaskList = new List<AsyncTask>(CommonDefine.s_ListConst_100);
+        /// <summary>每帧收集已结束任务，延迟从 <see cref="m_TaskList"/> 中移除以避免遍历中修改集合。</summary>
         List<AsyncTask> m_TempTaskList = new List<AsyncTask>(CommonDefine.s_ListConst_16);
 
         /// <inheritdoc />
