@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using System.IO;
+using System.Text;
 using System;
 using UnityEngine;
 using UnityEditor;
@@ -106,7 +107,8 @@ namespace ST.Core
             BuildAssetResource(BuildTarget.StandaloneWindows, AppPlatform.GetStreamingAssetsPath(s_Config.appName));
         }
 
-        /// <summary>清空输出目录、生成 Lua 资产、收集 <see cref="AssetBundleBuild"/> 并调用 <see cref="BuildPipeline.BuildAssetBundles"/>。</summary>
+        /// <summary>清空输出目录、生成 Lua 资产、收集 <see cref="AssetBundleBuild"/> 并调用 <see cref="BuildPipeline.BuildAssetBundles"/>。
+        /// 打包完成后从返回的 Manifest 生成文本依赖文件，再删除 Manifest AB 文件。</summary>
         static void BuildAssetResource(BuildTarget target, string resPath)
         {
             m_BundleBuildList.Clear();
@@ -122,8 +124,76 @@ namespace ST.Core
             string packagePathPrefix = "/Package/";
             AddAllAssetBundle(Application.dataPath + packagePathPrefix);
 
-            BuildPipeline.BuildAssetBundles(resPath, m_BundleBuildList.ToArray(), BuildAssetBundleOptions.None, target);
+            var manifest = BuildPipeline.BuildAssetBundles(resPath, m_BundleBuildList.ToArray(), BuildAssetBundleOptions.None, target);
+
+            if (manifest != null)
+            {
+                GenerateAssetBundleDB(manifest, resPath);
+                CleanManifestFiles(resPath);
+            }
+
             AssetDatabase.Refresh();
+        }
+
+        /// <summary>
+        /// 从 <see cref="AssetBundleManifest"/> 生成文本依赖文件（<see cref="IResourceConfig.assetBundleDBFile"/>），
+        /// 格式与 <see cref="AssetBundleDBMgr"/> 解析规则一致：
+        /// <code>
+        /// AB名称\t序号ID
+        /// \tDepend:依赖ID1\t依赖ID2\t...
+        /// </code>
+        /// </summary>
+        static void GenerateAssetBundleDB(AssetBundleManifest manifest, string resPath)
+        {
+            var allBundles = manifest.GetAllAssetBundles();
+            if (allBundles == null || allBundles.Length == 0)
+                return;
+
+            var nameToIndex = new Dictionary<string, int>(allBundles.Length);
+            for (int i = 0; i < allBundles.Length; ++i)
+                nameToIndex[allBundles[i]] = i;
+
+            var sb = new StringBuilder();
+            for (int i = 0; i < allBundles.Length; ++i)
+            {
+                string bundleName = allBundles[i];
+                sb.Append(bundleName).Append('\t').Append(i);
+
+                var deps = manifest.GetAllDependencies(bundleName);
+                if (deps != null && deps.Length > 0)
+                {
+                    sb.AppendLine();
+                    sb.Append("\tDepend:");
+                    for (int j = 0; j < deps.Length; ++j)
+                    {
+                        if (j > 0) sb.Append('\t');
+                        sb.Append(nameToIndex[deps[j]]);
+                    }
+                }
+
+                if (i < allBundles.Length - 1)
+                    sb.AppendLine();
+            }
+
+            string dbFilePath = Path.Combine(resPath, s_Config.assetBundleDBFile);
+            File.WriteAllText(dbFilePath, sb.ToString(), Encoding.UTF8);
+            Debug.Log($"[Packager] Generated {s_Config.assetBundleDBFile}: {allBundles.Length} bundles");
+        }
+
+        /// <summary>删除 BuildPipeline 生成的 Manifest AB 文件及所有 .manifest 文本文件。</summary>
+        static void CleanManifestFiles(string resPath)
+        {
+            string dirName = new DirectoryInfo(resPath).Name;
+            string manifestBundlePath = Path.Combine(resPath, dirName);
+            if (File.Exists(manifestBundlePath))
+                File.Delete(manifestBundlePath);
+
+            string manifestBundleManifestPath = manifestBundlePath + ".manifest";
+            if (File.Exists(manifestBundleManifestPath))
+                File.Delete(manifestBundleManifestPath);
+
+            foreach (var file in Directory.GetFiles(resPath, "*.manifest", SearchOption.AllDirectories))
+                File.Delete(file);
         }
 
         /// <summary>追加一条打包映射到内部列表。</summary>
