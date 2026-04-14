@@ -175,6 +175,19 @@ namespace ST.Core
             return m_AssetBundle.LoadAssetAsync(resname, type);
         }
 
+        /// <summary>卸载已加载的 AssetBundle 并重置状态为 <see cref="State.Unloaded"/>，使其可以重新加载。</summary>
+        /// <param name="unloadAllLoadedObjects">是否同时卸载从该包实例化的所有对象。</param>
+        public void Unload(bool unloadAllLoadedObjects)
+        {
+            if (m_AssetBundle != null)
+            {
+                m_AssetBundle.Unload(unloadAllLoadedObjects);
+                m_AssetBundle = null;
+            }
+            m_State = State.Unloaded;
+            m_PendingLoadList.Clear();
+        }
+
         /// <summary>
         /// <see cref="AsyncBundleRequest"/> 完成后的回调：更新状态、缓存 <see cref="m_AssetBundle"/>，
         /// 并将 <see cref="m_PendingLoadList"/> 中所有挂起任务提交给 <see cref="BaseAsyncTaskManager"/>。

@@ -81,6 +81,16 @@ namespace ST.Core
             bundle.LoadSceneAsync(filename, progress, complete);
         }
 
+        /// <summary>卸载所有已加载的 AssetBundle 并清空字典，使其可重新 <see cref="DoInit"/>。</summary>
+        /// <param name="unloadAllLoadedObjects">是否同时卸载从 Bundle 中实例化的所有对象。</param>
+        public void DoClose(bool unloadAllLoadedObjects = false)
+        {
+            foreach (var kv in m_BundleDict)
+                kv.Value.Unload(unloadAllLoadedObjects);
+
+            m_BundleDict.Clear();
+        }
+
         /// <summary>解析 AB 文本数据库，遍历所有 Bundle 名称并构建 <see cref="m_BundleDict"/>。</summary>
         void InitAllBundle()
         {

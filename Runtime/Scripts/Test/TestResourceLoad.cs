@@ -13,23 +13,23 @@ namespace ST.Core.Test
         // ──────────────────────────────────────────
 
         /// <summary>测试用 Prefab 所在目录（相对于 editorPathPrefix）。</summary>
-        public string prefabPath = "prefabs/";
+        public string prefabPath = "prefabs/character/";
         /// <summary>测试用 Prefab 文件名（不含扩展名）。</summary>
-        public string prefabName = "TestPrefab";
+        public string prefabName = "lady";
         /// <summary>测试用 Prefab 扩展名。</summary>
         public string prefabSuffix = ".prefab";
 
         /// <summary>测试用 Texture 所在目录。</summary>
         public string texturePath = "ui/icon/";
         /// <summary>测试用 Texture 文件名（不含扩展名）。</summary>
-        public string textureName = "hero_icon";
+        public string textureName = "common0";
         /// <summary>测试用 Texture 扩展名。</summary>
         public string textureSuffix = ".png";
 
         /// <summary>测试用场景所在目录。</summary>
         public string scenePath = "scene/";
         /// <summary>测试用场景文件名（不含扩展名）。</summary>
-        public string sceneName = "TestScene";
+        public string sceneName = "lobby";
         /// <summary>测试用场景扩展名。</summary>
         public string sceneSuffix = ".unity";
 
@@ -46,6 +46,8 @@ namespace ST.Core.Test
 
         /// <summary>异步任务管理器。</summary>
         AsyncTaskManager m_AsyncTaskMgr;
+        /// <summary>当前 ResourceLoad 实例引用，用于切换模式时重新初始化。</summary>
+        ResourceLoad m_ResLoad;
         /// <summary>异步加载进度（0~1），用于 OnGUI 进度条显示。</summary>
         float m_AsyncProgress = 0f;
         /// <summary>当前操作日志，显示在屏幕状态面板中。</summary>
@@ -61,9 +63,9 @@ namespace ST.Core.Test
             m_AsyncTaskMgr = new AsyncTaskManager();
             m_AsyncTaskMgr.DoInit();
 
-            var resLoad = new ResourceLoad();
-            resLoad.SetConfig(new TestResourceConfig());
-            resLoad.DoInit();
+            m_ResLoad = new ResourceLoad();
+            m_ResLoad.SetConfig(new TestResourceConfig());
+            m_ResLoad.DoInit();
 
             m_Log = "初始化完成，点击按钮开始测试。";
             Logger.Log("[TestResourceLoad] 初始化完成");
@@ -294,10 +296,15 @@ namespace ST.Core.Test
             }
         }
 
-        /// <summary>切换编辑器下是否强制走 AssetBundle 模式并刷新日志。</summary>
+        /// <summary>切换编辑器下是否强制走 AssetBundle 模式，先卸载旧 AB 再重新初始化。</summary>
         void ToggleAssetBundleMode()
         {
+            m_ResLoad.DoClose();
+
             ResourceLoad.useAssetBundle = !ResourceLoad.useAssetBundle;
+
+            m_ResLoad.DoInit();
+
             m_Log = string.Format("useAssetBundle = {0}", ResourceLoad.useAssetBundle);
             Logger.LogInfoF("[TestResourceLoad] 切换 AssetBundle 模式：{0}", ResourceLoad.useAssetBundle);
         }

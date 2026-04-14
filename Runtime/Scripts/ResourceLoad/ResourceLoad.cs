@@ -18,8 +18,12 @@ namespace ST.Core
         /// <summary>AssetBundle 模式加载器。</summary>
         AssetBundleLoad m_AssetBundleLoad;
 
-        /// <summary>无额外关闭逻辑。</summary>
-        public override void DoClose() { }
+        /// <summary>卸载所有已加载的 AssetBundle，释放资源以支持重新 <see cref="DoInit"/>。</summary>
+        public override void DoClose()
+        {
+            if (m_AssetBundleLoad != null)
+                m_AssetBundleLoad.DoClose(false);
+        }
 
         /// <summary>创建编辑器/Bundle 加载器、初始化清单并安装 <see cref="LuaAssetDecorator"/>。</summary>
         public override void DoInit()
