@@ -18,19 +18,33 @@ namespace ST.Core
         }
 
         /// <summary>
-        /// 获取 Bundle 根目录：Editor 和非 Windows 运行时返回 <c>StreamingAssets/</c>；
-        /// Windows 独立包返回 <c>dataPath/StreamingAssets/</c>。
+        /// 获取 Bundle 根目录：
+        /// Editor 下返回工程根目录的 <c>BuildRes/</c>（避免放入 Assets 触发 import 卡顿）；
+        /// Windows 独立包返回 exe 上两级的 <c>BuildRes/</c>；
+        /// 移动端返回 <c>StreamingAssets/</c>。
         /// </summary>
         /// <returns>以 <c>/</c> 结尾的根目录路径。</returns>
         public string GetFilePath()
         {
 #if UNITY_EDITOR
-            return Application.streamingAssetsPath + "/";
+            return GetParentDir(Application.dataPath, 1) + "/BuildRes/";
 #else
             if (Application.platform == RuntimePlatform.WindowsPlayer)
-                return Application.dataPath + "/StreamingAssets/";
+                return GetParentDir(Application.dataPath, 2) + "/BuildRes/";
             return Application.streamingAssetsPath + "/";
 #endif
+        }
+
+        /// <summary>获取指定层级的上级目录。</summary>
+        static string GetParentDir(string dir, int floor = 1)
+        {
+            string subDir = dir;
+            for (int i = 0; i < floor; ++i)
+            {
+                int last = subDir.LastIndexOf('/');
+                subDir = subDir.Substring(0, last);
+            }
+            return subDir;
         }
 
         /// <summary>

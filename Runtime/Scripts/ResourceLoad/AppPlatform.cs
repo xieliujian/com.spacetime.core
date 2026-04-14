@@ -26,11 +26,30 @@ namespace ST.Core
             }
         }
 
-        /// <summary>StreamingAssets 下以应用名为子目录的完整路径（小写）。</summary>
+        /// <summary>
+        /// 资源根目录：Editor 下返回工程根目录的 <c>BuildRes/appName/</c>；
+        /// 运行时返回 <c>StreamingAssets/appName/</c>。
+        /// </summary>
         /// <param name="appName">应用/游戏名称，与 <see cref="IResourceConfig.appName"/> 一致。</param>
         public static string GetStreamingAssetsPath(string appName)
         {
+#if UNITY_EDITOR
+            return GetParentDir(Application.dataPath, 1) + "/BuildRes/" + appName.ToLower() + "/";
+#else
             return Application.streamingAssetsPath + "/" + appName.ToLower() + "/";
+#endif
+        }
+
+        /// <summary>获取指定层级的上级目录。</summary>
+        static string GetParentDir(string dir, int floor = 1)
+        {
+            string subDir = dir;
+            for (int i = 0; i < floor; ++i)
+            {
+                int last = subDir.LastIndexOf('/');
+                subDir = subDir.Substring(0, last);
+            }
+            return subDir;
         }
 
 #if UNITY_EDITOR

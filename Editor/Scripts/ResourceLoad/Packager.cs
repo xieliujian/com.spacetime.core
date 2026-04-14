@@ -78,7 +78,7 @@ namespace ST.Core
 
         static List<AssetBundleBuild> m_BundleBuildList = new List<AssetBundleBuild>();
 
-        /// <summary>切换 iOS 目标并构建资源到 StreamingAssets 应用子目录。</summary>
+        /// <summary>切换 iOS 目标并构建资源到 BuildRes 应用子目录。</summary>
         [MenuItem("ST/Build iPhone Resource", false, 100)]
         public static void BuildiPhoneResource()
         {
@@ -89,7 +89,7 @@ namespace ST.Core
             BuildAssetResource(BuildTarget.iOS, AppPlatform.GetStreamingAssetsPath(s_Config.appName));
         }
 
-        /// <summary>切换 Android 目标并构建资源到 StreamingAssets 应用子目录。</summary>
+        /// <summary>切换 Android 目标并构建资源到 BuildRes 应用子目录。</summary>
         [MenuItem("ST/Build Android Resource", false, 101)]
         public static void BuildAndroidResource()
         {
@@ -98,7 +98,7 @@ namespace ST.Core
             BuildAssetResource(BuildTarget.Android, AppPlatform.GetStreamingAssetsPath(s_Config.appName));
         }
 
-        /// <summary>切换 Standalone 目标并构建资源到 StreamingAssets 应用子目录。</summary>
+        /// <summary>切换 Standalone 目标并构建资源到 BuildRes 应用子目录。</summary>
         [MenuItem("ST/Build Windows Resource", false, 102)]
         public static void BuildWindowsResource()
         {
