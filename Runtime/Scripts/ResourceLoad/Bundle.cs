@@ -76,16 +76,14 @@ namespace ST.Core
             m_FilePathHelper = filePathHelper;
         }
 
-        /// <summary>根据清单解析依赖并缓存依赖包引用（通过 <see cref="load"/> 按名查表）。</summary>
-        public void InitDependencies(AssetBundleManifest manifest)
+        /// <summary>根据依赖名称数组解析并缓存依赖包引用（通过 <see cref="load"/> 按名查表）。</summary>
+        /// <param name="dependNames">依赖的 Bundle 名称数组，由 <see cref="AssetBundleDBMgr"/> 提供。</param>
+        public void InitDependencies(string[] dependNames)
         {
-            if (m_Load == null || manifest == null)
+            if (m_Load == null || dependNames == null)
                 return;
 
-            var dependarray = manifest.GetAllDependencies(m_Path);
-            if (dependarray == null) return;
-
-            foreach (var dependname in dependarray)
+            foreach (var dependname in dependNames)
             {
                 if (dependname == null) continue;
                 var bundle = m_Load.GetBundle(dependname);

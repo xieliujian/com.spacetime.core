@@ -9,10 +9,10 @@ namespace ST.Core
     /// </summary>
     public class AssetBundleLoad
     {
-        /// <summary>按 Bundle 名称索引的全局字典（key 与清单中名称一致）。</summary>
+        /// <summary>按 Bundle 名称索引的全局字典（key 与数据库中名称一致）。</summary>
         Dictionary<string, Bundle> m_BundleDict = new Dictionary<string, Bundle>(CommonDefine.s_ListConst_1024);
-        /// <summary>从主清单包中读取的 <see cref="AssetBundleManifest"/>，用于获取依赖关系。</summary>
-        AssetBundleManifest m_Manifest = null;
+        /// <summary>AB 文本数据库管理器，替代 AssetBundleManifest。</summary>
+        AssetBundleDBMgr m_DBMgr = new AssetBundleDBMgr();
         /// <summary>路径拼接工具，解析 StreamingAssets 根目录与 Bundle 完整路径。</summary>
         FilePathHelper m_FilePathHelper;
         /// <summary>资源配置，提供 <see cref="IResourceConfig.bundleSuffix"/> 等参数。</summary>
@@ -81,33 +81,36 @@ namespace ST.Core
             bundle.LoadSceneAsync(filename, progress, complete);
         }
 
-        /// <summary>加载主清单包，遍历所有 Bundle 名称并构建 <see cref="m_BundleDict"/>，完成后卸载清单包。</summary>
+        /// <summary>解析 AB 文本数据库，遍历所有 Bundle 名称并构建 <see cref="m_BundleDict"/>。</summary>
         void InitAllBundle()
         {
-            string manifestPath = m_FilePathHelper.GetFilePath() + m_Config.appName + "/" + m_Config.appName;
-            var manifestBundle = AssetBundle.LoadFromFile(manifestPath);
+            string dbPath = m_FilePathHelper.GetFilePath() + m_Config.appName + "/" + m_Config.assetBundleDBFile;
+            m_DBMgr.Init(dbPath);
 
-            if (manifestBundle != null)
+            var allBundleNames = m_DBMgr.GetAllAssetBundleNames();
+            if (allBundleNames == null) return;
+
+            foreach (var bundlename in allBundleNames)
             {
-                m_Manifest = manifestBundle.LoadAsset<AssetBundleManifest>("AssetBundleManifest");
+                if (bundlename == null) continue;
 
-                var allbundlearray = m_Manifest.GetAllAssetBundles();
-                if (allbundlearray != null)
-                {
-                    foreach (var bundlename in allbundlearray)
-                    {
-                        if (bundlename == null) continue;
+                var bundle = new Bundle(bundlename, m_FilePathHelper);
+                bundle.load = this;
 
-                        var bundle = new Bundle(bundlename, m_FilePathHelper);
-                        bundle.load = this;
-                        bundle.InitDependencies(m_Manifest);
+                if (!m_BundleDict.ContainsKey(bundlename))
+                    m_BundleDict.Add(bundlename, bundle);
+            }
 
-                        if (!m_BundleDict.ContainsKey(bundlename))
-                            m_BundleDict.Add(bundlename, bundle);
-                    }
-                }
+            // 所有 Bundle 创建完毕后，再初始化依赖关系
+            foreach (var bundlename in allBundleNames)
+            {
+                if (bundlename == null) continue;
 
-                manifestBundle.Unload(true);
+                var bundle = GetBundle(bundlename);
+                if (bundle == null) continue;
+
+                var depends = m_DBMgr.GetAssetBundleDepends(bundlename);
+                bundle.InitDependencies(depends);
             }
         }
     }

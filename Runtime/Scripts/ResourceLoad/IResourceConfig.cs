@@ -18,5 +18,8 @@ namespace ST.Core
 
         /// <summary>编辑器模式下资源路径前缀，例如 "Assets/Package/"。</summary>
         string editorPathPrefix { get; }
+
+        /// <summary>AssetBundle 数据库文件名，例如 "assetbundledb.txt"。</summary>
+        string assetBundleDBFile { get; }
     }
 }

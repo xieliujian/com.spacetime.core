@@ -66,19 +66,6 @@ namespace ST.Core
             BuildAssetResource(BuildTarget.StandaloneWindows, AppPlatform.GetStreamingAssetsPath(s_Config.appName));
         }
 
-        /// <summary>依次为 Win/Android/iOS 输出到工程外 <c>assetBundle</c> 目录，并恢复原先活动构建目标。</summary>
-        [MenuItem("ST/Package All Resource", false, 103)]
-        public static void PackageAllResource()
-        {
-            BuildAssetResource(BuildTarget.StandaloneWindows, AppPlatform.GetPackageResPath(BuildTarget.StandaloneWindows, s_Config.appName));
-            BuildAssetResource(BuildTarget.Android, AppPlatform.GetPackageResPath(BuildTarget.Android, s_Config.appName));
-            BuildAssetResource(BuildTarget.iOS, AppPlatform.GetPackageResPath(BuildTarget.iOS, s_Config.appName));
-
-            BuildTargetGroup curtargetgroup = AppPlatform.GetCurBuildTargetGroup();
-            BuildTarget curtarget = AppPlatform.GetCurBuildTarget();
-            EditorUserBuildSettings.SwitchActiveBuildTarget(curtargetgroup, curtarget);
-        }
-
         /// <summary>清空输出目录、生成 Lua 资产、收集 <see cref="AssetBundleBuild"/> 并调用 <see cref="BuildPipeline.BuildAssetBundles"/>。</summary>
         static void BuildAssetResource(BuildTarget target, string resPath)
         {

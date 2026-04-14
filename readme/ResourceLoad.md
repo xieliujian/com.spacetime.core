@@ -17,10 +17,11 @@ using ST.Core;
 
 public class GameResourceConfig : IResourceConfig
 {
-    public string appName         => "mygame";
-    public string assetDir        => "assetBundle";
-    public string bundleSuffix    => ".unity3d";
-    public string editorPathPrefix => "Assets/Package/";
+    public string appName           => "mygame";
+    public string assetDir          => "assetBundle";
+    public string bundleSuffix      => ".unity3d";
+    public string editorPathPrefix  => "Assets/Package/";
+    public string assetBundleDBFile => "assetbundledb.txt";
 }
 ```
 
@@ -38,7 +39,7 @@ asyncMgr.DoInit();
 // 资源加载器
 var resLoad = new ResourceLoad();
 resLoad.SetConfig(new GameResourceConfig());
-resLoad.DoInit();  // 加载 AssetBundle 清单
+resLoad.DoInit();  // 解析 assetbundledb.txt，构建 Bundle 字典
 ```
 
 ### 3. 同步加载资源
@@ -119,10 +120,11 @@ Packager.RegisterConfig(new GameResourceConfig());
 
 | 属性 | 类型 | 说明 |
 |------|------|------|
-| `appName` | `string` | 应用名称，用于 StreamingAssets 子目录及清单文件名 |
+| `appName` | `string` | 应用名称，用于 StreamingAssets 子目录名 |
 | `assetDir` | `string` | AssetBundle 输出目录名（相对工程根目录） |
 | `bundleSuffix` | `string` | Bundle 文件后缀，例如 `.unity3d` |
 | `editorPathPrefix` | `string` | 编辑器下资源路径前缀，例如 `Assets/Package/` |
+| `assetBundleDBFile` | `string` | AB 数据库文件名，例如 `assetbundledb.txt` |
 
 ---
 
@@ -135,7 +137,7 @@ Packager.RegisterConfig(new GameResourceConfig());
 | `static instance` | 全局加载器引用 |
 | `static useAssetBundle` | 编辑器下是否强制使用 AssetBundle 模式 |
 | `SetConfig(IResourceConfig)` | **须在 `DoInit()` 前调用**，注入配置 |
-| `DoInit()` | 加载 Bundle 清单，安装 `LuaAssetDecorator` |
+| `DoInit()` | 解析 AB 数据库，构建 Bundle 字典，安装 `LuaAssetDecorator` |
 | `DoUpdate()` | 驱动异步任务（需每帧调用） |
 | `LoadResourceSync(path, filename, suffix, type)` | 同步加载单个资源 |
 | `LoadAllResourceSync(path, filename, suffix)` | 同步加载路径下全部资源 |
@@ -161,6 +163,26 @@ Packager.RegisterConfig(new GameResourceConfig());
 | `AnimationClip` | — | 动画片段 |
 | `AudioClip` | — | 音频 |
 | `ScriptableObject` | — | ScriptableObject 资产 |
+
+---
+
+### AssetBundleDBMgr
+
+解析 `assetbundledb.txt` 文本数据库，替代 Unity 原生 `AssetBundleManifest`，提供 Bundle 名称枚举与依赖查询：
+
+文件格式：
+
+```
+AB名称\t序号ID
+\tDepend:依赖ID1\t依赖ID2\t...
+```
+
+| 成员 | 说明 |
+|------|------|
+| `Init(dbFilePath)` | 解析单个数据库文件 |
+| `Init(dbFilePaths[])` | 解析多个数据库文件（合并） |
+| `GetAllAssetBundleNames()` | 返回所有已注册的 Bundle 名称列表 |
+| `GetAssetBundleDepends(abName)` | 返回指定 Bundle 的直接依赖名称数组 |
 
 ---
 
@@ -234,7 +256,7 @@ ResourceLoad（唯一公开入口）
               │     ├── AsyncBundleRequest（包文件异步加载）
               │     ├── AsyncAssetRequest（资产异步加载）
               │     └── AsyncSceneRequest（场景异步加载）
-              └── AssetBundleManifest（清单 & 依赖管理）
+              └── AssetBundleDBMgr（解析 assetbundledb.txt，提供名称枚举与依赖查询）
 
 AsyncTaskManager（每帧驱动所有 AsyncTask）
 
@@ -249,7 +271,7 @@ IAssetDecorator 链（BeforeLoad → 加载 → AfterLoad）
 ```
 SetConfig(config)          ← 注入 IResourceConfig（DoInit 前必须调用）
     ↓
-DoInit()                   ← 加载 Bundle 清单，安装装饰器
+DoInit()                   ← 解析 assetbundledb.txt，构建 Bundle 字典，安装装饰器
     ↓
 DoUpdate() × N             ← 每帧驱动异步任务
     ↓

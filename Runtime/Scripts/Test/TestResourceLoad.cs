@@ -317,6 +317,8 @@ namespace ST.Core.Test
             public string bundleSuffix { get { return ".unity3d"; } }
             /// <inheritdoc />
             public string editorPathPrefix { get { return "Assets/Package/"; } }
+            /// <inheritdoc />
+            public string assetBundleDBFile { get { return "assetbundledb.txt"; } }
         }
     }
 }
