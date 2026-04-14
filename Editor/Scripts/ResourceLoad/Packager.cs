@@ -3,10 +3,12 @@ using System.IO;
 using System;
 using UnityEngine;
 using UnityEditor;
+
 namespace ST.Core
 {
     /// <summary>
-    /// AssetBundle 与 Lua 字节码打包编辑器工具：菜单位于 <c>ST/</c>，依赖业务侧通过 <see cref="RegisterConfig"/> 注入 <see cref="IResourceConfig"/>。
+    /// AssetBundle 与 Lua 字节码打包编辑器工具：菜单位于 <c>ST/</c>。
+    /// 优先使用 <see cref="RegisterConfig"/> 注入的配置；若未注入则在打包时自动反射查找项目中 <see cref="IResourceConfig"/> 的实现类并实例化。
     /// </summary>
     public class Packager
     {
@@ -15,10 +17,45 @@ namespace ST.Core
 
         static IResourceConfig s_Config;
 
-        /// <summary>由业务在 <c>InitializeOnLoad</c> 等时机注入，供菜单与路径替换使用。</summary>
+        /// <summary>由业务在 <c>InitializeOnLoad</c> 等时机主动注入，优先级高于反射自动发现。</summary>
         public static void RegisterConfig(IResourceConfig config)
         {
             s_Config = config;
+        }
+
+        /// <summary>
+        /// 返回可用的 <see cref="IResourceConfig"/>：优先返回已注入的实例；
+        /// 若为空则遍历所有程序集，找到第一个非抽象实现类并通过无参构造实例化后缓存。
+        /// </summary>
+        static IResourceConfig GetConfig()
+        {
+            if (s_Config != null)
+                return s_Config;
+
+            foreach (var assembly in AppDomain.CurrentDomain.GetAssemblies())
+            {
+                foreach (var type in assembly.GetTypes())
+                {
+                    if (type.IsAbstract || type.IsInterface)
+                        continue;
+                    if (!typeof(IResourceConfig).IsAssignableFrom(type))
+                        continue;
+
+                    try
+                    {
+                        s_Config = (IResourceConfig)Activator.CreateInstance(type);
+                        Debug.Log($"[Packager] Auto-discovered IResourceConfig: {type.FullName}");
+                        return s_Config;
+                    }
+                    catch (Exception ex)
+                    {
+                        Debug.LogWarning($"[Packager] Failed to instantiate {type.FullName}: {ex.Message}");
+                    }
+                }
+            }
+
+            Debug.LogError("[Packager] No IResourceConfig implementation found. Please call Packager.RegisterConfig(config) or add a class implementing IResourceConfig.");
+            return null;
         }
 
         static string[] TexturePackageDir = { "ui/icon/", "ui/image/" };
@@ -44,6 +81,7 @@ namespace ST.Core
         [MenuItem("ST/Build iPhone Resource", false, 100)]
         public static void BuildiPhoneResource()
         {
+            if (GetConfig() == null) return;
             PlayerSettings.iOS.appleEnableAutomaticSigning = true;
             PlayerSettings.iOS.appleDeveloperTeamID = "24AZABCKN4";
             EditorUserBuildSettings.SwitchActiveBuildTarget(BuildTargetGroup.iOS, BuildTarget.iOS);
@@ -54,6 +92,7 @@ namespace ST.Core
         [MenuItem("ST/Build Android Resource", false, 101)]
         public static void BuildAndroidResource()
         {
+            if (GetConfig() == null) return;
             EditorUserBuildSettings.SwitchActiveBuildTarget(BuildTargetGroup.Android, BuildTarget.Android);
             BuildAssetResource(BuildTarget.Android, AppPlatform.GetStreamingAssetsPath(s_Config.appName));
         }
@@ -62,6 +101,7 @@ namespace ST.Core
         [MenuItem("ST/Build Windows Resource", false, 102)]
         public static void BuildWindowsResource()
         {
+            if (GetConfig() == null) return;
             EditorUserBuildSettings.SwitchActiveBuildTarget(BuildTargetGroup.Standalone, BuildTarget.StandaloneWindows64);
             BuildAssetResource(BuildTarget.StandaloneWindows, AppPlatform.GetStreamingAssetsPath(s_Config.appName));
         }
@@ -77,7 +117,7 @@ namespace ST.Core
             Directory.CreateDirectory(resPath);
             AssetDatabase.Refresh();
 
-            GenerateLuaScriptableObject();
+            //GenerateLuaScriptableObject();
 
             string packagePathPrefix = "/Package/";
             AddAllAssetBundle(Application.dataPath + packagePathPrefix);
