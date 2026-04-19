@@ -193,21 +193,87 @@ m_Manager?.Flush();
 
 ### XML Documentation Comments
 
-所有 `public` 及内部关键成员必须有 XML 文档注释，使用**中文**描述：
+**所有类、方法、字段、属性——无论访问修饰符是什么——都必须添加 XML 文档注释，使用中文描述。**  
+这包括 `public`、`internal`、`protected`、`private` 成员，以及嵌套类、枚举、枚举值。
+
+#### 类 / 枚举
 
 ```csharp
 /// <summary>
-/// 根据配置初始化格式化器和文件写入器
+/// 面板排序层级，决定面板在三大分组中的位置。
 /// </summary>
-/// <param name="config">日志配置</param>
-public void Initialize(LogConfig config) { ... }
+public enum PanelSortLayer : byte { ... }
+
+/// <summary>
+/// UI 系统总控制器，负责所有面板的打开/关闭/排序/可见性。
+/// </summary>
+public class UIManager : IManager { ... }
 ```
 
-单行字段注释使用行内形式：
+#### 方法（含私有）
+
+多行形式，含参数说明与返回值说明：
+
 ```csharp
-/// <summary>日志写入器，负责将格式化后的日志持久化</summary>
-FileLogWriter m_Writer;
+/// <summary>
+/// 根据配置初始化格式化器和文件写入器。
+/// </summary>
+/// <param name="config">日志配置，不可为 null。</param>
+public void Initialize(LogConfig config) { ... }
+
+/// <summary>
+/// 在运行列表中按 uiID 查找最近打开的面板（列表末尾优先）。
+/// </summary>
+/// <returns>找到的 <see cref="UIPanelActive"/>；未找到时返回 null。</returns>
+UIPanelActive FindRunningByUIID(int uiID) { ... }
 ```
+
+#### 字段 / 属性
+
+单行内联形式（内容能一句话说清时）：
+
+```csharp
+/// <summary>全局 UIManager 单例引用。</summary>
+static UIManager s_Instance;
+
+/// <summary>日志写入器，负责将格式化后的日志持久化。</summary>
+FileLogWriter m_Writer;
+
+/// <summary>面板当前是否处于打开状态。</summary>
+public bool isOpened { get { return m_IsOpened; } }
+```
+
+超过一句话时改用多行：
+
+```csharp
+/// <summary>
+/// 面板 Prefab 异步加载完成后由 UIPanelActive 回调，
+/// 触发重新排序以保证 sortingOrder 及时生效。
+/// </summary>
+internal void NotifyPanelReady(UIPanelActive panelActive) { ... }
+```
+
+#### 枚举值
+
+每个枚举值单独一行注释：
+
+```csharp
+public enum PanelHideMask : byte
+{
+    /// <summary>不影响下层。</summary>
+    None = 0,
+    /// <summary>下层不可交互。</summary>
+    UnInteractive = 1 << 0,
+    /// <summary>下层不可见。</summary>
+    Hide = 1 << 1,
+}
+```
+
+#### 禁止项
+
+- 禁止省略注释（哪怕是私有的简单字段）。
+- 禁止使用英文注释（统一中文）。
+- 禁止写无意义的复述注释（如 `/// <summary>m_Writer 字段</summary>`）；注释必须说明**用途或约束**，而非重复变量名。
 
 ### Logging — 禁止直接使用 `UnityEngine.Debug`
 
