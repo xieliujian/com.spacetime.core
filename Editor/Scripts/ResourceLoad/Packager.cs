@@ -79,7 +79,7 @@ namespace ST.Core
         static List<AssetBundleBuild> m_BundleBuildList = new List<AssetBundleBuild>();
 
         /// <summary>切换 iOS 目标并构建资源到 BuildRes 应用子目录。</summary>
-        [MenuItem("ST/Build iPhone Resource", false, 100)]
+        [MenuItem("SpaceTime/Build/Build iPhone Resource", false, 100)]
         public static void BuildiPhoneResource()
         {
             if (GetConfig() == null) return;
@@ -90,7 +90,7 @@ namespace ST.Core
         }
 
         /// <summary>切换 Android 目标并构建资源到 BuildRes 应用子目录。</summary>
-        [MenuItem("ST/Build Android Resource", false, 101)]
+        [MenuItem("SpaceTime/Build/Build Android Resource", false, 101)]
         public static void BuildAndroidResource()
         {
             if (GetConfig() == null) return;
@@ -99,7 +99,7 @@ namespace ST.Core
         }
 
         /// <summary>切换 Standalone 目标并构建资源到 BuildRes 应用子目录。</summary>
-        [MenuItem("ST/Build Windows Resource", false, 102)]
+        [MenuItem("SpaceTime/Build/Build Windows Resource", false, 102)]
         public static void BuildWindowsResource()
         {
             if (GetConfig() == null) return;
