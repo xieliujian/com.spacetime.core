@@ -428,9 +428,11 @@ BagPanel (Prefab)
 
 ---
 
-## 十一、测试场景快速上手（TestUIBoot + TestGMBoxPanel）
+## 十一、测试场景
 
-`Runtime/Scripts/Test/` 提供了两个开箱即用的测试组件，无需编写任何启动代码即可在编辑器场景中验证 UIManager 的完整流程。
+> 详细说明请参阅子文档 **[→ UI 测试系统](UI_Test.md)**，以下为快速摘要。
+
+`Runtime/Scripts/Test/` 提供了开箱即用的测试组件，无需编写任何启动代码即可在编辑器场景中验证 UIManager 的完整流程。
 
 ### 11.1 测试文件
 
@@ -476,8 +478,8 @@ Hierarchy
 ### 11.4 TestUIID 面板 ID 表
 
 ```csharp
-// TestUIBoot 内嵌常量，测试场景专用
-static class TestUIID
+// TestUIID.cs — 独立公共常量类，TestUIBoot 与 UIFlowTest 共用
+public static class TestUIID
 {
     public const int GMBoxPanel = 1;   // ui/uiprefab/ui_panel_gm_box.prefab
     public const int TestPanel  = 2;   // ui/uiprefab/ui_panel_test.prefab
@@ -521,6 +523,14 @@ gm.RegisterCommand("reloadui", (args) =>
     gm.AppendOutput("[reloadui] UIManager 已重置。");
 }, "重置 UIManager");
 ```
+
+---
+
+## 子文档
+
+| 文档 | 说明 |
+|------|------|
+| [UI 测试系统](UI_Test.md) | 测试场景搭建、自动化测试用例、GM 指令手册、扩展指南 |
 
 ---
 

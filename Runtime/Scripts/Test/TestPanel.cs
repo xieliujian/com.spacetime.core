@@ -26,6 +26,9 @@ namespace ST.Core.Test
         /// <summary>面板被打开的累计次数，用于验证生命周期调用是否正确。</summary>
         int m_OpenCount;
 
+        /// <summary>面板被打开的累计次数（只读），供 <see cref="UIFlowTest"/> 断言使用。</summary>
+        public int openCount { get { return m_OpenCount; } }
+
         // ─── 生命周期 ────────────────────────────────────────────────────
 
         /// <summary>初始化：注册关闭按钮事件（若存在）。</summary>

@@ -34,6 +34,11 @@ namespace ST.Core.Test
         /// <summary>GM 调试面板组件，必须在 Inspector 中拖入。</summary>
         public TestGMBoxPanel m_GMBox;
 
+        /// <summary>
+        /// 自动化流程测试组件，可选；有则在 GM 面板注册 <c>uitest</c> 指令触发入口。
+        /// </summary>
+        public UIFlowTest m_FlowTest;
+
         // ─── 私有字段 ────────────────────────────────────────────────────
 
         /// <summary>异步任务管理器实例，异步资源加载依赖此管理器驱动。</summary>
@@ -172,6 +177,18 @@ namespace ST.Core.Test
                 cacheCount  = 1,
                 isSingleton = true,
             });
+
+            UIDataTable.Register(new UIData
+            {
+                uiID        = TestUIID.TestModal,
+                name        = "TestModal",
+                path        = "ui/uiprefab/",
+                filename    = "ui_panel_test_modal",
+                suffix      = ".prefab",
+                sortLayer   = PanelSortLayer.Auto,
+                cacheCount  = 1,
+                isSingleton = true,
+            });
         }
 
         /// <summary>
@@ -184,6 +201,9 @@ namespace ST.Core.Test
             m_GMBox.RegisterCommand("closeall",  CmdCloseAll,  "关闭所有面板");
             m_GMBox.RegisterCommand("isopen",    CmdIsOpen,    "查询面板是否打开：isopen <uiID(int)>");
             m_GMBox.RegisterCommand("listpanel", CmdListPanel, "列出所有已注册面板配置");
+
+            if (m_FlowTest != null)
+                m_GMBox.RegisterCommand("uitest", _ => m_FlowTest.RunTests(), "运行 UI 自动化流程测试（等同按 F2）");
         }
 
         // ─── GM 指令实现 ─────────────────────────────────────────────────
@@ -275,25 +295,16 @@ namespace ST.Core.Test
         void CmdListPanel(string[] args)
         {
             m_GMBox.AppendOutput("── 已注册 TestUIID ──");
-            m_GMBox.AppendOutput(string.Format("  {0,-6} GMBoxPanel  (ui_panel_gm_box.prefab)", TestUIID.GMBoxPanel));
-            m_GMBox.AppendOutput(string.Format("  {0,-6} TestPanel   (ui_panel_test.prefab)", TestUIID.TestPanel));
+            m_GMBox.AppendOutput(string.Format("  {0,-6} GMBoxPanel   (ui_panel_gm_box.prefab)        Top", TestUIID.GMBoxPanel));
+            m_GMBox.AppendOutput(string.Format("  {0,-6} TestPanel    (ui_panel_test.prefab)           Auto", TestUIID.TestPanel));
+            m_GMBox.AppendOutput(string.Format("  {0,-6} TestModal    (ui_panel_test_modal.prefab)     Auto  HideMask=HideAndUnInteractive", TestUIID.TestModal));
         }
 
         // ══════════════════════════════════════════
-        // 内嵌配置与常量
+        // 内嵌配置
         // ══════════════════════════════════════════
 
-        /// <summary>
-        /// 测试场景专用 UI 整型 ID 常量表。
-        /// 上层正式工程应改用 <c>enum UIID : int</c>；此处用 static class 保持框架层零污染。
-        /// </summary>
-        static class TestUIID
-        {
-            /// <summary>GM 调试面板 ID。</summary>
-            public const int GMBoxPanel = 1;
-            /// <summary>通用测试面板 ID。</summary>
-            public const int TestPanel  = 2;
-        }
+        // UI ID 常量见 TestUIID.cs（ST.Core.Test.TestUIID）
 
         /// <summary>
         /// 测试专用资源配置，路径指向 com.spacetime.core 的 Assets/Package 目录。

@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.UI;
 
 namespace ST.Core.UI
 {
@@ -125,6 +126,28 @@ namespace ST.Core.UI
 
             var root = m_UIRoot != null ? m_UIRoot.GetPanelRoot(m_SortLayer) : null;
             var go   = UnityEngine.Object.Instantiate(prefab, root, false);
+
+            // ── 嵌套 Canvas 修正 ──────────────────────────────────────────
+            // 1. 强制拉伸填满父容器（PanelRoot / TopPanelRoot）。
+            //    Root Canvas 序列化的 RectTransform 变为嵌套 Canvas 后不会自动继承父节点尺寸。
+            //    同时强制 localScale=(1,1,1)，防止旧 Prefab 序列化了 scale=0 的情况。
+            var rt = go.GetComponent<RectTransform>();
+            if (rt != null)
+            {
+                rt.localScale = Vector3.one;
+                rt.anchorMin  = Vector2.zero;
+                rt.anchorMax  = Vector2.one;
+                rt.offsetMin  = Vector2.zero;
+                rt.offsetMax  = Vector2.zero;
+            }
+
+            // 2. 移除嵌套 Canvas 上的 CanvasScaler。
+            //    CanvasScaler(ScaleWithScreenSize) 在嵌套 Canvas 上以父容器尺寸为基准计算缩放，
+            //    若父容器尺寸为 0 则 scale = 0 / referenceResolution = 0，导致面板不可见。
+            //    缩放由根 Canvas（UIRoot.RootCanvas）的 CanvasScaler 统一管理即可。
+            var nestedScaler = go.GetComponent<CanvasScaler>();
+            if (nestedScaler != null)
+                UnityEngine.Object.Destroy(nestedScaler);
 
             var panel = go.GetComponent<AbstractPanel>();
             if (panel == null)
