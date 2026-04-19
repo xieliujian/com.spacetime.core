@@ -25,12 +25,24 @@ namespace ST.Core
                 m_AssetBundleLoad.DoClose(false);
         }
 
-        /// <summary>创建编辑器/Bundle 加载器、初始化清单并安装 <see cref="LuaAssetDecorator"/>。</summary>
+        /// <summary>
+        /// 创建编辑器/Bundle 加载器、初始化清单并安装 <see cref="LuaAssetDecorator"/>。
+        /// <para>
+        /// 编辑器模式下仅当 <see cref="useAssetBundle"/> 为 <c>true</c> 时才初始化 AssetBundle 加载器，
+        /// 避免在未打包时因找不到 <c>assetbundledb.txt</c> 而产生错误日志。
+        /// </para>
+        /// </summary>
         public override void DoInit()
         {
-            m_EditorResLoad = new EditorResourceLoad(m_Config);
+            m_EditorResLoad   = new EditorResourceLoad(m_Config);
             m_AssetBundleLoad = new AssetBundleLoad(m_FilePathHelper, m_Config);
+
+#if UNITY_EDITOR
+            if (useAssetBundle)
+                m_AssetBundleLoad.DoInit();
+#else
             m_AssetBundleLoad.DoInit();
+#endif
 
             InstallDecorator(new LuaAssetDecorator());
         }

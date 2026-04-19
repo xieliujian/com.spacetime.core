@@ -428,4 +428,100 @@ BagPanel (Prefab)
 
 ---
 
+## 十一、测试场景快速上手（TestUIBoot + TestGMBoxPanel）
+
+`Runtime/Scripts/Test/` 提供了两个开箱即用的测试组件，无需编写任何启动代码即可在编辑器场景中验证 UIManager 的完整流程。
+
+### 11.1 测试文件
+
+| 文件 | 职责 |
+|------|------|
+| `TestGMBoxPanel.cs` | 可拖拽的 OnGUI GM 指令窗口，支持指令注册、执行、历史记录（PlayerPrefs 持久化） |
+| `TestUIBoot.cs` | 场景引导类：初始化 ResourceLoad → UIManager → UIDataTable，并向 GMBox 注册 UI 调试指令 |
+
+### 11.2 场景搭建
+
+```
+Hierarchy
+├── UIRoot              ← 挂 UIRoot.cs，配置双 Camera / Canvas / PanelRoot
+└── Boot
+    ├── TestUIBoot.cs   ← 引导类
+    └── TestGMBoxPanel.cs ← GM 面板（F1 开关）
+```
+
+**Inspector 连线：**
+
+| TestUIBoot 字段 | 拖入对象 |
+|---|---|
+| `m_UIRoot` | UIRoot GameObject 上的 `UIRoot` 组件 |
+| `m_GMBox` | Boot GameObject 上的 `TestGMBoxPanel` 组件 |
+
+### 11.3 运行时 GM 指令
+
+运行后按 **F1** 打开 GM 面板，支持以下内置指令：
+
+| 指令 | 功能 |
+|---|---|
+| `help` | 列出所有已注册指令及描述 |
+| `openui <uiID>` | 打开指定 uiID 的面板，例如 `openui 1` |
+| `closeui <uiID>` | 关闭指定 uiID 的面板 |
+| `closeall` | 关闭所有运行中的面板 |
+| `isopen <uiID>` | 查询面板状态（IsOpened / IsVisible / IsActive） |
+| `listpanel` | 列出所有已注册的 TestUIID 常量 |
+| `echo <内容>` | 回显文本到输出区 |
+| `clear` | 清空输出区 |
+
+键盘快捷键：`↑` / `↓` 导航历史记录，`Enter` 执行指令。
+
+### 11.4 TestUIID 面板 ID 表
+
+```csharp
+// TestUIBoot 内嵌常量，测试场景专用
+static class TestUIID
+{
+    public const int GMBoxPanel = 1;   // ui/uiprefab/ui_panel_gm_box.prefab
+    public const int TestPanel  = 2;   // ui/uiprefab/ui_panel_test.prefab
+}
+```
+
+### 11.5 扩展测试面板
+
+**第一步**：在 `TestUIBoot.RegisterTestPanels()` 追加注册：
+
+```csharp
+UIDataTable.Register(new UIData
+{
+    uiID      = TestUIID.MyPanel,
+    name      = "MyPanel",
+    path      = "ui/uiprefab/",
+    filename  = "ui_panel_my",
+    suffix    = ".prefab",
+    sortLayer = PanelSortLayer.Auto,
+});
+```
+
+**第二步**：在 `TestUIID` 追加常量：
+
+```csharp
+public const int MyPanel = 3;
+```
+
+运行后执行 `openui 3` 即可验证。
+
+### 11.6 注册自定义 GM 指令
+
+```csharp
+// 在任意 MonoBehaviour 的 Start 中获取 TestGMBoxPanel 并注册
+var gm = FindObjectOfType<TestGMBoxPanel>();
+
+gm.RegisterCommand("reloadui", (args) =>
+{
+    UIManager.S.DoClose();
+    UIManager.S.DoInit();
+    gm.AppendOutput("[reloadui] UIManager 已重置。");
+}, "重置 UIManager");
+```
+
+---
+
 [← 返回主页](../README.md)
