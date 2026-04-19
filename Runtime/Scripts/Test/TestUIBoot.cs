@@ -202,6 +202,18 @@ namespace ST.Core.Test
                 cacheCount  = 1,
                 isSingleton = false,
             });
+
+            UIDataTable.Register(new UIData
+            {
+                uiID        = TestUIID.TestBagPanel,
+                name        = "TestBagPanel",
+                path        = "ui/uiprefab/",
+                filename    = "ui_panel_test_bag",
+                suffix      = ".prefab",
+                sortLayer   = PanelSortLayer.Auto,
+                cacheCount  = 1,
+                isSingleton = true,
+            });
         }
 
         /// <summary>
@@ -216,6 +228,8 @@ namespace ST.Core.Test
             m_GMBox.RegisterCommand("listpanel", CmdListPanel, "列出所有已注册面板配置");
             m_GMBox.RegisterCommand("openpage",  CmdOpenPage,  "挂载子页面到 TestPanel：openpage");
             m_GMBox.RegisterCommand("closepage", CmdClosePage, "卸载 TestPanel 的子页面：closepage");
+            m_GMBox.RegisterCommand("openbag",   CmdOpenBag,   "打开背包面板：openbag [itemCount=50]");
+            m_GMBox.RegisterCommand("refreshbag",CmdRefreshBag,"刷新背包格子数量：refreshbag <count>");
 
             if (m_FlowTest != null)
                 m_GMBox.RegisterCommand("uitest", _ => m_FlowTest.RunTests(), "运行 UI 自动化流程测试（等同按 F2）");
@@ -314,6 +328,7 @@ namespace ST.Core.Test
             m_GMBox.AppendOutput(string.Format("  {0,-6} TestPanel    (ui_panel_test.prefab)           Auto", TestUIID.TestPanel));
             m_GMBox.AppendOutput(string.Format("  {0,-6} TestModal    (ui_panel_test_modal.prefab)     Auto  HideMask=HideAndUnInteractive", TestUIID.TestModal));
             m_GMBox.AppendOutput(string.Format("  {0,-6} TestPageA    (ui_page_test_a.prefab)          Page（挂载于 TestPanel）", TestUIID.TestPageA));
+            m_GMBox.AppendOutput(string.Format("  {0,-6} TestBagPanel (ui_panel_test_bag.prefab)       Auto  ScrollView+GridLayout", TestUIID.TestBagPanel));
         }
 
         /// <summary>
@@ -348,6 +363,49 @@ namespace ST.Core.Test
 
             testPanel.ClosePageA();
             m_GMBox.AppendOutput("[closepage] TestPageA ClosePageA 请求已发送");
+        }
+
+        /// <summary>
+        /// 指令 <c>openbag</c>：打开背包测试面板，可选指定格子数量。
+        /// 用法：<c>openbag</c> 或 <c>openbag 100</c>
+        /// </summary>
+        void CmdOpenBag(string[] args)
+        {
+            int count = 50;
+            if (args.Length >= 2 && int.TryParse(args[1], out int n))
+                count = n;
+
+            int panelID = UIManager.S.OpenPanel(TestUIID.TestBagPanel, count);
+            m_GMBox.AppendOutput(string.Format("[openbag] count={0}  panelID={1}", count, panelID));
+        }
+
+        /// <summary>
+        /// 指令 <c>refreshbag</c>：刷新已打开背包面板的格子数量。
+        /// 用法：<c>refreshbag 30</c>
+        /// </summary>
+        void CmdRefreshBag(string[] args)
+        {
+            if (args.Length < 2)
+            {
+                m_GMBox.AppendOutput("[refreshbag] 用法：refreshbag <count>");
+                return;
+            }
+
+            if (!int.TryParse(args[1], out int count))
+            {
+                m_GMBox.AppendOutput(string.Format("[refreshbag] 参数不是有效整数：{0}", args[1]));
+                return;
+            }
+
+            var bag = UIManager.S != null ? UIManager.S.FindPanel<TestBagPanel>() : null;
+            if (bag == null)
+            {
+                m_GMBox.AppendOutput("[refreshbag] 背包面板未打开或未加载完成，请先 openbag");
+                return;
+            }
+
+            bag.RefreshItems(count);
+            m_GMBox.AppendOutput(string.Format("[refreshbag] 已刷新为 {0} 个格子", count));
         }
 
         // ══════════════════════════════════════════

@@ -2,7 +2,7 @@
 
 [← 返回 UI 管理系统](UI.md)
 
-> 版本：1.2.0 | 命名空间：`ST.Core.Test`
+> 版本：1.4.0 | 命名空间：`ST.Core.Test`
 
 ---
 
@@ -14,7 +14,7 @@
 |------|------|----------|------|
 | GM 指令 | `TestUIBoot` + `TestGMBoxPanel` | F1 打开面板，输入指令 | 运行时手动按需打开/关闭面板及子页面 |
 | 手动调试 GUI | `UIFlowTest` | **F3** 切换 | IMGUI 悬浮窗，实时状态 + 快速操作 + 逐步执行 TC |
-| 自动化测试 | `UIFlowTest` | **F2** 或 `uitest` | 自动顺序执行 7 条 TC，输出 PASS / FAIL |
+| 自动化测试 | `UIFlowTest` | **F2** 或 `uitest` | 自动顺序执行 8 条 TC，输出 PASS / FAIL |
 
 ---
 
@@ -22,23 +22,26 @@
 
 ```
 Runtime/Scripts/Test/
-├── TestUIID.cs             UI ID 常量表（GMBoxPanel=1 / TestPanel=2 / TestModal=3 / TestPageA=4）
+├── TestUIID.cs             UI ID 常量表（1~5）
 ├── GMBoxPanel.cs           GM Box 的 UIManager 适配层（AbstractPanel 包装）
 ├── TestPanel.cs            通用测试面板（AbstractPanel，Auto 层，含子页面操作方法）
 ├── TestModalPanel.cs       模态测试面板（hideMask=HideAndUnInteractive，Auto 层）
 ├── TestPageA.cs            测试子页面 A（AbstractPage，无 Canvas，挂载于 TestPanel）
+├── TestBagItem.cs          背包格子单元（MonoBehaviour，由 TestBagPanel 克隆模板生成）
+├── TestBagPanel.cs         背包测试面板（ScrollView + GridLayout + 模板克隆，Auto 层）
 ├── TestGMBoxPanel.cs       全屏 IMGUI GM 指令窗口（F1 开关）
 ├── TestUIBoot.cs           场景引导类（初始化 UIManager + 注册 GM 指令）
 └── UIFlowTest.cs           测试运行器（F2 自动 / F3 手动调试 GUI）
 
 Editor/Scripts/Test/
-└── CreateUITestPrefabEditor.cs   一键生成全部 4 个测试 Prefab
+└── CreateUITestPrefabEditor.cs   一键生成全部 5 个测试 Prefab
 
 Assets/Package/ui/uiprefab/
 ├── ui_panel_gm_box.prefab        GM 面板（GMBoxPanel，Top 层）
 ├── ui_panel_test.prefab          通用测试面板（TestPanel，Auto 层）
 ├── ui_panel_test_modal.prefab    模态测试面板（TestModalPanel，Auto 层）
-└── ui_page_test_a.prefab         测试子页面 A（TestPageA，无 Canvas）
+├── ui_page_test_a.prefab         测试子页面 A（TestPageA，无 Canvas）
+└── ui_panel_test_bag.prefab      背包面板（TestBagPanel，含 ScrollView + ItemTemplate）
 ```
 
 ---
@@ -57,6 +60,7 @@ Assets/Package/ui/uiprefab/
 | `ui_panel_test.prefab` | `TestPanel` | Auto | 基础开关 / 缓存 / 计数 / 子页面测试 |
 | `ui_panel_test_modal.prefab` | `TestModalPanel` | Auto | 打开后下层全隐藏且不可交互 |
 | `ui_page_test_a.prefab` | `TestPageA` | — | 子页面，无 Canvas，由父面板的 Canvas 渲染 |
+| `ui_panel_test_bag.prefab` | `TestBagPanel` | Auto | ScrollView + GridLayout + ItemTemplate 克隆 |
 
 > 也可单独生成：**ST.Core / Test / Create ui_page_test_a Prefab** 等子菜单。
 
@@ -70,6 +74,24 @@ ui_panel_xxx
 ├── CloseBtn      (右上角关闭按钮)
 │   └── Label     (Text "×")
 └── Content       (内容容器)
+```
+
+**Bag Prefab 节点结构：**
+
+```
+ui_panel_test_bag        ← Canvas + TestBagPanel
+├── Background
+├── TitleBar
+│   └── TitleText        ("背包 (N 个物品)")
+├── CloseBtn
+│   └── Label
+├── ScrollView           ← ScrollRect + Image
+│   └── Viewport         ← Mask（不可见 Image，raycastTarget=true）
+│       └── Content      ← GridLayoutGroup(5列, cellSize 运行时计算) + ContentSizeFitter
+└── ItemTemplate         ← TestBagItem（SetActive=false，运行时克隆至 Content）
+    ├── IconImage        (随机色 Image，模拟道具图标)
+    ├── NameText         ("物品 001")
+    └── CountText        ("×N"，右上角角标)
 ```
 
 **Page Prefab 节点结构（无 Canvas）：**
@@ -126,6 +148,8 @@ Hierarchy
 | `listpanel` | `listpanel` | 列出已注册的 TestUIID 及层级信息 |
 | `openpage` | `openpage` | 向已打开的 TestPanel 挂载子页面 A |
 | `closepage` | `closepage` | 从 TestPanel 卸载子页面 A |
+| `openbag [N]` | `openbag 100` | 打开背包面板，N 为格子数量（默认 50）|
+| `refreshbag <N>` | `refreshbag 30` | 刷新背包格子数量（面板须已打开）|
 | `uitest` | `uitest` | 运行自动化测试（需连线 `m_FlowTest`）|
 | `help` | `help` | 列出所有指令 |
 | `echo <内容>` | `echo hello` | 输出文本到 GM 面板 |
@@ -141,6 +165,7 @@ Hierarchy
 | 2 | `TestPanel` | `ui_panel_test.prefab` | Panel | Auto | 基础测试面板，可挂载子页面 |
 | 3 | `TestModal` | `ui_panel_test_modal.prefab` | Panel | Auto | 模态面板，HideMask=HideAndUnInteractive |
 | 4 | `TestPageA` | `ui_page_test_a.prefab` | **Page** | — | TestPanel 的子页面，无独立 Canvas |
+| 5 | `TestBagPanel` | `ui_panel_test_bag.prefab` | Panel | Auto | ScrollView + GridLayout 背包，支持 `openbag` / `refreshbag` |
 
 > **Page 与 Panel 的区别**：Page 没有独立 Canvas，无法通过 `UIManager.OpenPanel` 打开，只能通过父面板的 `panelActive.AttachPage` / `DettachPage` 管理。
 
@@ -241,6 +266,7 @@ Hierarchy
 | TC05 | DoClose 全关 | `UIManager.DoClose()` 后所有面板 `IsOpened=false` |
 | TC06 | 查询 API 准确性 | `IsOpened` / `IsPanelVisible` / `IsPanelActive` / `SetPanelVisible` 返回值符合预期 |
 | **TC07** | **子页面 Attach/Detach** | `AttachPage(TestPageA)` → `IsPageOpen=true` → `DettachPage` → `IsPageOpen=false` → 再次 Attach（缓存复用）|
+| **TC08** | **背包 ScrollView** | 打开(50格) → `itemCount=50` → `RefreshItems(10)` → `itemCount=10` → `RefreshItems(100)` → `itemCount=100` → 关闭 → `IsOpened=false` |
 
 ### 6.3 Console 输出示例
 
@@ -262,8 +288,10 @@ Hierarchy
   [PASS] TC06_查询API
 ── TC07 子页面 Attach/Detach
   [PASS] TC07_子页面
+── TC08 背包 ScrollView
+  [PASS] TC08_背包ScrollView
 ──────────────────────────────
-结果：7 / 7 通过
+结果：8 / 8 通过
 ══════════════════════════════
 ```
 
@@ -372,7 +400,93 @@ public static class TestUIID
 
 ---
 
-### 7.6 TestUIBoot
+### 7.6 TestBagItem
+
+**文件**：`Runtime/Scripts/Test/TestBagItem.cs`
+
+背包格子的 MonoBehaviour 单元，由 `TestBagPanel` 从 `ItemTemplate` 克隆后调用 `Init` 初始化。
+
+| 成员 | 说明 |
+|------|------|
+| `Image m_IconImage` | 格子图标，`Init` 时设置随机颜色模拟不同道具 |
+| `Text m_NameText` | 物品名称（`"物品 001"` 格式）|
+| `Text m_CountText` | 数量角标（`"×N"` 格式）|
+| `Button m_Button` | 整格按钮，点击时输出格子序号到 Console |
+| `void Init(index, name, count, color)` | 初始化格子数据并绑定点击事件 |
+
+---
+
+### 7.7 TestBagPanel
+
+**文件**：`Runtime/Scripts/Test/TestBagPanel.cs`
+
+背包测试面板，演示 ScrollView + 格子模板动态克隆 + 自适应列宽的完整流程。
+
+| 成员 | 说明 |
+|------|------|
+| `ScrollRect m_ScrollRect` | ScrollView 组件引用 |
+| `RectTransform m_Content` | GridLayoutGroup 所在容器，格子的父节点 |
+| `GameObject m_ItemTemplate` | 格子模板，Prefab 中 `SetActive(false)` |
+| `int itemCount` | 只读，当前存活格子数（供 TC08 断言）|
+| `void RefreshItems(int count)` | 清除旧格子 → 重算 cellSize → 克隆 N 格子 → LayoutRebuilder 刷新 |
+
+**ScrollView 节点结构：**
+
+```
+ScrollView  ← ScrollRect（horizontal=false, vertical=true, sensitivity=40）
+└── Viewport  ← Image(透明, raycastTarget=true) + Mask(showMaskGraphic=false)
+    └── Content  ← anchorMin=(0,1) pivot=(0.5,1)  ← 顶部对齐，向下扩展
+                  GridLayoutGroup（5列固定, cellSize 由运行时计算, spacing=12）
+                  ContentSizeFitter（verticalFit=PreferredSize）
+```
+
+**一行铺满算法（`FitCellSizeToRow`）：**
+
+```
+Canvas.ForceUpdateCanvases()          ← 面板挂入 PanelRoot 后立即刷新布局
+↓
+contentWidth = Content.rect.width     ← 取 Content 实际宽度（= Viewport 宽度）
+              若为 0 则回退到 Viewport.rect.width
+↓
+cellW = floor((contentWidth - paddingH - spacing.x × (cols-1)) / cols)
+cellH = floor(cellW × 1.15)          ← 保持固定宽高比
+↓
+grid.cellSize = (cellW, cellH)        ← GridLayoutGroup 自动重排
+```
+
+以 1920×1080 为例：
+
+| 参数 | 值 |
+|------|----|
+| ScrollView 宽 | 1920 − 32 = **1888 px** |
+| padding 左+右 | 24 + 24 = **48 px** |
+| spacing × 4列间隙 | 12 × 4 = **48 px** |
+| 可用宽度 | 1888 − 48 − 48 = **1792 px** |
+| cellWidth（5列）| 1792 / 5 = **358 px** |
+| cellHeight（×1.15）| **411 px** |
+
+`FitCellSizeToRow` 在以下两处被调用，确保任何情况下 cellSize 都正确：
+- `OnOpen` — 打开面板时（`Canvas.ForceUpdateCanvases` 后）
+- `RefreshItems` — GM 指令 `refreshbag` / 代码直接调用时
+
+`LayoutRebuilder.ForceRebuildLayoutImmediate(m_Content)` 在格子创建完毕后调用，
+确保 Content 高度在同帧更新，ScrollRect 立即可滚动。
+
+**生命周期：**
+```
+OnCreate  → 关闭按钮监听 + 确认 ItemTemplate 隐藏
+OnOpen    → Canvas.ForceUpdateCanvases → FitCellSizeToRow → RefreshItems(args[0] ?? 50)
+OnClose   → ClearItems()（缓存时清理格子，下次 OnOpen 重新生成）
+OnDispose → 取消按钮监听
+```
+
+> **设计说明**：`GridLayoutGroup` 不支持弹性列宽（`cellSize` 只能固定值），
+> 因此通过运行时计算来代替 CSS `grid-template-columns: repeat(5, 1fr)` 的效果。
+> Prefab 中预设的 `cellSize(160, 180)` 仅作编辑器预览用途，运行时会被覆盖。
+
+---
+
+### 7.8 TestUIBoot
 
 **文件**：`Runtime/Scripts/Test/TestUIBoot.cs`
 
@@ -389,7 +503,7 @@ public class TestUIBoot : MonoBehaviour
 
 ---
 
-### 7.7 UIFlowTest
+### 7.9 UIFlowTest
 
 **文件**：`Runtime/Scripts/Test/UIFlowTest.cs`
 

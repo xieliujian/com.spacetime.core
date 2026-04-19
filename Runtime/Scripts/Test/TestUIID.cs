@@ -23,5 +23,11 @@ namespace ST.Core.Test
         /// <para>Page 无独立 Canvas，由父面板（<see cref="TestPanel"/>）的 Canvas 渲染。</para>
         /// </summary>
         public const int TestPageA    = 4;
+
+        /// <summary>
+        /// 背包测试面板 ID，对应 <c>ui_panel_test_bag.prefab</c>（<see cref="TestBagPanel"/>）。
+        /// <para>演示 ScrollView + 格子模板（<see cref="TestBagItem"/>）动态克隆流程。</para>
+        /// </summary>
+        public const int TestBagPanel = 5;
     }
 }

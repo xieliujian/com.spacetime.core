@@ -44,10 +44,11 @@ namespace ST.Core.Editor.Test
             if (SavePrefab("ui_panel_test",           BuildTestPrefab()))         ok++;
             if (SavePrefab("ui_panel_test_modal",     BuildTestModalPrefab()))    ok++;
             if (SavePrefab("ui_page_test_a",          BuildPageAPrefab()))        ok++;
+            if (SavePrefab("ui_panel_test_bag",       BuildBagPrefab()))          ok++;
 
             AssetDatabase.Refresh();
 
-            string msg = string.Format("完成：{0}/4 个 Prefab 已保存到\n{1}", ok, k_PrefabDir);
+            string msg = string.Format("完成：{0}/5 个 Prefab 已保存到\n{1}", ok, k_PrefabDir);
             Debug.Log("[ST.Core] " + msg);
             EditorUtility.DisplayDialog("创建结果", msg, "OK");
         }
@@ -67,6 +68,10 @@ namespace ST.Core.Editor.Test
         /// <summary>单独生成 <c>ui_page_test_a.prefab</c>。</summary>
         [MenuItem("ST.Core/Test/Create ui_page_test_a Prefab")]
         static void CreatePageA()    => CreateSingle("ui_page_test_a",         BuildPageAPrefab());
+
+        /// <summary>单独生成 <c>ui_panel_test_bag.prefab</c>。</summary>
+        [MenuItem("ST.Core/Test/Create ui_panel_test_bag Prefab")]
+        static void CreateBag()      => CreateSingle("ui_panel_test_bag",      BuildBagPrefab());
 
         // ═══════════════════════════════════════════
         // ui_panel_gm_box
@@ -236,6 +241,186 @@ namespace ST.Core.Editor.Test
 
             SetLayerRecursive(root);
             return root;
+        }
+
+        // ═══════════════════════════════════════════
+        // ui_panel_test_bag  （背包 ScrollView 面板）
+        // ═══════════════════════════════════════════
+
+        /// <summary>
+        /// 构建背包测试面板 Prefab 节点树。
+        /// <code>
+        /// ui_panel_test_bag  (Canvas + TestBagPanel)
+        /// ├─ Background      (全屏蒙版)
+        /// ├─ TitleBar        (顶部标题条)
+        /// │  └─ TitleText
+        /// ├─ CloseBtn
+        /// │  └─ Label
+        /// ├─ ScrollView      (ScrollRect + Image + Mask)
+        /// │  └─ Viewport     (Mask)
+        /// │     └─ Content   (GridLayoutGroup + ContentSizeFitter)
+        /// └─ ItemTemplate    (TestBagItem，SetActive=false)
+        ///    ├─ IconImage
+        ///    ├─ NameText
+        ///    └─ CountText
+        /// </code>
+        /// </summary>
+        static GameObject BuildBagPrefab()
+        {
+            var root  = MakeRoot("ui_panel_test_bag", new Color(0.08f, 0.06f, 0.04f, 0.93f));
+            var panel = root.AddComponent<TestBagPanel>();
+
+            var (_, titleText) = AddTitleBar(root.transform, "背包",
+                                             new Color(0.22f, 0.15f, 0.06f, 1f));
+            var closeBtn = AddCloseBtn(root.transform);
+
+            // ScrollView（留出顶部标题栏 + 四边 padding）
+            var (scrollView, content) = AddScrollView(root.transform);
+
+            // ItemTemplate — 置于 root 下（不在 Content 内），运行时 Instantiate 到 Content
+            var template = CreateBagItemTemplate(root.transform);
+            template.SetActive(false);
+
+            // 绑定引用
+            panel.m_TitleText    = titleText;
+            panel.m_CloseButton  = closeBtn;
+            panel.m_ScrollRect   = scrollView.GetComponent<ScrollRect>();
+            panel.m_Content      = content;
+            panel.m_ItemTemplate = template;
+
+            SetLayerRecursive(root);
+            return root;
+        }
+
+        /// <summary>
+        /// 创建 ScrollView 节点树（ScrollRect + Viewport + Content），
+        /// Content 挂 <c>GridLayoutGroup</c> + <c>ContentSizeFitter</c>。
+        /// </summary>
+        /// <returns>(ScrollView 根节点 GameObject, Content RectTransform)</returns>
+        static (GameObject sv, RectTransform content) AddScrollView(Transform parent)
+        {
+            // ── ScrollView 根节点 ──────────────────────────────────────
+            var sv    = CreateChild("ScrollView", parent);
+            var svImg = sv.AddComponent<Image>();
+            svImg.color = new Color(0f, 0f, 0f, 0.25f);
+            var svRect = sv.GetComponent<RectTransform>();
+            svRect.anchorMin = new Vector2(0f, 0f);
+            svRect.anchorMax = new Vector2(1f, 1f);
+            svRect.offsetMin = new Vector2(16f, 16f);
+            svRect.offsetMax = new Vector2(-16f, -96f); // 上边留出 TitleBar
+
+            // ── Viewport（带 Mask）────────────────────────────────────
+            var vp    = CreateChild("Viewport", sv.transform);
+            var vpImg = vp.AddComponent<Image>();
+            vpImg.color           = new Color(0f, 0f, 0f, 0.01f);
+            vpImg.raycastTarget   = true;
+            var mask = vp.AddComponent<Mask>();
+            mask.showMaskGraphic  = false;
+            var vpRect = vp.GetComponent<RectTransform>();
+            StretchFull(vpRect);
+
+            // ── Content（格子父节点）─────────────────────────────────
+            var contentGo   = CreateChild("Content", vp.transform);
+            var contentRect = contentGo.GetComponent<RectTransform>();
+            contentRect.anchorMin        = new Vector2(0f, 1f);
+            contentRect.anchorMax        = new Vector2(1f, 1f);
+            contentRect.pivot            = new Vector2(0.5f, 1f);
+            contentRect.sizeDelta        = new Vector2(0f, 0f);
+            contentRect.anchoredPosition = Vector2.zero;
+
+            var grid = contentGo.AddComponent<GridLayoutGroup>();
+            grid.cellSize        = new Vector2(160f, 180f);
+            grid.spacing         = new Vector2(12f, 12f);
+            grid.padding         = new RectOffset(24, 24, 24, 24);
+            grid.constraint      = GridLayoutGroup.Constraint.FixedColumnCount;
+            grid.constraintCount = 5;
+            grid.childAlignment  = TextAnchor.UpperLeft;
+
+            var csf = contentGo.AddComponent<ContentSizeFitter>();
+            csf.horizontalFit = ContentSizeFitter.FitMode.Unconstrained;
+            csf.verticalFit   = ContentSizeFitter.FitMode.PreferredSize;
+
+            // ── ScrollRect ────────────────────────────────────────────
+            var scrollRect = sv.AddComponent<ScrollRect>();
+            scrollRect.viewport          = vpRect;
+            scrollRect.content           = contentRect;
+            scrollRect.horizontal        = false;
+            scrollRect.vertical          = true;
+            scrollRect.scrollSensitivity = 40f;
+            scrollRect.movementType      = ScrollRect.MovementType.Elastic;
+            scrollRect.elasticity        = 0.1f;
+            scrollRect.inertia           = true;
+            scrollRect.decelerationRate  = 0.135f;
+
+            return (sv, contentRect);
+        }
+
+        /// <summary>
+        /// 创建格子模板节点（挂 <see cref="TestBagItem"/>），默认 SetActive(false) 由调用方负责。
+        /// </summary>
+        static GameObject CreateBagItemTemplate(Transform parent)
+        {
+            var go   = CreateChild("ItemTemplate", parent);
+            var rt   = go.GetComponent<RectTransform>();
+            rt.localScale = Vector3.one;
+            rt.sizeDelta  = new Vector2(160f, 180f);
+
+            // 背景 + 按钮（整格可点击）
+            var bgImg = go.AddComponent<Image>();
+            bgImg.color = new Color(0.28f, 0.22f, 0.14f, 1f);
+            var btn = go.AddComponent<Button>();
+
+            // 高亮颜色调整
+            var colors       = btn.colors;
+            colors.highlightedColor = new Color(0.45f, 0.36f, 0.22f, 1f);
+            colors.pressedColor     = new Color(0.18f, 0.14f, 0.08f, 1f);
+            btn.colors       = colors;
+
+            var item = go.AddComponent<TestBagItem>();
+
+            // ── 图标 ───────────────────────────────────────────────────
+            var iconGo = CreateChild("IconImage", go.transform);
+            var iconImg = iconGo.AddComponent<Image>();
+            iconImg.color = new Color(0.55f, 0.38f, 0.18f, 1f);
+            var iconRect  = iconGo.GetComponent<RectTransform>();
+            iconRect.anchorMin = new Vector2(0.08f, 0.28f);
+            iconRect.anchorMax = new Vector2(0.92f, 0.95f);
+            iconRect.offsetMin = Vector2.zero;
+            iconRect.offsetMax = Vector2.zero;
+
+            // ── 物品名称 ──────────────────────────────────────────────
+            var nameGo   = CreateChild("NameText", go.transform);
+            var nameText = nameGo.AddComponent<Text>();
+            nameText.text      = "物品名称";
+            nameText.fontSize  = 18;
+            nameText.alignment = TextAnchor.MiddleCenter;
+            nameText.color     = Color.white;
+            var nameRect = nameGo.GetComponent<RectTransform>();
+            nameRect.anchorMin = new Vector2(0f, 0f);
+            nameRect.anchorMax = new Vector2(1f, 0.28f);
+            nameRect.offsetMin = Vector2.zero;
+            nameRect.offsetMax = Vector2.zero;
+
+            // ── 数量角标 ──────────────────────────────────────────────
+            var countGo   = CreateChild("CountText", go.transform);
+            var countText = countGo.AddComponent<Text>();
+            countText.text      = "×1";
+            countText.fontSize  = 16;
+            countText.alignment = TextAnchor.UpperRight;
+            countText.color     = new Color(1f, 0.9f, 0.45f, 1f);
+            var countRect = countGo.GetComponent<RectTransform>();
+            countRect.anchorMin = new Vector2(0.5f, 0.72f);
+            countRect.anchorMax = new Vector2(1f,   1f);
+            countRect.offsetMin = new Vector2(0f, -4f);
+            countRect.offsetMax = new Vector2(-4f, 0f);
+
+            // 绑定引用
+            item.m_IconImage  = iconImg;
+            item.m_NameText   = nameText;
+            item.m_CountText  = countText;
+            item.m_Button     = btn;
+
+            return go;
         }
 
         // ─── 共用节点构建方法 ────────────────────────────────────────────

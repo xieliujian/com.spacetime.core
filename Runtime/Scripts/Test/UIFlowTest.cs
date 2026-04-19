@@ -170,6 +170,7 @@ namespace ST.Core.Test
             DrawPanelRow(TestUIID.GMBoxPanel,  "GMBoxPanel");
             DrawPanelRow(TestUIID.TestPanel,   "TestPanel");
             DrawPanelRow(TestUIID.TestModal,   "TestModal");
+            DrawPanelRow(TestUIID.TestBagPanel,"TestBagPanel");
 
             // 子页面行
             GUILayout.BeginHorizontal();
@@ -177,6 +178,15 @@ namespace ST.Core.Test
             string pageAStr = pageAOpen ? "<color=#4f4>●</color>" : "<color=#666>○</color>";
             GUILayout.Label(string.Format("  {0,-4} {1,-14}  {2}        <color=#aaa>(Page)</color>",
                 TestUIID.TestPageA, "TestPageA", pageAStr), RichStyle());
+            GUILayout.EndHorizontal();
+
+            // 背包格子数量行
+            GUILayout.BeginHorizontal();
+            var bagPanel = UIManager.S != null ? UIManager.S.FindPanel<TestBagPanel>() : null;
+            string bagItemStr = bagPanel != null
+                ? string.Format("<color=#ff8>格子数={0}</color>", bagPanel.itemCount)
+                : "<color=#666>（未加载）</color>";
+            GUILayout.Label(string.Format("       {0,-14}  {1}", "  itemCount", bagItemStr), RichStyle());
             GUILayout.EndHorizontal();
         }
 
@@ -229,6 +239,16 @@ namespace ST.Core.Test
             if (GUILayout.Button("Attach PageA",  GUILayout.Width(110))) DoAttachPageA();
             if (GUILayout.Button("Detach PageA",  GUILayout.Width(110))) DoDetachPageA();
             GUILayout.EndHorizontal();
+
+            // 背包行
+            GUILayout.BeginHorizontal();
+            GUILayout.Label("  背包 ScrollView：", GUILayout.Width(130));
+            if (GUILayout.Button("Open Bag(50)",  GUILayout.Width(100))) DoOpenBag(50);
+            if (GUILayout.Button("Open Bag(10)",  GUILayout.Width(100))) DoOpenBag(10);
+            if (GUILayout.Button("Close Bag",     GUILayout.Width(85)))  DoClose(TestUIID.TestBagPanel);
+            if (GUILayout.Button("Refresh(10)",   GUILayout.Width(90)))  DoRefreshBag(10);
+            if (GUILayout.Button("Refresh(100)",  GUILayout.Width(95)))  DoRefreshBag(100);
+            GUILayout.EndHorizontal();
         }
 
         /// <summary>向 TestPanel 挂载 TestPageA。</summary>
@@ -257,6 +277,27 @@ namespace ST.Core.Test
             }
             panel.ClosePageA();
             GUILog("[操作] DettachPage TestPageA");
+        }
+
+        /// <summary>打开背包面板并传入格子数量。</summary>
+        void DoOpenBag(int count)
+        {
+            if (UIManager.S == null) return;
+            int pid = UIManager.S.OpenPanel(TestUIID.TestBagPanel, count);
+            GUILog(string.Format("[操作] OpenPanel(Bag, {0}) → panelID={1}", count, pid));
+        }
+
+        /// <summary>刷新背包格子数量（需面板已加载完成）。</summary>
+        void DoRefreshBag(int count)
+        {
+            var bag = UIManager.S != null ? UIManager.S.FindPanel<TestBagPanel>() : null;
+            if (bag == null)
+            {
+                GUILog("[操作] RefreshBag 失败：背包未打开或未加载完成");
+                return;
+            }
+            bag.RefreshItems(count);
+            GUILog(string.Format("[操作] RefreshItems({0})", count));
         }
 
         void DoOpen(int uiID)
@@ -463,6 +504,7 @@ namespace ST.Core.Test
                 BuildManualTC05(),
                 BuildManualTC06(),
                 BuildManualTC07(),
+                BuildManualTC08(),
             };
         }
 
@@ -727,6 +769,55 @@ namespace ST.Core.Test
             });
         }
 
+        ManualTC BuildManualTC08()
+        {
+            return new ManualTC("TC08 背包 ScrollView", "TC08", new Step[]
+            {
+                new Step("OpenPanel(TestBagPanel, 50 格子)",
+                    "IsOpened=true",
+                    () => UIManager.S.OpenPanel(TestUIID.TestBagPanel, 50),
+                    () => UIManager.S.IsOpened(TestUIID.TestBagPanel)),
+
+                new Step("等待背包 Prefab 加载完成",
+                    "FindPanel<TestBagPanel>≠null",
+                    null,
+                    () => UIManager.S.FindPanel<TestBagPanel>() != null,
+                    waitLoad: true),
+
+                new Step("验证格子数量 = 50",
+                    "itemCount=50",
+                    null,
+                    () =>
+                    {
+                        var p = UIManager.S.FindPanel<TestBagPanel>();
+                        return p != null && p.itemCount == 50;
+                    }),
+
+                new Step("RefreshItems(10) — 减少格子数量",
+                    "itemCount=10",
+                    () => UIManager.S.FindPanel<TestBagPanel>()?.RefreshItems(10),
+                    () =>
+                    {
+                        var p = UIManager.S.FindPanel<TestBagPanel>();
+                        return p != null && p.itemCount == 10;
+                    }),
+
+                new Step("RefreshItems(100) — 增加格子数量（需滚动查看）",
+                    "itemCount=100",
+                    () => UIManager.S.FindPanel<TestBagPanel>()?.RefreshItems(100),
+                    () =>
+                    {
+                        var p = UIManager.S.FindPanel<TestBagPanel>();
+                        return p != null && p.itemCount == 100;
+                    }),
+
+                new Step("ClosePanel(TestBagPanel) — 格子随面板销毁",
+                    "IsOpened=false",
+                    () => UIManager.S.ClosePanel(TestUIID.TestBagPanel),
+                    () => !UIManager.S.IsOpened(TestUIID.TestBagPanel)),
+            });
+        }
+
         // ═══════════════════════════════════════════════════════════════
         // ═══  自动模式（F2 / uitest）  ══════════════════════════════
         // ═══════════════════════════════════════════════════════════════
@@ -748,6 +839,7 @@ namespace ST.Core.Test
             yield return TC05_DoCloseAll();
             yield return TC06_QueryAPIs();
             yield return TC07_PageAttachDetach();
+            yield return TC08_BagScrollView();
 
             Print("──────────────────────────────");
             Print(string.Format("结果：{0} / {1} 通过", m_PassedTests, m_TotalTests));
@@ -935,6 +1027,50 @@ namespace ST.Core.Test
             // 清理
             yield return EnsureClosed();
             ReportTC("TC07_子页面", passed);
+        }
+
+        IEnumerator TC08_BagScrollView()
+        {
+            bool passed = true;
+            Print("── TC08 背包 ScrollView");
+
+            if (UIManager.S.IsOpened(TestUIID.TestBagPanel))
+                UIManager.S.ClosePanel(TestUIID.TestBagPanel);
+            yield return null;
+
+            UIManager.S.OpenPanel(TestUIID.TestBagPanel, 50);
+            float elapsed = 0f;
+            while (UIManager.S.FindPanel<TestBagPanel>() == null && elapsed < k_LoadTimeout)
+            {
+                elapsed += Time.deltaTime;
+                yield return null;
+            }
+
+            var bag = UIManager.S.FindPanel<TestBagPanel>();
+            Check(bag != null, "TestBagPanel 加载完成", ref passed);
+            if (bag == null) { ReportTC("TC08_背包ScrollView", false); yield break; }
+
+            Check(bag.itemCount == 50,
+                string.Format("生成 50 格子（实际 {0}）", bag.itemCount), ref passed);
+
+            // 减少格子
+            bag.RefreshItems(10);
+            yield return null;
+            Check(bag.itemCount == 10,
+                string.Format("减少为 10 格子（实际 {0}）", bag.itemCount), ref passed);
+
+            // 增加格子（验证大量 Item 不报错）
+            bag.RefreshItems(100);
+            yield return null;
+            Check(bag.itemCount == 100,
+                string.Format("增加为 100 格子（实际 {0}）", bag.itemCount), ref passed);
+
+            // 关闭，格子随面板销毁
+            UIManager.S.ClosePanel(TestUIID.TestBagPanel);
+            yield return null;
+            Check(!UIManager.S.IsOpened(TestUIID.TestBagPanel), "关闭后 IsOpened=false", ref passed);
+
+            ReportTC("TC08_背包ScrollView", passed);
         }
 
         // ─── 辅助协程 ────────────────────────────────────────────────────
