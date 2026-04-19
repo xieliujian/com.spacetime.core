@@ -17,5 +17,11 @@ namespace ST.Core.Test
 
         /// <summary>模态测试面板 ID，对应 <c>ui_panel_test_modal.prefab</c>（<see cref="TestModalPanel"/>）。</summary>
         public const int TestModal    = 3;
+
+        /// <summary>
+        /// 测试子页面 A 的 ID，对应 <c>ui_page_test_a.prefab</c>（<see cref="TestPageA"/>）。
+        /// <para>Page 无独立 Canvas，由父面板（<see cref="TestPanel"/>）的 Canvas 渲染。</para>
+        /// </summary>
+        public const int TestPageA    = 4;
     }
 }

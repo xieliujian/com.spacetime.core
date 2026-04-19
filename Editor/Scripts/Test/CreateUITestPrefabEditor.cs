@@ -43,10 +43,11 @@ namespace ST.Core.Editor.Test
             if (SavePrefab("ui_panel_gm_box",        BuildGMBoxPrefab()))        ok++;
             if (SavePrefab("ui_panel_test",           BuildTestPrefab()))         ok++;
             if (SavePrefab("ui_panel_test_modal",     BuildTestModalPrefab()))    ok++;
+            if (SavePrefab("ui_page_test_a",          BuildPageAPrefab()))        ok++;
 
             AssetDatabase.Refresh();
 
-            string msg = string.Format("完成：{0}/3 个 Prefab 已保存到\n{1}", ok, k_PrefabDir);
+            string msg = string.Format("完成：{0}/4 个 Prefab 已保存到\n{1}", ok, k_PrefabDir);
             Debug.Log("[ST.Core] " + msg);
             EditorUtility.DisplayDialog("创建结果", msg, "OK");
         }
@@ -62,6 +63,10 @@ namespace ST.Core.Editor.Test
         /// <summary>单独生成 <c>ui_panel_test_modal.prefab</c>。</summary>
         [MenuItem("ST.Core/Test/Create ui_panel_test_modal Prefab")]
         static void CreateModal()    => CreateSingle("ui_panel_test_modal",    BuildTestModalPrefab());
+
+        /// <summary>单独生成 <c>ui_page_test_a.prefab</c>。</summary>
+        [MenuItem("ST.Core/Test/Create ui_page_test_a Prefab")]
+        static void CreatePageA()    => CreateSingle("ui_page_test_a",         BuildPageAPrefab());
 
         // ═══════════════════════════════════════════
         // ui_panel_gm_box
@@ -171,6 +176,63 @@ namespace ST.Core.Editor.Test
             panel.m_TitleText   = titleText;
             panel.m_InfoText    = infoText;
             panel.m_CloseButton = closeBtn;
+
+            SetLayerRecursive(root);
+            return root;
+        }
+
+        // ═══════════════════════════════════════════
+        // ui_page_test_a  （子页面，无 Canvas）
+        // ═══════════════════════════════════════════
+
+        /// <summary>
+        /// 构建测试子页面 A 的 Prefab 节点树（无 Canvas，由父面板 Canvas 渲染）。
+        /// </summary>
+        static GameObject BuildPageAPrefab()
+        {
+            var root = new GameObject("ui_page_test_a");
+
+            // Page 根节点仅含 RectTransform，无 Canvas。
+            var rt = root.AddComponent<RectTransform>();
+            rt.localScale       = Vector3.one;
+            rt.anchorMin        = new Vector2(0.5f, 0.5f);
+            rt.anchorMax        = new Vector2(0.5f, 0.5f);
+            rt.pivot            = new Vector2(0.5f, 0.5f);
+            rt.sizeDelta        = new Vector2(k_DesignW, k_DesignH);
+            rt.anchoredPosition = Vector2.zero;
+
+            var page = root.AddComponent<TestPageA>();
+
+            // Background
+            var bg      = CreateChild("Background", root.transform);
+            var bgImage = bg.AddComponent<Image>();
+            bgImage.color = new Color(0f, 0.05f, 0.15f, 0.82f);
+            StretchFull(bg.GetComponent<RectTransform>());
+
+            // TitleBar
+            var (_, titleText) = AddTitleBar(root.transform, "TestPageA（子页面）",
+                                             new Color(0.05f, 0.20f, 0.40f, 1f));
+
+            // InfoText
+            var infoGo   = CreateChild("InfoText", root.transform);
+            var infoText = infoGo.AddComponent<Text>();
+            infoText.text      = "这是 TestPanel 的子页面 A\n通过 panelActive.AttachPage 动态挂载\n点击右上角 × 卸载";
+            infoText.fontSize  = 30;
+            infoText.alignment = TextAnchor.MiddleCenter;
+            infoText.color     = new Color(0.8f, 0.95f, 1f, 1f);
+            var infoRect = infoGo.GetComponent<RectTransform>();
+            infoRect.anchorMin        = new Vector2(0.1f, 0.35f);
+            infoRect.anchorMax        = new Vector2(0.9f, 0.65f);
+            infoRect.offsetMin        = Vector2.zero;
+            infoRect.offsetMax        = Vector2.zero;
+
+            // CloseBtn
+            var closeBtn = AddCloseBtn(root.transform);
+
+            // 绑定引用
+            page.m_TitleText   = titleText;
+            page.m_InfoText    = infoText;
+            page.m_CloseButton = closeBtn;
 
             SetLayerRecursive(root);
             return root;

@@ -71,6 +71,40 @@ namespace ST.Core.Test
             Debug.LogFormat("[TestPanel] OnVisibleChanged  isVisible={0}", isVisible);
         }
 
+        // ─── 子页面操作 ──────────────────────────────────────────────────
+
+        /// <summary>
+        /// 动态挂载子页面 A（<see cref="TestUIID.TestPageA"/>）到本面板。
+        /// <para>
+        /// 调用 <see cref="UIPanelActive.AttachPage"/> 异步加载并实例化页面 Prefab；
+        /// 若已挂载则忽略。
+        /// </para>
+        /// </summary>
+        /// <param name="args">传递给 <see cref="TestPageA.OnOpen"/> 的可选参数。</param>
+        public void OpenPageA(params object[] args)
+        {
+            panelActive?.AttachPage(TestUIID.TestPageA, args);
+            Debug.Log("[TestPanel] OpenPageA 请求已发送");
+        }
+
+        /// <summary>
+        /// 卸载子页面 A（<see cref="TestUIID.TestPageA"/>）。
+        /// </summary>
+        /// <param name="useCache">
+        /// <c>true</c> 时若配置了缓存数量则不销毁 GameObject，仅隐藏；默认 <c>false</c>。
+        /// </param>
+        public void ClosePageA(bool useCache = false)
+        {
+            panelActive?.DettachPage(TestUIID.TestPageA, useCache);
+            Debug.Log("[TestPanel] ClosePageA 请求已发送");
+        }
+
+        /// <summary>返回子页面 A 当前是否已挂载并打开。</summary>
+        public bool IsPageAOpened()
+        {
+            return panelActive != null && panelActive.IsPageOpened(TestUIID.TestPageA);
+        }
+
         // ─── 私有方法 ────────────────────────────────────────────────────
 
         /// <summary>关闭按钮点击回调，通过 UIManager 关闭自身。</summary>

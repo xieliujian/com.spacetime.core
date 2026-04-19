@@ -170,6 +170,14 @@ namespace ST.Core.Test
             DrawPanelRow(TestUIID.GMBoxPanel,  "GMBoxPanel");
             DrawPanelRow(TestUIID.TestPanel,   "TestPanel");
             DrawPanelRow(TestUIID.TestModal,   "TestModal");
+
+            // 子页面行
+            GUILayout.BeginHorizontal();
+            bool pageAOpen = UIManager.S != null && UIManager.S.IsPageOpen(TestUIID.TestPanel, TestUIID.TestPageA);
+            string pageAStr = pageAOpen ? "<color=#4f4>●</color>" : "<color=#666>○</color>";
+            GUILayout.Label(string.Format("  {0,-4} {1,-14}  {2}        <color=#aaa>(Page)</color>",
+                TestUIID.TestPageA, "TestPageA", pageAStr), RichStyle());
+            GUILayout.EndHorizontal();
         }
 
         /// <summary>绘制单个面板的状态行。</summary>
@@ -195,8 +203,9 @@ namespace ST.Core.Test
         void DrawQuickControls()
         {
             GUILayout.Label("■ 快速操作", BoldStyle());
-            GUILayout.BeginHorizontal();
 
+            // 面板行
+            GUILayout.BeginHorizontal();
             if (GUILayout.Button("Open 1",    GUILayout.Width(70))) DoOpen(TestUIID.GMBoxPanel);
             if (GUILayout.Button("Close 1",   GUILayout.Width(70))) DoClose(TestUIID.GMBoxPanel);
             GUILayout.Space(10);
@@ -212,8 +221,42 @@ namespace ST.Core.Test
                 UIManager.S.DoInit();
                 GUILog("[操作] Close All");
             }
-
             GUILayout.EndHorizontal();
+
+            // 子页面行（需要 TestPanel 已打开）
+            GUILayout.BeginHorizontal();
+            GUILayout.Label("  Page A（需 TestPanel 已打开）：", GUILayout.Width(200));
+            if (GUILayout.Button("Attach PageA",  GUILayout.Width(110))) DoAttachPageA();
+            if (GUILayout.Button("Detach PageA",  GUILayout.Width(110))) DoDetachPageA();
+            GUILayout.EndHorizontal();
+        }
+
+        /// <summary>向 TestPanel 挂载 TestPageA。</summary>
+        void DoAttachPageA()
+        {
+            if (UIManager.S == null) return;
+            var panel = UIManager.S.FindPanel<TestPanel>();
+            if (panel == null)
+            {
+                GUILog("[操作] Attach PageA 失败：TestPanel 未打开或未加载完成");
+                return;
+            }
+            panel.OpenPageA("via GUI");
+            GUILog("[操作] AttachPage TestPageA");
+        }
+
+        /// <summary>从 TestPanel 卸载 TestPageA。</summary>
+        void DoDetachPageA()
+        {
+            if (UIManager.S == null) return;
+            var panel = UIManager.S.FindPanel<TestPanel>();
+            if (panel == null)
+            {
+                GUILog("[操作] Detach PageA 失败：TestPanel 未打开或未加载完成");
+                return;
+            }
+            panel.ClosePageA();
+            GUILog("[操作] DettachPage TestPageA");
         }
 
         void DoOpen(int uiID)
@@ -419,6 +462,7 @@ namespace ST.Core.Test
                 BuildManualTC04(),
                 BuildManualTC05(),
                 BuildManualTC06(),
+                BuildManualTC07(),
             };
         }
 
@@ -628,6 +672,61 @@ namespace ST.Core.Test
             });
         }
 
+        ManualTC BuildManualTC07()
+        {
+            return new ManualTC("TC07 子页面 Attach/Detach", "TC07", new Step[]
+            {
+                new Step("清理：确保 TestPanel 已打开",
+                    "IsOpened(TestPanel)=true",
+                    () => { if (!UIManager.S.IsOpened(TestUIID.TestPanel)) UIManager.S.OpenPanel(TestUIID.TestPanel); },
+                    () => UIManager.S.IsOpened(TestUIID.TestPanel)),
+
+                new Step("等待 TestPanel 加载完成",
+                    "FindPanel<TestPanel>≠null",
+                    null,
+                    () => UIManager.S.FindPanel<TestPanel>() != null,
+                    waitLoad: true),
+
+                new Step("AttachPage(TestPageA)",
+                    "IsPageOpen(TestPanel, TestPageA)=true",
+                    () =>
+                    {
+                        var p = UIManager.S.FindPanel<TestPanel>();
+                        p?.OpenPageA("manual step");
+                    },
+                    () => UIManager.S.IsPageOpen(TestUIID.TestPanel, TestUIID.TestPageA)),
+
+                new Step("等待 TestPageA 加载完成",
+                    "IsPageOpen=true（Prefab 就绪）",
+                    null,
+                    () => UIManager.S.IsPageOpen(TestUIID.TestPanel, TestUIID.TestPageA),
+                    waitLoad: true),
+
+                new Step("DettachPage(TestPageA)",
+                    "IsPageOpen(TestPanel, TestPageA)=false",
+                    () =>
+                    {
+                        var p = UIManager.S.FindPanel<TestPanel>();
+                        p?.ClosePageA();
+                    },
+                    () => !UIManager.S.IsPageOpen(TestUIID.TestPanel, TestUIID.TestPageA)),
+
+                new Step("再次 Attach（验证缓存复用）",
+                    "IsPageOpen=true（缓存复用）",
+                    () =>
+                    {
+                        var p = UIManager.S.FindPanel<TestPanel>();
+                        p?.OpenPageA("cached");
+                    },
+                    () => UIManager.S.IsPageOpen(TestUIID.TestPanel, TestUIID.TestPageA)),
+
+                new Step("清理：关闭 TestPanel",
+                    "IsOpened=false",
+                    () => UIManager.S.ClosePanel(TestUIID.TestPanel),
+                    () => !UIManager.S.IsOpened(TestUIID.TestPanel)),
+            });
+        }
+
         // ═══════════════════════════════════════════════════════════════
         // ═══  自动模式（F2 / uitest）  ══════════════════════════════
         // ═══════════════════════════════════════════════════════════════
@@ -648,6 +747,7 @@ namespace ST.Core.Test
             yield return TC04_OpenCount();
             yield return TC05_DoCloseAll();
             yield return TC06_QueryAPIs();
+            yield return TC07_PageAttachDetach();
 
             Print("──────────────────────────────");
             Print(string.Format("结果：{0} / {1} 通过", m_PassedTests, m_TotalTests));
@@ -793,6 +893,50 @@ namespace ST.Core.Test
             ReportTC("TC06_查询API", passed);
         }
 
+        IEnumerator TC07_PageAttachDetach()
+        {
+            bool passed = true;
+            Print("── TC07 子页面 Attach/Detach");
+
+            // 确保 TestPanel 已打开并加载完成
+            if (!UIManager.S.IsOpened(TestUIID.TestPanel))
+                UIManager.S.OpenPanel(TestUIID.TestPanel);
+            yield return WaitForPanel<TestPanel>(k_LoadTimeout);
+
+            var testPanel = UIManager.S.FindPanel<TestPanel>();
+            Check(testPanel != null, "TestPanel 加载完成", ref passed);
+            if (testPanel == null) { ReportTC("TC07_子页面", false); yield break; }
+
+            // 确保 PageA 未挂载
+            if (UIManager.S.IsPageOpen(TestUIID.TestPanel, TestUIID.TestPageA))
+                testPanel.ClosePageA();
+            yield return null;
+            Check(!UIManager.S.IsPageOpen(TestUIID.TestPanel, TestUIID.TestPageA),
+                "Attach 前 IsPageOpen=false", ref passed);
+
+            // AttachPage
+            testPanel.OpenPageA("auto-tc07");
+            yield return WaitForPage(k_LoadTimeout);
+            Check(UIManager.S.IsPageOpen(TestUIID.TestPanel, TestUIID.TestPageA),
+                "Attach 后 IsPageOpen=true", ref passed);
+
+            // DettachPage
+            testPanel.ClosePageA();
+            yield return null;
+            Check(!UIManager.S.IsPageOpen(TestUIID.TestPanel, TestUIID.TestPageA),
+                "Detach 后 IsPageOpen=false", ref passed);
+
+            // 再次 Attach，验证缓存复用
+            testPanel.OpenPageA("cached");
+            yield return WaitForPage(k_LoadTimeout);
+            Check(UIManager.S.IsPageOpen(TestUIID.TestPanel, TestUIID.TestPageA),
+                "缓存复用后 IsPageOpen=true", ref passed);
+
+            // 清理
+            yield return EnsureClosed();
+            ReportTC("TC07_子页面", passed);
+        }
+
         // ─── 辅助协程 ────────────────────────────────────────────────────
 
         IEnumerator EnsureClosed()
@@ -814,6 +958,19 @@ namespace ST.Core.Test
             }
             if (UIManager.S.FindPanel<T>() == null)
                 Print(string.Format("[超时] 等待 {0} 超过 {1}s", typeof(T).Name, timeout));
+        }
+
+        /// <summary>等待 TestPageA 挂载完成（IsPageOpen 变为 true），超时打印警告。</summary>
+        IEnumerator WaitForPage(float timeout)
+        {
+            float elapsed = 0f;
+            while (!UIManager.S.IsPageOpen(TestUIID.TestPanel, TestUIID.TestPageA) && elapsed < timeout)
+            {
+                elapsed += Time.deltaTime;
+                yield return null;
+            }
+            if (!UIManager.S.IsPageOpen(TestUIID.TestPanel, TestUIID.TestPageA))
+                Print(string.Format("[超时] 等待 TestPageA 超过 {0}s", timeout));
         }
 
         // ─── 断言与输出 ──────────────────────────────────────────────────

@@ -189,6 +189,19 @@ namespace ST.Core.Test
                 cacheCount  = 1,
                 isSingleton = true,
             });
+
+            // Page 注册：路径与 Panel 相同目录，sortLayer 对 Page 无实际意义（由父 Panel 决定）
+            UIDataTable.Register(new UIData
+            {
+                uiID        = TestUIID.TestPageA,
+                name        = "TestPageA",
+                path        = "ui/uiprefab/",
+                filename    = "ui_page_test_a",
+                suffix      = ".prefab",
+                sortLayer   = PanelSortLayer.Auto,
+                cacheCount  = 1,
+                isSingleton = false,
+            });
         }
 
         /// <summary>
@@ -201,6 +214,8 @@ namespace ST.Core.Test
             m_GMBox.RegisterCommand("closeall",  CmdCloseAll,  "关闭所有面板");
             m_GMBox.RegisterCommand("isopen",    CmdIsOpen,    "查询面板是否打开：isopen <uiID(int)>");
             m_GMBox.RegisterCommand("listpanel", CmdListPanel, "列出所有已注册面板配置");
+            m_GMBox.RegisterCommand("openpage",  CmdOpenPage,  "挂载子页面到 TestPanel：openpage");
+            m_GMBox.RegisterCommand("closepage", CmdClosePage, "卸载 TestPanel 的子页面：closepage");
 
             if (m_FlowTest != null)
                 m_GMBox.RegisterCommand("uitest", _ => m_FlowTest.RunTests(), "运行 UI 自动化流程测试（等同按 F2）");
@@ -298,6 +313,41 @@ namespace ST.Core.Test
             m_GMBox.AppendOutput(string.Format("  {0,-6} GMBoxPanel   (ui_panel_gm_box.prefab)        Top", TestUIID.GMBoxPanel));
             m_GMBox.AppendOutput(string.Format("  {0,-6} TestPanel    (ui_panel_test.prefab)           Auto", TestUIID.TestPanel));
             m_GMBox.AppendOutput(string.Format("  {0,-6} TestModal    (ui_panel_test_modal.prefab)     Auto  HideMask=HideAndUnInteractive", TestUIID.TestModal));
+            m_GMBox.AppendOutput(string.Format("  {0,-6} TestPageA    (ui_page_test_a.prefab)          Page（挂载于 TestPanel）", TestUIID.TestPageA));
+        }
+
+        /// <summary>
+        /// 指令 <c>openpage</c>：向已打开的 TestPanel 挂载子页面 A。
+        /// 用法：<c>openpage</c>（TestPanel 必须已打开）
+        /// </summary>
+        void CmdOpenPage(string[] args)
+        {
+            var testPanel = UIManager.S != null ? UIManager.S.FindPanel<TestPanel>() : null;
+            if (testPanel == null)
+            {
+                m_GMBox.AppendOutput("[openpage] TestPanel 未打开或尚未加载完成，请先 openui 2");
+                return;
+            }
+
+            testPanel.OpenPageA("via GM");
+            m_GMBox.AppendOutput("[openpage] TestPageA OpenPageA 请求已发送");
+        }
+
+        /// <summary>
+        /// 指令 <c>closepage</c>：从 TestPanel 卸载子页面 A。
+        /// 用法：<c>closepage</c>
+        /// </summary>
+        void CmdClosePage(string[] args)
+        {
+            var testPanel = UIManager.S != null ? UIManager.S.FindPanel<TestPanel>() : null;
+            if (testPanel == null)
+            {
+                m_GMBox.AppendOutput("[closepage] TestPanel 未打开或尚未加载完成");
+                return;
+            }
+
+            testPanel.ClosePageA();
+            m_GMBox.AppendOutput("[closepage] TestPageA ClosePageA 请求已发送");
         }
 
         // ══════════════════════════════════════════
