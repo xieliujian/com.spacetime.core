@@ -49,6 +49,9 @@ The main framework is structured as follows:
 - **Runtime/Scripts/Manager/** - Game managers
   - `MainThreadTask` - Main thread task execution
 
+- **Runtime/Scripts/Camera/** - 摄像机工具
+  - `SceneRoamCamera` - 场景漫游摄像机（MonoBehaviour），支持 WASD 移动、鼠标右键旋转、滚轮调速，兼容 WebGL
+
 - **Editor/Scripts/** - Unity Editor tools
   - `ShaderVariant/` - Shader variant collection tools
   - `Utils/` - Editor utilities
