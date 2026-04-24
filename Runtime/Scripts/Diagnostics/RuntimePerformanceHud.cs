@@ -3,7 +3,7 @@ using UnityEngine;
 #if UNITY_EDITOR
 using UnityEditor;
 #endif
-#if !UNITY_EDITOR && ENABLE_PROFILER
+#if !UNITY_EDITOR && DEVELOPMENT_BUILD
 using Unity.Profiling;
 #endif
 
@@ -50,20 +50,20 @@ namespace ST.Core.Diagnostics
         bool _sizeNeedsRecalc = true;
         const float k_Pad = 10f;
 
-#if !UNITY_EDITOR && ENABLE_PROFILER
+#if !UNITY_EDITOR && DEVELOPMENT_BUILD
         ProfilerRecorder _drawCallsRecorder;
 #endif
 
         void OnEnable()
         {
-#if !UNITY_EDITOR && ENABLE_PROFILER
+#if !UNITY_EDITOR && DEVELOPMENT_BUILD
             _drawCallsRecorder = ProfilerRecorder.StartNew(ProfilerCategory.Render, "Draw Calls Count");
 #endif
         }
 
         void OnDisable()
         {
-#if !UNITY_EDITOR && ENABLE_PROFILER
+#if !UNITY_EDITOR && DEVELOPMENT_BUILD
             _drawCallsRecorder.Dispose();
 #endif
         }
@@ -150,7 +150,7 @@ namespace ST.Core.Diagnostics
 
 #if !UNITY_EDITOR && !DEVELOPMENT_BUILD
             _sb.AppendLine();
-            _sb.AppendLine("(真机 DrawCall 需 Development Build + Profiler)");
+            _sb.AppendLine("(DrawCall 需 Development Build)");
 #endif
         }
 
@@ -160,11 +160,11 @@ namespace ST.Core.Diagnostics
             sb.Append("Draw Calls: ").Append(UnityStats.drawCalls);
             sb.Append("  Batches: ").Append(UnityStats.batches);
             sb.AppendLine();
-#elif ENABLE_PROFILER
-            if (_drawCallsRecorder.Valid)
+#elif DEVELOPMENT_BUILD
+            if (_drawCallsRecorder.Valid && _drawCallsRecorder.LastValue > 0)
                 sb.Append("Draw Calls: ").Append(_drawCallsRecorder.LastValue).AppendLine();
             else
-                sb.AppendLine("Draw Calls: (ProfilerRecorder 无效)");
+                sb.AppendLine("Draw Calls: N/A (WebGL/Profiler限制)");
 #else
             sb.AppendLine("Draw Calls: —");
 #endif
