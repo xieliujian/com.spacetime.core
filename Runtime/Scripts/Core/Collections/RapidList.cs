@@ -25,6 +25,9 @@ namespace ST.Core
         /// <summary>当前有效元素数量。</summary>
         public int Count => m_Count;
 
+        /// <summary>当前有效元素数量（小写别名，兼容旧代码）。</summary>
+        public int count => m_Count;
+
         /// <summary>当前分配的容量。</summary>
         public int Capacity => m_Items.Length;
 
@@ -38,6 +41,11 @@ namespace ST.Core
         // ──────────────────────────────────────────
         // 构造
         // ──────────────────────────────────────────
+
+        /// <summary>
+        /// 以默认初始容量 16 创建 RapidList。
+        /// </summary>
+        public RapidList() : this(16) { }
 
         /// <summary>
         /// 以指定初始容量创建 RapidList。
@@ -66,6 +74,17 @@ namespace ST.Core
         }
 
         /// <summary>
+        /// 批量追加数组中的所有元素。
+        /// </summary>
+        /// <param name="items">要追加的元素数组。</param>
+        public void AddItems(T[] items)
+        {
+            if (items == null) return;
+            foreach (var item in items)
+                Add(item);
+        }
+
+        /// <summary>
         /// 将有效元素数量重置为 0，不清除底层数组内容（保留内存以复用）。
         /// </summary>
         public void Clear()
@@ -88,6 +107,35 @@ namespace ST.Core
         public T[] GetInternalArray()
         {
             return m_Items;
+        }
+
+        /// <summary>
+        /// 底层数组的引用（兼容旧代码的别名）。
+        /// </summary>
+        public T[] buffer => m_Items;
+
+        /// <summary>
+        /// 判断有效元素中是否包含指定值。
+        /// </summary>
+        public bool Contains(T item)
+        {
+            var comparer = System.Collections.Generic.EqualityComparer<T>.Default;
+            for (int i = 0; i < m_Count; i++)
+            {
+                if (comparer.Equals(m_Items[i], item))
+                    return true;
+            }
+            return false;
+        }
+
+        /// <summary>
+        /// 将有效元素复制到新数组并返回。
+        /// </summary>
+        public T[] ToArray()
+        {
+            T[] result = new T[m_Count];
+            Array.Copy(m_Items, result, m_Count);
+            return result;
         }
     }
 }
