@@ -278,6 +278,8 @@ Shader "SpaceTime/Scene/SceneObjLit"
                 #pragma multi_compile _ _FORWARD_PLUS
                 #include_with_pragmas "Packages/com.unity.render-pipelines.core/ShaderLibrary/FoveatedRenderingKeywords.hlsl"
                 #include_with_pragmas "Packages/com.unity.render-pipelines.universal/ShaderLibrary/RenderingLayers.hlsl"
+                #pragma multi_compile _ DYNAMICLIGHTMAP_ON
+                #pragma multi_compile_fragment _ DEBUG_DISPLAY
             #endif
 
 
@@ -289,11 +291,6 @@ Shader "SpaceTime/Scene/SceneObjLit"
             #pragma multi_compile _ LIGHTMAP_ON
             #pragma multi_compile_fragment _ LOD_FADE_CROSSFADE
             #pragma multi_compile_fog
-
-            #if !defined(ST_SHADER_RUNTIME)
-                #pragma multi_compile _ DYNAMICLIGHTMAP_ON
-                #pragma multi_compile_fragment _ DEBUG_DISPLAY
-            #endif
 
             //--------------------------------------
             // GPU Instancing

@@ -39,9 +39,12 @@ Insert immediately after the ForwardLit material keyword block:
             #else
 ```
 
-Keep the existing complete URP pipeline pragma block inside the `#else` branch, including Foveated Rendering and Rendering Layers. Close the branch after those includes:
+Keep the existing complete URP pipeline pragma block inside the `#else` branch, including Foveated Rendering,
+Rendering Layers, Dynamic Lightmap, and Debug Display. Close the branch after those editor-only pragmas:
 
 ```hlsl
+            #pragma multi_compile _ DYNAMICLIGHTMAP_ON
+            #pragma multi_compile_fragment _ DEBUG_DISPLAY
             #endif
 ```
 
@@ -56,15 +59,6 @@ Keep these pragmas outside the runtime/editor branch:
             #pragma multi_compile _ LIGHTMAP_ON
             #pragma multi_compile_fragment _ LOD_FADE_CROSSFADE
             #pragma multi_compile_fog
-```
-
-Restrict Dynamic Lightmap and Debug Display to the editor branch:
-
-```hlsl
-            #if !defined(ST_SHADER_RUNTIME)
-                #pragma multi_compile _ DYNAMICLIGHTMAP_ON
-                #pragma multi_compile_fragment _ DEBUG_DISPLAY
-            #endif
 ```
 
 - [x] **Step 3: Keep normal GPU Instancing and remove runtime DOTS variants**
