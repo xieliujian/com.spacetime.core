@@ -245,22 +245,40 @@ Shader "SpaceTime/Scene/SceneObjLit"
             #pragma shader_feature_local_fragment _ENVIRONMENTREFLECTIONS_OFF
             #pragma shader_feature_local_fragment _SPECULAR_SETUP
 
+            //#define ST_SHADER_RUNTIME 1
+
             // -------------------------------------
             // Universal Pipeline keywords
-            #pragma multi_compile _ _MAIN_LIGHT_SHADOWS _MAIN_LIGHT_SHADOWS_CASCADE _MAIN_LIGHT_SHADOWS_SCREEN
-            #pragma multi_compile _ _ADDITIONAL_LIGHTS_VERTEX _ADDITIONAL_LIGHTS
-            #pragma multi_compile _ EVALUATE_SH_MIXED EVALUATE_SH_VERTEX
-            #pragma multi_compile_fragment _ _ADDITIONAL_LIGHT_SHADOWS
-            #pragma multi_compile_fragment _ _REFLECTION_PROBE_BLENDING
-            #pragma multi_compile_fragment _ _REFLECTION_PROBE_BOX_PROJECTION
-            #pragma multi_compile_fragment _ _SHADOWS_SOFT _SHADOWS_SOFT_LOW _SHADOWS_SOFT_MEDIUM _SHADOWS_SOFT_HIGH
-            #pragma multi_compile_fragment _ _SCREEN_SPACE_OCCLUSION
-            #pragma multi_compile_fragment _ _DBUFFER_MRT1 _DBUFFER_MRT2 _DBUFFER_MRT3
-            #pragma multi_compile_fragment _ _LIGHT_COOKIES
-            #pragma multi_compile _ _LIGHT_LAYERS
-            #pragma multi_compile _ _FORWARD_PLUS
-            #include_with_pragmas "Packages/com.unity.render-pipelines.core/ShaderLibrary/FoveatedRenderingKeywords.hlsl"
-            #include_with_pragmas "Packages/com.unity.render-pipelines.universal/ShaderLibrary/RenderingLayers.hlsl"
+            #if defined(ST_SHADER_RUNTIME)
+                #define _FORWARD_PLUS 1
+
+                #if defined(SHADER_API_MOBILE)
+                    #define _MAIN_LIGHT_SHADOWS 1
+                    #define _SHADOWS_SOFT 1
+                    #define _SHADOWS_SOFT_LOW 1
+                    #define EVALUATE_SH_VERTEX 1
+                #else
+                    #define _MAIN_LIGHT_SHADOWS_CASCADE 1
+                    #define _ADDITIONAL_LIGHT_SHADOWS 1
+                    #define _SHADOWS_SOFT 1
+                    #define _SHADOWS_SOFT_MEDIUM 1
+                #endif
+            #else
+                #pragma multi_compile _ _MAIN_LIGHT_SHADOWS _MAIN_LIGHT_SHADOWS_CASCADE _MAIN_LIGHT_SHADOWS_SCREEN
+                #pragma multi_compile _ _ADDITIONAL_LIGHTS_VERTEX _ADDITIONAL_LIGHTS
+                #pragma multi_compile _ EVALUATE_SH_MIXED EVALUATE_SH_VERTEX
+                #pragma multi_compile_fragment _ _ADDITIONAL_LIGHT_SHADOWS
+                #pragma multi_compile_fragment _ _REFLECTION_PROBE_BLENDING
+                #pragma multi_compile_fragment _ _REFLECTION_PROBE_BOX_PROJECTION
+                #pragma multi_compile_fragment _ _SHADOWS_SOFT _SHADOWS_SOFT_LOW _SHADOWS_SOFT_MEDIUM _SHADOWS_SOFT_HIGH
+                #pragma multi_compile_fragment _ _SCREEN_SPACE_OCCLUSION
+                #pragma multi_compile_fragment _ _DBUFFER_MRT1 _DBUFFER_MRT2 _DBUFFER_MRT3
+                #pragma multi_compile_fragment _ _LIGHT_COOKIES
+                #pragma multi_compile _ _LIGHT_LAYERS
+                #pragma multi_compile _ _FORWARD_PLUS
+                #include_with_pragmas "Packages/com.unity.render-pipelines.core/ShaderLibrary/FoveatedRenderingKeywords.hlsl"
+                #include_with_pragmas "Packages/com.unity.render-pipelines.universal/ShaderLibrary/RenderingLayers.hlsl"
+            #endif
 
 
             // -------------------------------------
@@ -269,16 +287,22 @@ Shader "SpaceTime/Scene/SceneObjLit"
             #pragma multi_compile _ SHADOWS_SHADOWMASK
             #pragma multi_compile _ DIRLIGHTMAP_COMBINED
             #pragma multi_compile _ LIGHTMAP_ON
-            #pragma multi_compile _ DYNAMICLIGHTMAP_ON
             #pragma multi_compile_fragment _ LOD_FADE_CROSSFADE
             #pragma multi_compile_fog
-            #pragma multi_compile_fragment _ DEBUG_DISPLAY
+
+            #if !defined(ST_SHADER_RUNTIME)
+                #pragma multi_compile _ DYNAMICLIGHTMAP_ON
+                #pragma multi_compile_fragment _ DEBUG_DISPLAY
+            #endif
 
             //--------------------------------------
             // GPU Instancing
             #pragma multi_compile_instancing
             #pragma instancing_options renderinglayer
-            #include_with_pragmas "Packages/com.unity.render-pipelines.universal/ShaderLibrary/DOTS.hlsl"
+
+            #if !defined(ST_SHADER_RUNTIME)
+                #include_with_pragmas "Packages/com.unity.render-pipelines.universal/ShaderLibrary/DOTS.hlsl"
+            #endif
 
             #include "SceneObjLit/SceneObjLitInput.hlsl"
             #include "SceneObjLit/SceneObjLitForwardPass.hlsl"
