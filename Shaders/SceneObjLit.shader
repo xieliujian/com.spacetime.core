@@ -2,64 +2,178 @@ Shader "SpaceTime/Scene/SceneObjLit"
 {
     Properties
     {
-        // Specular vs Metallic workflow
-        _WorkflowMode("WorkflowMode", Float) = 1.0
+        [Main(Base, _, off, off)] _FoldoutBase("基础设置", Float) = 0
 
-        [MainTexture] _BaseMap("Albedo", 2D) = "white" {}
-        [MainColor] _BaseColor("Color", Color) = (1,1,1,1)
+        // Specular vs Metallic workflow. Keywords and render states are controlled independently.
+        [SubEnum(Base, Specular, 0, Metallic, 1)]
+        _WorkflowMode("工作流", Float) = 1.0
 
-        _Cutoff("Alpha Cutoff", Range(0.0, 1.0)) = 0.5
+        [SubToggle(Base, _SPECULAR_SETUP)]
+        _SpecularSetup("使用高光工作流关键字", Float) = 0.0
 
-        _Smoothness("Smoothness", Range(0.0, 1.0)) = 0.5
-        _SmoothnessTextureChannel("Smoothness texture channel", Float) = 0
+        [SubToggle(Base, _SURFACE_TYPE_TRANSPARENT)]
+        _Surface("透明表面", Float) = 0.0
 
-        _Metallic("Metallic", Range(0.0, 1.0)) = 0.0
-        _MetallicGlossMap("Metallic", 2D) = "white" {}
+        [SubEnum(Base, Alpha, 0, Premultiply, 1, Additive, 2, Multiply, 3)]
+        _Blend("透明混合方式", Float) = 0.0
 
-        _SpecColor("Specular", Color) = (0.2, 0.2, 0.2)
-        _SpecGlossMap("Specular", 2D) = "white" {}
+        [SubToggle(Base, _ALPHAPREMULTIPLY_ON)]
+        _AlphaPremultiply("Alpha 预乘关键字", Float) = 0.0
 
-        [ToggleOff] _SpecularHighlights("Specular Highlights", Float) = 1.0
-        [ToggleOff] _EnvironmentReflections("Environment Reflections", Float) = 1.0
+        [SubToggle(Base, _ALPHAMODULATE_ON)]
+        _AlphaModulate("Alpha 调制关键字", Float) = 0.0
 
-        _BumpScale("Scale", Float) = 1.0
-        _BumpMap("Normal Map", 2D) = "bump" {}
+        [SubEnum(Base, UnityEngine.Rendering.CullMode)]
+        _Cull("剔除模式", Float) = 2.0
 
-        _Parallax("Scale", Range(0.005, 0.08)) = 0.005
-        _ParallaxMap("Height Map", 2D) = "black" {}
+        [SubToggle(Base, _ALPHATEST_ON)]
+        _AlphaClip("Alpha 裁剪", Float) = 0.0
 
-        _OcclusionStrength("Strength", Range(0.0, 1.0)) = 1.0
-        _OcclusionMap("Occlusion", 2D) = "white" {}
+        [Sub(Base)] [ShowIf(_AlphaClip, Equal, 1)]
+        _Cutoff("Alpha 裁剪阈值", Range(0.0, 1.0)) = 0.5
 
-        [HDR] _EmissionColor("Color", Color) = (0,0,0)
-        _EmissionMap("Emission", 2D) = "white" {}
+        [SubToggle(Base, _)]
+        _ReceiveShadows("接收阴影", Float) = 1.0
 
-        _DetailMask("Detail Mask", 2D) = "white" {}
-        _DetailAlbedoMapScale("Scale", Range(0.0, 2.0)) = 1.0
-        _DetailAlbedoMap("Detail Albedo x2", 2D) = "linearGrey" {}
-        _DetailNormalMapScale("Scale", Range(0.0, 2.0)) = 1.0
-        [Normal] _DetailNormalMap("Normal Map", 2D) = "bump" {}
+        [SubToggle(Base, _RECEIVE_SHADOWS_OFF)]
+        _ReceiveShadowsOff("禁用接收阴影关键字", Float) = 0.0
+
+        [SubEnum(Base, UnityEngine.Rendering.BlendMode)]
+        _SrcBlend("颜色源混合", Float) = 1.0
+
+        [SubEnum(Base, UnityEngine.Rendering.BlendMode)]
+        _DstBlend("颜色目标混合", Float) = 0.0
+
+        [SubEnum(Base, UnityEngine.Rendering.BlendMode)]
+        _SrcBlendAlpha("Alpha 源混合", Float) = 1.0
+
+        [SubEnum(Base, UnityEngine.Rendering.BlendMode)]
+        _DstBlendAlpha("Alpha 目标混合", Float) = 0.0
+
+        [SubToggle(Base, _)]
+        _ZWrite("写入深度", Float) = 1.0
+
+        [SubToggle(Base, _)]
+        _BlendModePreserveSpecular("透明保留高光", Float) = 1.0
+
+        [SubToggle(Base, _)]
+        _AlphaToMask("Alpha To Coverage", Float) = 0.0
+
+        [Sub(Base)]
+        _QueueOffset("渲染队列偏移", Float) = 0.0
+
+        [Main(MainColor, _, off, off)] _FoldoutMainColor("主颜色", Float) = 0
+
+        [Tex(MainColor, _BaseColor)] [MainTexture]
+        _BaseMap("基础贴图", 2D) = "white" {}
+
+        [HideInInspector] [MainColor]
+        _BaseColor("基础颜色", Color) = (1,1,1,1)
+
+        [Main(MetallicSpecular, _, off, off)] _FoldoutMetallicSpecular("金属与光滑", Float) = 0
+
+        [SubToggle(MetallicSpecular, _METALLICSPECGLOSSMAP)]
+        _UseMetallicSpecGlossMap("使用金属/高光贴图", Float) = 0.0
+
+        [Tex(MetallicSpecular)] [ShowIf(_WorkflowMode, Equal, 1)]
+        [ShowIf(_UseMetallicSpecGlossMap, Equal, 1)]
+        _MetallicGlossMap("金属贴图", 2D) = "white" {}
+
+        [Tex(MetallicSpecular)] [ShowIf(_WorkflowMode, Equal, 0)]
+        [ShowIf(_UseMetallicSpecGlossMap, Equal, 1)]
+        _SpecGlossMap("高光贴图", 2D) = "white" {}
+
+        [Sub(MetallicSpecular)] [ShowIf(_WorkflowMode, Equal, 1)]
+        _Metallic("金属度", Range(0.0, 1.0)) = 0.0
+
+        [Sub(MetallicSpecular)] [ShowIf(_WorkflowMode, Equal, 0)]
+        _SpecColor("高光颜色", Color) = (0.2, 0.2, 0.2)
+
+        [Sub(MetallicSpecular)]
+        _Smoothness("光滑度", Range(0.0, 1.0)) = 0.5
+
+        [SubToggle(MetallicSpecular, _SMOOTHNESS_TEXTURE_ALBEDO_CHANNEL_A)]
+        _SmoothnessTextureChannel("光滑度取自基础贴图 Alpha", Float) = 0
+
+        [Main(NormalHeight, _, off, off)] _FoldoutNormalHeight("法线与高度", Float) = 0
+
+        [SubToggle(NormalHeight, _NORMALMAP)]
+        _UseNormalMap("使用法线贴图", Float) = 0.0
+
+        [Tex(NormalHeight)] [Normal] [ShowIf(_UseNormalMap, Equal, 1)]
+        _BumpMap("法线贴图", 2D) = "bump" {}
+
+        [Sub(NormalHeight)] [ShowIf(_UseNormalMap, Equal, 1)]
+        _BumpScale("法线强度", Float) = 1.0
+
+        [SubToggle(NormalHeight, _PARALLAXMAP)]
+        _UseParallaxMap("使用高度贴图", Float) = 0.0
+
+        [Tex(NormalHeight)] [ShowIf(_UseParallaxMap, Equal, 1)]
+        _ParallaxMap("高度贴图", 2D) = "black" {}
+
+        [Sub(NormalHeight)] [ShowIf(_UseParallaxMap, Equal, 1)]
+        _Parallax("高度缩放", Range(0.005, 0.08)) = 0.005
+
+        [Main(Occlusion, _, off, off)] _FoldoutOcclusion("环境遮蔽", Float) = 0
+
+        [SubToggle(Occlusion, _OCCLUSIONMAP)]
+        _UseOcclusionMap("使用环境遮蔽贴图", Float) = 0.0
+
+        [Tex(Occlusion)] [ShowIf(_UseOcclusionMap, Equal, 1)]
+        _OcclusionMap("环境遮蔽贴图", 2D) = "white" {}
+
+        [Sub(Occlusion)] [ShowIf(_UseOcclusionMap, Equal, 1)]
+        _OcclusionStrength("环境遮蔽强度", Range(0.0, 1.0)) = 1.0
+
+        [Main(Emission, _, off, off)] _FoldoutEmission("自发光", Float) = 0
+
+        [SubToggle(Emission, _EMISSION)]
+        _UseEmission("启用自发光", Float) = 0.0
+
+        [Tex(Emission, _EmissionColor)] [ShowIf(_UseEmission, Equal, 1)]
+        _EmissionMap("自发光贴图", 2D) = "white" {}
+
+        [HideInInspector] [HDR]
+        _EmissionColor("自发光颜色", Color) = (0,0,0)
+
+        [Main(Detail, _, off, off)] _FoldoutDetail("纹理细节", Float) = 0
+
+        [SubToggle(Detail, _DETAIL_SCALED)]
+        _UseDetailMap("使用纹理细节", Float) = 0.0
+
+        [Tex(Detail)] [ShowIf(_UseDetailMap, Equal, 1)]
+        _DetailMask("细节遮罩", 2D) = "white" {}
+
+        [Tex(Detail)] [ShowIf(_UseDetailMap, Equal, 1)]
+        _DetailAlbedoMap("细节颜色贴图", 2D) = "linearGrey" {}
+
+        [Sub(Detail)] [ShowIf(_UseDetailMap, Equal, 1)]
+        _DetailAlbedoMapScale("细节颜色强度", Range(0.0, 2.0)) = 1.0
+
+        [Tex(Detail)] [Normal] [ShowIf(_UseDetailMap, Equal, 1)]
+        _DetailNormalMap("细节法线贴图", 2D) = "bump" {}
+
+        [Sub(Detail)] [ShowIf(_UseDetailMap, Equal, 1)]
+        _DetailNormalMapScale("细节法线强度", Range(0.0, 2.0)) = 1.0
+
+        [Main(AdvancedOptions, _, off, off)] _FoldoutAdvancedOptions("高级设置", Float) = 0
+
+        [SubToggle(AdvancedOptions, _)]
+        _SpecularHighlights("高光反射", Float) = 1.0
+
+        [SubToggle(AdvancedOptions, _)]
+        _EnvironmentReflections("环境反射", Float) = 1.0
+
+        [SubToggle(AdvancedOptions, _SPECULARHIGHLIGHTS_OFF)]
+        _SpecularHighlightsOff("禁用高光反射关键字", Float) = 0.0
+
+        [SubToggle(AdvancedOptions, _ENVIRONMENTREFLECTIONS_OFF)]
+        _EnvironmentReflectionsOff("禁用环境反射关键字", Float) = 0.0
 
         // SRP batching compatibility for Clear Coat (Not used in Lit)
         [HideInInspector] _ClearCoatMask("_ClearCoatMask", Float) = 0.0
         [HideInInspector] _ClearCoatSmoothness("_ClearCoatSmoothness", Float) = 0.0
-
-        // Blending state
-        _Surface("__surface", Float) = 0.0
-        _Blend("__blend", Float) = 0.0
-        _Cull("__cull", Float) = 2.0
-        [ToggleUI] _AlphaClip("__clip", Float) = 0.0
-        [HideInInspector] _SrcBlend("__src", Float) = 1.0
-        [HideInInspector] _DstBlend("__dst", Float) = 0.0
-        [HideInInspector] _SrcBlendAlpha("__srcA", Float) = 1.0
-        [HideInInspector] _DstBlendAlpha("__dstA", Float) = 0.0
-        [HideInInspector] _ZWrite("__zw", Float) = 1.0
-        [HideInInspector] _BlendModePreserveSpecular("_BlendModePreserveSpecular", Float) = 1.0
-        [HideInInspector] _AlphaToMask("__alphaToMask", Float) = 0.0
-
-        [ToggleUI] _ReceiveShadows("Receive Shadows", Float) = 1.0
-        // Editmode props
-        _QueueOffset("Queue offset", Float) = 0.0
 
         // ObsoleteProperties
         [HideInInspector] _MainTex("BaseMap", 2D) = "white" {}
@@ -472,5 +586,5 @@ Shader "SpaceTime/Scene/SceneObjLit"
     }
 
     FallBack "Hidden/Universal Render Pipeline/FallbackError"
-    CustomEditor "UnityEditor.Rendering.Universal.ShaderGUI.LitShader"
+    CustomEditor "LWGUI.LWGUI"
 }
