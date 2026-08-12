@@ -399,56 +399,6 @@ Shader "SpaceTime/Scene/SceneObjLit"
             ENDHLSL
         }
 
-        // This pass is used when drawing to a _CameraNormalsTexture texture
-        Pass
-        {
-            Name "DepthNormals"
-            Tags
-            {
-                "LightMode" = "DepthNormals"
-            }
-
-            // -------------------------------------
-            // Render State Commands
-            ZWrite On
-            Cull[_Cull]
-
-            HLSLPROGRAM
-            #pragma target 2.0
-
-            // -------------------------------------
-            // Shader Stages
-            #pragma vertex DepthNormalsVertex
-            #pragma fragment DepthNormalsFragment
-
-            // -------------------------------------
-            // Material Keywords
-            #pragma shader_feature_local _NORMALMAP
-            #pragma shader_feature_local _PARALLAXMAP
-            #pragma shader_feature_local _ _DETAIL_MULX2 _DETAIL_SCALED
-            #pragma shader_feature_local _ALPHATEST_ON
-            #pragma shader_feature_local_fragment _SMOOTHNESS_TEXTURE_ALBEDO_CHANNEL_A
-
-            // -------------------------------------
-            // Unity defined keywords
-            #pragma multi_compile_fragment _ LOD_FADE_CROSSFADE
-
-            // -------------------------------------
-            // Universal Pipeline keywords
-            #include_with_pragmas "Packages/com.unity.render-pipelines.universal/ShaderLibrary/RenderingLayers.hlsl"
-
-            //--------------------------------------
-            // GPU Instancing
-            #pragma multi_compile_instancing
-            #include_with_pragmas "Packages/com.unity.render-pipelines.universal/ShaderLibrary/DOTS.hlsl"
-
-            // -------------------------------------
-            // Includes
-            #include "SceneObjLit/SceneObjLitInput.hlsl"
-            #include "SceneObjLit/SceneObjLitDepthNormalsPass.hlsl"
-            ENDHLSL
-        }
-
         // This pass it not used during regular rendering, only for lightmap baking.
         Pass
         {
