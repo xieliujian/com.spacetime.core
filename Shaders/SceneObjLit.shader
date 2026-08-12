@@ -199,7 +199,7 @@ Shader "SpaceTime/Scene/SceneObjLit"
             "UniversalMaterialType" = "Lit"
             "IgnoreProjector" = "True"
         }
-        LOD 300
+        LOD 100
 
         // ------------------------------------------------------------------
         //  Forward pass. Shades all light in a single pass. GI + emission + Fog
