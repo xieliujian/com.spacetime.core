@@ -109,9 +109,9 @@ Unity 为新增目录、脚本和程序集定义生成的 `.meta` 文件必须�
 - `DoLateUpdate()`：预留滞后帧驱动。
 - `DoClose()`：委托 `LaunchModule.DoClose()` 停止节点树，但保留模块引用供状态查询。
 
-同一实例只允许初始化一次。`DoInit()` 在已初始化或已关闭时直接返回；如果构造或启动模块时
-发生异常，则记录错误、关闭已创建的模块并进入不可重试的关闭状态。关闭操作可重复调用。
-初始化前或关闭后的 `DoUpdate()`、`DoLateUpdate()` 均直接返回。
+同一实例只允许初始化一次。`DoInit()` 在已初始化或已关闭时直接返回。`LaunchModule` 自己
+捕获节点树构造和启动异常并暴露失败状态，因此 `GameApplication` 不重复捕获或记录同一错误。
+关闭操作可重复调用。初始化前或关闭后的 `DoUpdate()`、`DoLateUpdate()` 均直接返回。
 
 ### LaunchNode
 
@@ -194,7 +194,8 @@ WaitFrame
 `LaunchModule.Launch()` 只在首次调用时构造并启动节点树，重复调用直接忽略。`DoUpdate()` 在
 根节点运行时驱动它；启动前、完成后或关闭后调用均忽略。`DoClose()` 停止运行中的根节点并
 可重复调用。节点基类只保存错误，最终由
-`LaunchModule` 在首次观察到根节点失败时通过 `Logger.LogErrorF` 统一记录一次，避免重复日志。
+`LaunchModule` 在首次观察到根节点失败时通过非可变参数的 `Logger.LogError` 统一记录一次，
+避免重复日志，也避免在 `DoUpdate()` 中产生 `params object[]` 分配。
 
 模块状态使用 `LaunchNodeState`，转换规则如下：
 
