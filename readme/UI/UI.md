@@ -1,6 +1,6 @@
 # UI 管理系统
 
-[← 返回主页](../README.md)
+[← 返回主页](../../README.md)
 
 > 版本：1.0.0 | 命名空间：`ST.Core.UI`
 
@@ -430,7 +430,7 @@ BagPanel (Prefab)
 
 ## 十一、测试场景
 
-> 详细说明请参阅子文档 **[→ UI 测试系统](UI_Test.md)**，以下为快速摘要。
+> 详细说明请参阅子文档 **[→ UI 测试系统](../UI_Test/UI_Test.md)**，以下为快速摘要。
 
 `Runtime/Scripts/Test/` 提供了开箱即用的测试组件，无需编写任何启动代码即可在编辑器场景中验证 UIManager 的完整流程。
 
@@ -530,8 +530,8 @@ gm.RegisterCommand("reloadui", (args) =>
 
 | 文档 | 说明 |
 |------|------|
-| [UI 测试系统](UI_Test.md) | 测试场景搭建、自动化测试用例、GM 指令手册、扩展指南 |
+| [UI 测试系统](../UI_Test/UI_Test.md) | 测试场景搭建、自动化测试用例、GM 指令手册、扩展指南 |
 
 ---
 
-[← 返回主页](../README.md)
+[← 返回主页](../../README.md)

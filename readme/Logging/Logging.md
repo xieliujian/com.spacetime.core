@@ -1,6 +1,6 @@
 # 日志系统
 
-[← 返回主页](../README.md)
+[← 返回主页](../../README.md)
 
 文件日志系统，支持批量刷新、文件轮转、Unity 日志捕获。  
 所有日志调用统一通过 `Logger` 静态门面完成，内部实现对外不可见。
@@ -193,4 +193,4 @@ LogManager → FileLogWriter → 文件
 MIT License
 
 ---
-[← 返回主页](../README.md)
+[← 返回主页](../../README.md)

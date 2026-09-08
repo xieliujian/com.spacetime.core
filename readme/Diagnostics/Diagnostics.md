@@ -1,6 +1,6 @@
 # 诊断与性能工具
 
-[← 返回主页](../README.md)
+[← 返回主页](../../README.md)
 
 运行时 OnGUI 性能浮层，实时显示 FPS、顶点数、三角面数、Draw Call 与 Batch 数目；
 底层由 `SceneMeshStatistics` 按采样间隔遍历场景，避免每帧全量遍历。
@@ -159,4 +159,4 @@ SceneMeshStatistics（静态工具类）
 MIT License
 
 ---
-[← 返回主页](../README.md)
+[← 返回主页](../../README.md)

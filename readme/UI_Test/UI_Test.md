@@ -1,6 +1,6 @@
 # UI 测试系统
 
-[← 返回 UI 管理系统](UI.md)
+[← 返回 UI 管理系统](../UI/UI.md)
 
 > 版本：1.4.0 | 命名空间：`ST.Core.Test`
 
@@ -686,4 +686,4 @@ gm.RegisterCommand("myCmd", (args) =>
 
 ---
 
-[← 返回 UI 管理系统](UI.md)
+[← 返回 UI 管理系统](../UI/UI.md)

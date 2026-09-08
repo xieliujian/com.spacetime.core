@@ -1,6 +1,6 @@
 # 场景漫游摄像机
 
-[← 返回主页](../README.md)
+[← 返回主页](../../README.md)
 
 轻量级场景漫游摄像机控制器，以 MonoBehaviour 形式挂载到摄像机 GameObject 上即可使用。  
 全部输入 API 基于 Unity 标准 Input 系统，兼容 **WebGL** 平台。
@@ -108,4 +108,4 @@ SceneRoamCamera（MonoBehaviour）
 
 ---
 
-[← 返回主页](../README.md)
+[← 返回主页](../../README.md)
