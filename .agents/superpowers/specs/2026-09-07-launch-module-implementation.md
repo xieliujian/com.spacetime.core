@@ -651,7 +651,7 @@ For GREEN, exit must be zero and the XML must contain `result="Passed"` and `fai
 - [ ] **Step 6: Dispatch final code review and fix every blocking issue**
 
   Review the complete diff against
-  `docs/superpowers/specs/2026-09-07-launch-module-design.md` and this plan. Re-run Steps 1–5 after
+  `.agents/superpowers/specs/2026-09-07-launch-module-design.md` and this plan. Re-run Steps 1–5 after
   any fix.
 
 - [ ] **Step 7: Report the direct-main result**
