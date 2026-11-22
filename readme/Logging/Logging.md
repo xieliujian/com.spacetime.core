@@ -176,7 +176,7 @@ UnityEngine.Debug.LogXxx
   ↓
 Application.logMessageReceived 事件
   ↓（仅 EnableUnityLogCapture(true) 时）
-LogManager → FileLogWriter → 文件
+LogManager → LogFileWriter → 文件
 ```
 
 ---

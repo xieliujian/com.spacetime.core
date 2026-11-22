@@ -8,7 +8,7 @@ namespace ST.Core.Logging.Examples
     /// 日志系统完整测试示例，覆盖初始化、Unity 日志捕获、各级别输出、格式化输出、Fatal 回调、Assert 与 Flush / Close。
     /// <para>日志写入工程根目录下的 <c>Logs/Output.txt</c>。</para>
     /// </summary>
-    public class LoggingExample : MonoBehaviour
+    public class LogExample : MonoBehaviour
     {
         /// <summary>
         /// 示例日志文件保存目录。

@@ -29,10 +29,13 @@ namespace ST.Core.Logging
         /// </summary>
         public LogConfig()
         {
-            m_LogFilePath = Path.Combine(Application.persistentDataPath, "Logs", "Output.txt");
-            m_IsLowMemoryDevice = SystemInfo.systemMemorySize < 2048; // 2GB
-            m_MaxFlushCount = m_IsLowMemoryDevice ? 20 : 100;
-            m_MaxFileSize = 20 * 1024 * 1024; // 20MB
+            m_LogFilePath = Path.Combine(
+                Application.persistentDataPath,
+                LogDefine.k_LogDirectory,
+                LogDefine.k_LogFileName);
+            m_IsLowMemoryDevice = SystemInfo.systemMemorySize < LogDefine.k_LowMemoryThresholdMB;
+            m_MaxFlushCount = m_IsLowMemoryDevice ? LogDefine.k_LowMemoryFlushCount : LogDefine.k_NormalFlushCount;
+            m_MaxFileSize = LogDefine.k_DefaultMaxFileSize;
             m_EnableBackup = true;
         }
 
@@ -55,7 +58,7 @@ namespace ST.Core.Logging
         public LogConfig SetLowMemoryDevice(bool isLowMemory)
         {
             m_IsLowMemoryDevice = isLowMemory;
-            m_MaxFlushCount = isLowMemory ? 20 : 100;
+            m_MaxFlushCount = isLowMemory ? LogDefine.k_LowMemoryFlushCount : LogDefine.k_NormalFlushCount;
             return this;
         }
 

@@ -7,7 +7,7 @@ namespace ST.Core.Logging
     /// <summary>
     /// 文件日志写入器，使用内存缓存批量写入，并在打开文件时按大小做轮转与备份。
     /// </summary>
-    public class FileLogWriter
+    public class LogFileWriter
     {
         /// <summary>日志文件完整路径，构造后不再变化。</summary>
         readonly string m_FilePath;
@@ -37,7 +37,7 @@ namespace ST.Core.Logging
         /// <param name="maxFlushCount">缓存达到多少条时自动刷新。</param>
         /// <param name="maxFileSize">单个文件字节上限，超出时在打开阶段轮转。</param>
         /// <param name="enableBackup">超限时是否保留 .bak 备份。</param>
-        public FileLogWriter(string filePath, int maxFlushCount, long maxFileSize, bool enableBackup)
+        public LogFileWriter(string filePath, int maxFlushCount, long maxFileSize, bool enableBackup)
         {
             m_FilePath = filePath;
             m_MaxFlushCount = maxFlushCount;
@@ -79,12 +79,13 @@ namespace ST.Core.Logging
                 {
                     m_StreamWriter.WriteLine(log);
                 }
+
                 m_CacheList.Clear();
                 m_StreamWriter.Flush();
             }
             catch (Exception ex)
             {
-                UnityEngine.Debug.LogError($"[FileLogWriter] Flush failed: {ex.Message}");
+                UnityEngine.Debug.LogError($"[LogFileWriter] Flush failed: {ex.Message}");
             }
         }
 
@@ -155,7 +156,7 @@ namespace ST.Core.Logging
             }
             catch (Exception ex)
             {
-                UnityEngine.Debug.LogError($"[FileLogWriter] Open file failed: {m_FilePath}, Error: {ex.Message}");
+                UnityEngine.Debug.LogError($"[LogFileWriter] Open file failed: {m_FilePath}, Error: {ex.Message}");
             }
         }
 
@@ -167,16 +168,17 @@ namespace ST.Core.Logging
         {
             try
             {
-                string backupPath = m_FilePath + ".bak";
+                string backupPath = m_FilePath + LogDefine.k_BackupSuffix;
                 if (File.Exists(backupPath))
                 {
                     File.Delete(backupPath);
                 }
+
                 File.Move(m_FilePath, backupPath);
             }
             catch (Exception ex)
             {
-                UnityEngine.Debug.LogError($"[FileLogWriter] Backup file failed: {ex.Message}");
+                UnityEngine.Debug.LogError($"[LogFileWriter] Backup file failed: {ex.Message}");
             }
         }
     }

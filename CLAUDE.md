@@ -22,8 +22,8 @@ The main framework is structured as follows:
 - **Runtime/Scripts/Logging/** - Logging system (`ST.Core.Logging` namespace)
   - `STLogger` - **唯一对外入口**（静态门面），所有日志调用均通过此类
   - `LogManager` - 内部日志管理器，协调文件写入与 Unity 日志捕获
-  - `FileLogWriter` - 文件写入器（缓存 + 批量刷新）
-  - `DefaultLogFormatter` - 日志格式化器
+  - `LogFileWriter` - 文件写入器（缓存 + 批量刷新）
+  - `LogFormatter` - 日志格式化器
   - `LogConfig` - 日志配置（链式调用风格）
   - `LogLevel` - 日志级别枚举（Debug / Info / Warning / Error / Exception）
   - **注意**：`Debugger` 类已作为 `STLogger` 的私有嵌套类存在，外部不可直接访问
@@ -142,12 +142,12 @@ This project has several custom Claude Code skills configured in `.claude/skills
 ```csharp
 // Correct
 static LogManager s_Manager;
-FileLogWriter m_Writer;
+LogFileWriter m_Writer;
 void DoSomething() { }
 
 // Wrong — do not write explicit private
 private static LogManager s_Manager;
-private FileLogWriter m_Writer;
+private LogFileWriter m_Writer;
 private void DoSomething() { }
 ```
 
@@ -240,7 +240,7 @@ UIPanelActive FindRunningByUIID(int uiID) { ... }
 static UIManager s_Instance;
 
 /// <summary>日志写入器，负责将格式化后的日志持久化。</summary>
-FileLogWriter m_Writer;
+LogFileWriter m_Writer;
 
 /// <summary>面板当前是否处于打开状态。</summary>
 public bool isOpened { get { return m_IsOpened; } }

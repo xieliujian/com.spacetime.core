@@ -10,10 +10,10 @@ namespace ST.Core.Logging
     public class LogManager
     {
         /// <summary>日志写入器；初始化失败时为 null，此时所有写入会被丢弃。</summary>
-        FileLogWriter m_Writer;
+        LogFileWriter m_Writer;
 
         /// <summary>日志格式化器，把级别、消息和堆栈拼成一行文本。</summary>
-        DefaultLogFormatter m_Formatter;
+        LogFormatter m_Formatter;
 
         /// <summary>初始化时传入的配置，保存路径与轮转参数。</summary>
         LogConfig m_Config;
@@ -29,8 +29,8 @@ namespace ST.Core.Logging
         public void Initialize(LogConfig config)
         {
             m_Config = config;
-            m_Formatter = new DefaultLogFormatter();
-            m_Writer = new FileLogWriter(
+            m_Formatter = new LogFormatter();
+            m_Writer = new LogFileWriter(
                 config.GetLogFilePath(),
                 config.GetMaxFlushCount(),
                 config.GetMaxFileSize(),

@@ -2,7 +2,7 @@
 name: spacetime-core-dev
 description: >-
   编写、修改或审查 com.spacetime.core（命名空间 ST.Core）框架本身，以及调用它的 Unity C# 代码时使用。
-  覆盖项目强制的编码规范（m_/s_ 前缀、camelCase 属性、禁止 ?. 与 UnityEngine.Debug、中文 XML 注释、两行式空值守卫），
+  覆盖项目强制的编码规范（m_/s_ 前缀、camelCase 属性、禁止 ?. 与 UnityEngine.Debug、中文 XML 注释、枚举成员行尾注释、两行式空值守卫、代码块后空行），
   以及框架特有陷阱：单例靠构造函数赋值、异步加载没有取消与失败回调、UIManager 的 DoUpdate 是空的需手动驱动、
   Launch 节点全是空壳、AssetBundle 名等于资源相对路径。Use whenever editing C# under Packages/com.spacetime.core,
   or any code touching NetManager / MsgDispatcher / UIManager / ResourceLoad / TableLoader / STLogger / LaunchModule,
@@ -36,7 +36,7 @@ description: >-
 ```csharp
 // 正确
 static LogManager s_Manager;
-FileLogWriter m_Writer;
+LogFileWriter m_Writer;
 void DoSomething() { }
 
 // 错误
@@ -57,6 +57,26 @@ m_Manager.DoSomething();
 ```
 
 `if (x == null) return;`、`{ return; }`、以及 return 后不留空行三种写法都算违规。
+### 代码块之后留空行
+
+多行 `if` / `for` / `while` / `try` 等语句块结束后，后续语句前要空一行，与空值守卫的写法保持同一节奏：
+
+```csharp
+// 正确
+if (s_Manager == null)
+{
+    s_Manager = new LogManager();
+}
+
+s_Manager.Initialize(config);
+
+// 错误 —— 花括号后直接接语句
+if (s_Manager == null)
+{
+    s_Manager = new LogManager();
+}
+s_Manager.Initialize(config);
+```
 
 ### 禁止 `?.`
 
@@ -92,21 +112,37 @@ UnityEngine.Debug.LogWarning("...");
 
 `STLogger` 的完整 API：`Initialize(LogConfig)` / `SetAllIsLog(bool)` / `EnableUnityLogCapture(bool)` / `Flush()` / `Close()` / `Assert(...)` 以及 `Log` `LogInfo` `LogDebug` `LogWarning` `LogError` `LogException` `LogFatal`（每个带 `*F` 格式化版）。
 
-**但要知道 `STLogger` 未初始化时是全静默 no-op**：`STLogger.Initialize` 目前只有 `Logging/Examples/LoggingExample.cs` 调用过，所以框架自身大量 `STLogger.LogError` 实际只进 Console、不落文件。新增日志前先确认初始化链，别以为写了就一定有文件记录。
+**但要知道 `STLogger` 未初始化时是全静默 no-op**：`STLogger.Initialize` 目前只有 `Logging/Examples/LogExample.cs` 调用过，所以框架自身大量 `STLogger.LogError` 实际只进 Console、不落文件。新增日志前先确认初始化链，别以为写了就一定有文件记录。
 
 ### XML 注释：全覆盖，中文
 
-所有类型、方法、字段、属性、枚举值 —— **包括 private 成员** —— 都要中文 XML 注释。注释要说明**用途或约束**，不是复述变量名。
+所有类型、方法、字段、属性 —— **包括 private 成员** —— 都要中文 XML 注释。注释要说明**用途或约束**，不是复述变量名。枚举值改用行尾 `//` 注释，见下一节。
 
 ```csharp
 /// <summary>日志写入器，负责将格式化后的日志持久化。</summary>
-FileLogWriter m_Writer;
+LogFileWriter m_Writer;
 
 /// <summary>
 /// 在运行列表中按 uiID 查找最近打开的面板（列表末尾优先）。
 /// </summary>
 /// <returns>找到的 <see cref="UIPanelActive"/>；未找到时返回 null。</returns>
 UIPanelActive FindRunningByUIID(int uiID) { }
+```
+
+### 枚举成员：行尾 `//` 注释
+
+枚举类型本身保留 XML 注释，枚举值不写 `<summary>`，统一在成员行尾用 `//` 说明，成员之间不空行：
+
+```csharp
+/// <summary>
+/// 日志级别，按严重程度从低到高排列。
+/// </summary>
+public enum LogLevel
+{
+    Debug = 0, // 调试级别，用于开发阶段的详细诊断信息
+    Info = 1, // 信息级别，用于记录正常的运行流程
+    Warning = 2, // 警告级别，表示潜在问题但不影响正常运行
+}
 ```
 
 ## 二、框架陷阱（CLAUDE.md 里没有，照文档写会踩）
@@ -211,7 +247,7 @@ UIPanelActive FindRunningByUIID(int uiID) { }
 - `ST.Core.ByteBuffer` 字节序是混的：`WriteInt/WriteShort/WriteLong` 走 `BinaryWriter`（小端），而 `WriteFloat/WriteDouble` 先 `Array.Reverse`（大端）。类注释承认了但没说清，别想当然。
 - 命名语义错误的历史包袱：`IMsgType` 是**枚举**却带 `I` 前缀；`IProtobufProcFun` / `IFlatBufferProcFun` 是**类**却用接口命名（能被 `new`）。别照着它们猜"这是个接口"。
 - `STLogger` 未初始化时 `EnableUnityLogCapture` / `Flush` / `Close` 全部静默 no-op，不报错。
-- `STLogger.Initialize` **重复调用会泄漏文件句柄并使后续写入永久失败**（旧 `FileLogWriter` 不 Close，而 `File.Open` 是 `FileShare.None`）。别在反复进入 Play 模式的路径里调它。
+- `STLogger.Initialize` **重复调用会泄漏文件句柄并使后续写入永久失败**（旧 `LogFileWriter` 不 Close，而 `File.Open` 是 `FileShare.None`）。别在反复进入 Play 模式的路径里调它。
 - 日志从**子线程调用不会进文件**：`LogManager` 订阅的是 `Application.logMessageReceived`（仅主线程），而网络层全部在线程池线程打日志。所以网络相关日志只进 Console。
 
 ## 三、动手之前

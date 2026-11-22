@@ -5,7 +5,7 @@ namespace ST.Core.Logging
     /// <summary>
     /// 默认日志格式化器，输出 <c>[级别][日 时:分:秒 毫秒]消息</c>，有堆栈时换行追加。
     /// </summary>
-    public class DefaultLogFormatter
+    public class LogFormatter
     {
         /// <summary>
         /// 按固定格式拼出一行日志；堆栈为空时不追加。
@@ -40,17 +40,17 @@ namespace ST.Core.Logging
             switch (level)
             {
                 case LogLevel.Debug:
-                    return "Debug";
+                    return LogDefine.k_Debug;
                 case LogLevel.Info:
-                    return "Log";
+                    return LogDefine.k_Info;
                 case LogLevel.Warning:
-                    return "LogWarning";
+                    return LogDefine.k_Warning;
                 case LogLevel.Error:
-                    return "LogError";
+                    return LogDefine.k_Error;
                 case LogLevel.Exception:
-                    return "LogException";
+                    return LogDefine.k_Exception;
                 default:
-                    return "Log";
+                    return LogDefine.k_Info;
             }
         }
     }
