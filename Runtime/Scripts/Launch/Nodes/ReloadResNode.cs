@@ -4,7 +4,9 @@
     public sealed class ReloadResNode : LaunchNode
     {
         /// <summary>创建资源重载节点。</summary>
-        public ReloadResNode() : base(LaunchDefine.k_ReloadRes) { }
+        public ReloadResNode() : base(LaunchDefine.k_ReloadRes)
+        {
+        }
 
         /// <summary>完成占位操作。</summary>
         protected override void OnStart()

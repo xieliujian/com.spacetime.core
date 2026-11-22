@@ -4,7 +4,9 @@
     public sealed class SDKInitNode : LaunchNode
     {
         /// <summary>创建 SDK 初始化节点。</summary>
-        public SDKInitNode() : base(LaunchDefine.k_SDKInit) { }
+        public SDKInitNode() : base(LaunchDefine.k_SDKInit)
+        {
+        }
 
         /// <summary>完成占位操作。</summary>
         protected override void OnStart()

@@ -4,7 +4,9 @@
     public sealed class DownloadServerConfigNode : LaunchNode
     {
         /// <summary>创建服务器配置下载节点。</summary>
-        public DownloadServerConfigNode() : base(LaunchDefine.k_DownloadServerConfig) { }
+        public DownloadServerConfigNode() : base(LaunchDefine.k_DownloadServerConfig)
+        {
+        }
 
         /// <summary>完成占位操作。</summary>
         protected override void OnStart()

@@ -4,7 +4,9 @@
     public sealed class EndNode : LaunchNode
     {
         /// <summary>创建启动流程结束节点。</summary>
-        public EndNode() : base(LaunchDefine.k_End) { }
+        public EndNode() : base(LaunchDefine.k_End)
+        {
+        }
 
         /// <summary>完成占位操作。</summary>
         protected override void OnStart()

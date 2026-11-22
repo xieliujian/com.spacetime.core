@@ -4,7 +4,9 @@
     public sealed class CompileShaderNode : LaunchNode
     {
         /// <summary>创建着色器预编译节点。</summary>
-        public CompileShaderNode() : base(LaunchDefine.k_CompileShader) { }
+        public CompileShaderNode() : base(LaunchDefine.k_CompileShader)
+        {
+        }
 
         /// <summary>完成占位操作。</summary>
         protected override void OnStart()

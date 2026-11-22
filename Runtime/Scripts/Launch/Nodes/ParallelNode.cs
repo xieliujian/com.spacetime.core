@@ -15,7 +15,9 @@ namespace ST.Core.Launch
         /// 创建并行节点。
         /// </summary>
         /// <param name="name">非空的稳定节点名称。</param>
-        public ParallelNode(string name) : base(name) { }
+        public ParallelNode(string name) : base(name)
+        {
+        }
 
         /// <summary>
         /// 追加一个尚未执行的子节点。

@@ -4,7 +4,9 @@
     public sealed class SplashGlobalResLoadNode : LaunchNode
     {
         /// <summary>创建首屏全局资源加载节点。</summary>
-        public SplashGlobalResLoadNode() : base(LaunchDefine.k_SplashGlobalResLoad) { }
+        public SplashGlobalResLoadNode() : base(LaunchDefine.k_SplashGlobalResLoad)
+        {
+        }
 
         /// <summary>完成占位操作。</summary>
         protected override void OnStart()

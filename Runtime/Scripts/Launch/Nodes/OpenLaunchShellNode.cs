@@ -4,7 +4,9 @@
     public sealed class OpenLaunchShellNode : LaunchNode
     {
         /// <summary>创建打开启动界面节点。</summary>
-        public OpenLaunchShellNode() : base(LaunchDefine.k_OpenLaunchShell) { }
+        public OpenLaunchShellNode() : base(LaunchDefine.k_OpenLaunchShell)
+        {
+        }
 
         /// <summary>完成占位操作。</summary>
         protected override void OnStart()

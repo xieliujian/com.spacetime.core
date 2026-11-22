@@ -4,7 +4,9 @@
     public sealed class DownloadServerDynamicNode : LaunchNode
     {
         /// <summary>创建服务器动态配置下载节点。</summary>
-        public DownloadServerDynamicNode() : base(LaunchDefine.k_DownloadServerDynamic) { }
+        public DownloadServerDynamicNode() : base(LaunchDefine.k_DownloadServerDynamic)
+        {
+        }
 
         /// <summary>完成占位操作。</summary>
         protected override void OnStart()

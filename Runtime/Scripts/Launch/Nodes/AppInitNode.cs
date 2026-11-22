@@ -4,7 +4,9 @@
     public sealed class AppInitNode : LaunchNode
     {
         /// <summary>创建应用初始化节点。</summary>
-        public AppInitNode() : base(LaunchDefine.k_AppInit) { }
+        public AppInitNode() : base(LaunchDefine.k_AppInit)
+        {
+        }
 
         /// <summary>完成占位初始化。</summary>
         protected override void OnStart()

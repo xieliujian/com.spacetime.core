@@ -175,7 +175,9 @@ namespace ST.Core
         }
 
         /// <summary>禁止外部创建执行器实例，仅提供静态调用入口。</summary>
-        ERunner() { }
+        ERunner()
+        {
+        }
     }
 
     /// <summary>带返回值回调的统一执行入口，隔离单个回调抛出的异常。</summary>
@@ -346,6 +348,8 @@ namespace ST.Core
         }
 
         /// <summary>禁止外部创建执行器实例，仅提供静态调用入口。</summary>
-        EFuncer() { }
+        EFuncer()
+        {
+        }
     }
 }

@@ -1,7 +1,7 @@
 ﻿namespace ST.Core.Launch
 {
     /// <summary>
-    /// 启动流程名称定义，集中存放节点稳定名称，避免字符串散落在节点实现与业务代码中。
+    /// 启动流程定义，集中存放节点稳定名称和节点枚举，避免定义散落在节点实现与业务代码中。
     /// </summary>
     public static class LaunchDefine
     {

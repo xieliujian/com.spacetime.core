@@ -18,13 +18,31 @@ namespace ST.Core.Launch
         string m_Error = string.Empty;
 
         /// <summary>节点稳定名称。</summary>
-        public string name { get { return m_Name; } }
+        public string name
+        {
+            get
+            {
+                return m_Name;
+            }
+        }
 
         /// <summary>当前生命周期状态。</summary>
-        public LaunchNodeState state { get { return m_State; } }
+        public LaunchNodeState state
+        {
+            get
+            {
+                return m_State;
+            }
+        }
 
         /// <summary>失败信息；无错误时为空字符串。</summary>
-        public string error { get { return m_Error; } }
+        public string error
+        {
+            get
+            {
+                return m_Error;
+            }
+        }
 
         /// <summary>节点是否已经进入终态。</summary>
         public bool isDone
@@ -39,7 +57,13 @@ namespace ST.Core.Launch
         }
 
         /// <summary>节点是否成功完成。</summary>
-        public bool isSucceeded { get { return m_State == LaunchNodeState.Succeeded; } }
+        public bool isSucceeded
+        {
+            get
+            {
+                return m_State == LaunchNodeState.Succeeded;
+            }
+        }
 
         /// <summary>
         /// 创建指定名称的启动节点。
@@ -123,10 +147,14 @@ namespace ST.Core.Launch
         protected abstract void OnStart();
 
         /// <summary>派生节点逐帧逻辑。</summary>
-        protected virtual void OnUpdate() { }
+        protected virtual void OnUpdate()
+        {
+        }
 
         /// <summary>派生节点停止逻辑。</summary>
-        protected virtual void OnStop() { }
+        protected virtual void OnStop()
+        {
+        }
 
         /// <summary>将运行中的节点标记为成功。</summary>
         protected void Complete()

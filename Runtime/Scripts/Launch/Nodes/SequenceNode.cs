@@ -18,7 +18,9 @@ namespace ST.Core.Launch
         /// 创建顺序节点。
         /// </summary>
         /// <param name="name">非空的稳定节点名称。</param>
-        public SequenceNode(string name) : base(name) { }
+        public SequenceNode(string name) : base(name)
+        {
+        }
 
         /// <summary>
         /// 追加一个尚未执行的子节点。

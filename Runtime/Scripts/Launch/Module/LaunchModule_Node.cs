@@ -1,27 +1,14 @@
 ﻿using System;
 using System.Collections.Generic;
-using ST.Core.Logging;
 
 namespace ST.Core.Launch
 {
     /// <summary>
-    /// 构建并驱动标准游戏启动节点树。
+    /// 标准启动节点部分，负责按节点类型创建实例并组装标准节点树。
     /// </summary>
-    public sealed class LaunchModule : IManager
+    public sealed partial class LaunchModule
     {
-        /// <summary>标准启动根顺序节点。</summary>
-        LaunchNode m_RootNode;
-
-        /// <summary>模块当前状态。</summary>
-        LaunchNodeState m_State;
-
-        /// <summary>启动失败信息；无错误时为空字符串。</summary>
-        string m_Error = string.Empty;
-
-        /// <summary>是否已经记录根节点失败。</summary>
-        bool m_IsFailureLogged;
-
-        /// <summary>启动节点创建表，按节点类型索引对应的无参构造函数。</summary>
+        /// <summary>启动节点创建表，按节点类型索引对应的无参构造，避免维护 switch 分支。</summary>
         static readonly Dictionary<LaunchNodeType, RFunc<LaunchNode>> s_NodeCreators =
             new Dictionary<LaunchNodeType, RFunc<LaunchNode>>
             {
@@ -48,92 +35,7 @@ namespace ST.Core.Launch
                 { LaunchNodeType.End, () => new EndNode() },
             };
 
-        /// <summary>模块当前状态。</summary>
-        public LaunchNodeState state { get { return m_State; } }
-
-        /// <summary>启动失败信息；无错误时为空字符串。</summary>
-        public string error { get { return m_Error; } }
-
-        /// <summary>启动流程是否进入终态。</summary>
-        public bool isDone
-        {
-            get
-            {
-                bool isTerminal = m_State == LaunchNodeState.Succeeded
-                                  || m_State == LaunchNodeState.Failed
-                                  || m_State == LaunchNodeState.Stopped;
-                return isTerminal;
-            }
-        }
-
-        /// <summary>启动流程是否成功完成。</summary>
-        public bool isSucceeded { get { return m_State == LaunchNodeState.Succeeded; } }
-
-        /// <summary>IManager 初始化入口；节点树由 Launch 创建。</summary>
-        public override void DoInit() { }
-
-        /// <summary>驱动运行中的启动节点树。</summary>
-        public override void DoUpdate()
-        {
-            if (m_State != LaunchNodeState.Running || m_RootNode == null)
-            {
-                return;
-            }
-
-            m_RootNode.DoUpdate();
-            SyncRootState();
-        }
-
-        /// <summary>启动树没有滞后帧任务。</summary>
-        public override void DoLateUpdate() { }
-
-        /// <summary>停止尚未完成的启动节点树。</summary>
-        public override void DoClose()
-        {
-            if (m_State == LaunchNodeState.Ready)
-            {
-                m_State = LaunchNodeState.Stopped;
-                return;
-            }
-
-            if (m_State != LaunchNodeState.Running)
-            {
-                return;
-            }
-
-            if (m_RootNode != null)
-            {
-                m_RootNode.Stop();
-            }
-
-            m_State = LaunchNodeState.Stopped;
-        }
-
-        /// <summary>构建并启动标准节点树；重复调用会被忽略。</summary>
-        public void Launch()
-        {
-            if (m_State != LaunchNodeState.Ready)
-            {
-                return;
-            }
-
-            try
-            {
-                m_RootNode = CreateRootNode();
-                m_State = LaunchNodeState.Running;
-                m_RootNode.Start();
-                SyncRootState();
-            }
-            catch (Exception exception)
-            {
-                m_Error = exception.ToString();
-                m_State = LaunchNodeState.Failed;
-                m_IsFailureLogged = true;
-                Logger.LogException(exception);
-            }
-        }
-
-        /// <summary>创建标准根节点树。</summary>
+        /// <summary>创建标准根节点树；首屏阶段并行执行，其余节点按顺序串联。</summary>
         SequenceNode CreateRootNode()
         {
             SequenceNode rootNode = new SequenceNode(LaunchDefine.k_LaunchRoot);
@@ -166,10 +68,10 @@ namespace ST.Core.Launch
         }
 
         /// <summary>
-        /// 创建指定类型的具体启动节点。
+        /// 按节点类型创建新的启动节点；未登记的类型视为非法参数。
         /// </summary>
         /// <param name="type">有效的标准启动节点类型。</param>
-        /// <returns>与类型对应的新节点。</returns>
+        /// <returns>与类型对应的新节点实例。</returns>
         LaunchNode CreateNode(LaunchNodeType type)
         {
             RFunc<LaunchNode> creator;
@@ -182,26 +84,6 @@ namespace ST.Core.Launch
 
             LaunchNode node = creator();
             return node;
-        }
-
-        /// <summary>同步根节点终态，并只记录一次失败。</summary>
-        void SyncRootState()
-        {
-            if (m_RootNode == null || !m_RootNode.isDone)
-            {
-                return;
-            }
-
-            m_State = m_RootNode.state;
-            m_Error = m_RootNode.error;
-
-            if (m_State != LaunchNodeState.Failed || m_IsFailureLogged)
-            {
-                return;
-            }
-
-            m_IsFailureLogged = true;
-            Logger.LogError(m_Error);
         }
     }
 }

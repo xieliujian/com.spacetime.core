@@ -4,10 +4,14 @@
     public sealed class WaitFrameNode : LaunchNode
     {
         /// <summary>创建等待帧节点。</summary>
-        public WaitFrameNode() : base(LaunchDefine.k_WaitFrame) { }
+        public WaitFrameNode() : base(LaunchDefine.k_WaitFrame)
+        {
+        }
 
         /// <summary>启动时保持运行，等待下一帧。</summary>
-        protected override void OnStart() { }
+        protected override void OnStart()
+        {
+        }
 
         /// <summary>首个更新帧完成节点。</summary>
         protected override void OnUpdate()

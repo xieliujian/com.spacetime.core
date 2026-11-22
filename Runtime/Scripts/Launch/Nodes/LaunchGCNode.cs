@@ -4,7 +4,9 @@
     public sealed class LaunchGCNode : LaunchNode
     {
         /// <summary>创建启动阶段垃圾回收节点。</summary>
-        public LaunchGCNode() : base(LaunchDefine.k_LaunchGC) { }
+        public LaunchGCNode() : base(LaunchDefine.k_LaunchGC)
+        {
+        }
 
         /// <summary>完成占位操作。</summary>
         protected override void OnStart()

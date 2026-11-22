@@ -4,7 +4,9 @@
     public sealed class CheckVersionNode : LaunchNode
     {
         /// <summary>创建版本检查节点。</summary>
-        public CheckVersionNode() : base(LaunchDefine.k_CheckVersion) { }
+        public CheckVersionNode() : base(LaunchDefine.k_CheckVersion)
+        {
+        }
 
         /// <summary>完成占位操作。</summary>
         protected override void OnStart()
