@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
@@ -55,8 +55,8 @@ namespace ST.Core.Network
             }
             catch (Exception e)
             {
-                Logger.LogError("process protobuf msg error!" + typeof(T).FullName);
-                Logger.LogError(e.ToString());
+                STLogger.LogError("process protobuf msg error!" + typeof(T).FullName);
+                STLogger.LogError(e.ToString());
             }
         }
     }

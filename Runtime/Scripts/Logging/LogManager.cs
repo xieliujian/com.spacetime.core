@@ -1,29 +1,31 @@
-using System;
+﻿using System;
 using UnityEngine;
 
 namespace ST.Core.Logging
 {
     /// <summary>
-    /// 日志管理器，协调 <see cref="FileLogWriter"/> 和 <see cref="DefaultLogFormatter"/>，并管理 Unity 日志捕获
+    /// 日志管理器，负责把格式化后的日志写入文件，并承接 Unity 控制台日志。
+    /// <para>由 <see cref="STLogger.Initialize"/> 创建，业务代码通常不直接实例化。</para>
     /// </summary>
     public class LogManager
     {
-        /// <summary>日志写入器，负责将格式化后的日志持久化</summary>
+        /// <summary>日志写入器；初始化失败时为 null，此时所有写入会被丢弃。</summary>
         FileLogWriter m_Writer;
 
-        /// <summary>日志格式化器，负责将日志内容转换为字符串</summary>
+        /// <summary>日志格式化器，把级别、消息和堆栈拼成一行文本。</summary>
         DefaultLogFormatter m_Formatter;
 
-        /// <summary>日志配置，保存路径、文件大小等参数</summary>
+        /// <summary>初始化时传入的配置，保存路径与轮转参数。</summary>
         LogConfig m_Config;
 
-        /// <summary>标记当前是否已注册 Unity 日志回调，避免重复订阅</summary>
+        /// <summary>Unity 日志回调是否已订阅，用于避免重复订阅或重复取消。</summary>
         bool m_UnityLogCaptureEnabled;
 
         /// <summary>
-        /// 根据配置初始化格式化器和文件写入器
+        /// 根据配置创建格式化器和文件写入器。
+        /// <para>重复调用会用新的写入器覆盖旧实例，旧文件句柄不会被关闭。</para>
         /// </summary>
-        /// <param name="config">日志配置</param>
+        /// <param name="config">日志配置，不可为 null。</param>
         public void Initialize(LogConfig config)
         {
             m_Config = config;
@@ -37,10 +39,10 @@ namespace ST.Core.Logging
         }
 
         /// <summary>
-        /// 启用或禁用对 Unity <c>Application.logMessageReceived</c> 事件的监听
-        /// 重复设置相同状态时不做任何处理
+        /// 订阅或取消 Unity 控制台日志回调。
+        /// <para>状态未变化时不做任何处理，避免重复订阅。</para>
         /// </summary>
-        /// <param name="enable">true 表示开始监听，false 表示停止监听</param>
+        /// <param name="enable">true 表示开始监听，false 表示停止监听。</param>
         public void EnableUnityLogCapture(bool enable)
         {
             if (m_UnityLogCaptureEnabled == enable)
@@ -59,7 +61,7 @@ namespace ST.Core.Logging
         }
 
         /// <summary>
-        /// 将缓存中的日志立即写入文件
+        /// 把写入器缓存中的日志立即落盘。
         /// </summary>
         public void Flush()
         {
@@ -70,7 +72,8 @@ namespace ST.Core.Logging
         }
 
         /// <summary>
-        /// 停止 Unity 日志捕获并关闭写入器，释放文件句柄
+        /// 取消 Unity 日志订阅，刷新缓存并关闭文件句柄。
+        /// <para>重复调用是安全的。</para>
         /// </summary>
         public void Close()
         {
@@ -82,11 +85,11 @@ namespace ST.Core.Logging
         }
 
         /// <summary>
-        /// Unity <c>Application.logMessageReceived</c> 回调，将 Unity 日志转发到日志系统
+        /// Unity 控制台日志回调，把日志内容和堆栈转交写入器。
         /// </summary>
-        /// <param name="condition">日志消息内容</param>
-        /// <param name="stackTrace">堆栈跟踪</param>
-        /// <param name="type">Unity 日志类型</param>
+        /// <param name="condition">日志消息内容。</param>
+        /// <param name="stackTrace">Unity 生成的堆栈跟踪。</param>
+        /// <param name="type">Unity 日志类型，决定写入的级别。</param>
         void OnUnityLogCallback(string condition, string stackTrace, LogType type)
         {
             LogLevel level = ConvertUnityLogType(type);
@@ -94,11 +97,11 @@ namespace ST.Core.Logging
         }
 
         /// <summary>
-        /// 格式化并写入一条日志
+        /// 格式化一条日志并交给写入器；写入器为空时直接丢弃。
         /// </summary>
-        /// <param name="level">日志级别</param>
-        /// <param name="message">日志消息</param>
-        /// <param name="stackTrace">堆栈跟踪（可选）</param>
+        /// <param name="level">日志级别。</param>
+        /// <param name="message">日志消息。</param>
+        /// <param name="stackTrace">堆栈跟踪，可为 null。</param>
         void Log(LogLevel level, string message, string stackTrace = null)
         {
             if (m_Writer == null)
@@ -109,10 +112,10 @@ namespace ST.Core.Logging
         }
 
         /// <summary>
-        /// 将 Unity <see cref="LogType"/> 转换为 <see cref="LogLevel"/>
+        /// 把 Unity 日志类型映射到内部级别；Assert 按错误处理，未知类型按 Info 处理。
         /// </summary>
-        /// <param name="type">Unity 日志类型</param>
-        /// <returns>对应的日志级别</returns>
+        /// <param name="type">Unity 日志类型。</param>
+        /// <returns>对应的内部日志级别。</returns>
         LogLevel ConvertUnityLogType(LogType type)
         {
             switch (type)

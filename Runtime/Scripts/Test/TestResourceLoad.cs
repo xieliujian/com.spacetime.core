@@ -1,5 +1,5 @@
 ﻿using UnityEngine;
-using Logger = ST.Core.Logging.Logger;
+using ST.Core.Logging;
 
 namespace ST.Core.Test
 {
@@ -68,7 +68,7 @@ namespace ST.Core.Test
             m_ResLoad.DoInit();
 
             m_Log = "初始化完成，点击按钮开始测试。";
-            Logger.Log("[TestResourceLoad] 初始化完成");
+            STLogger.Log("[TestResourceLoad] 初始化完成");
         }
 
         /// <summary>每帧驱动异步任务队列。</summary>
@@ -153,12 +153,12 @@ namespace ST.Core.Test
             if (obj != null)
             {
                 m_Log = string.Format("[同步 Prefab] 成功：{0}", obj.name);
-                Logger.LogInfoF("[TestResourceLoad] 同步加载 Prefab 成功：{0}", obj.name);
+                STLogger.LogInfoF("[TestResourceLoad] 同步加载 Prefab 成功：{0}", obj.name);
             }
             else
             {
                 m_Log = "[同步 Prefab] 失败：返回 null";
-                Logger.LogWarning("[TestResourceLoad] 同步加载 Prefab 失败");
+                STLogger.LogWarning("[TestResourceLoad] 同步加载 Prefab 失败");
             }
         }
 
@@ -177,12 +177,12 @@ namespace ST.Core.Test
                     if (go != null)
                     {
                         m_Log = string.Format("[异步 Prefab] 成功：{0}", go.name);
-                        Logger.LogInfoF("[TestResourceLoad] 异步加载 Prefab 成功：{0}", go.name);
+                        STLogger.LogInfoF("[TestResourceLoad] 异步加载 Prefab 成功：{0}", go.name);
                     }
                     else
                     {
                         m_Log = "[异步 Prefab] 失败：返回 null";
-                        Logger.LogWarning("[TestResourceLoad] 异步加载 Prefab 失败");
+                        STLogger.LogWarning("[TestResourceLoad] 异步加载 Prefab 失败");
                     }
                 });
         }
@@ -196,12 +196,12 @@ namespace ST.Core.Test
             if (tex != null)
             {
                 m_Log = string.Format("[同步 Texture] 成功：{0}  {1}x{2}", tex.name, tex.width, tex.height);
-                Logger.LogInfoF("[TestResourceLoad] 同步加载 Texture 成功：{0}", tex.name);
+                STLogger.LogInfoF("[TestResourceLoad] 同步加载 Texture 成功：{0}", tex.name);
             }
             else
             {
                 m_Log = "[同步 Texture] 失败：返回 null";
-                Logger.LogWarning("[TestResourceLoad] 同步加载 Texture 失败");
+                STLogger.LogWarning("[TestResourceLoad] 同步加载 Texture 失败");
             }
         }
 
@@ -221,12 +221,12 @@ namespace ST.Core.Test
                     {
                         m_Log = string.Format("[异步 Texture] 成功：{0}  {1}x{2}",
                             tex.name, tex.width, tex.height);
-                        Logger.LogInfoF("[TestResourceLoad] 异步加载 Texture 成功：{0}", tex.name);
+                        STLogger.LogInfoF("[TestResourceLoad] 异步加载 Texture 成功：{0}", tex.name);
                     }
                     else
                     {
                         m_Log = "[异步 Texture] 失败：返回 null";
-                        Logger.LogWarning("[TestResourceLoad] 异步加载 Texture 失败");
+                        STLogger.LogWarning("[TestResourceLoad] 异步加载 Texture 失败");
                     }
                 });
         }
@@ -248,12 +248,12 @@ namespace ST.Core.Test
                         sb.AppendLine(string.Format("  · {0}", uobj.name));
                 }
                 m_Log = sb.ToString();
-                Logger.LogInfoF("[TestResourceLoad] LoadAll 成功，共 {0} 项", objs.Length);
+                STLogger.LogInfoF("[TestResourceLoad] LoadAll 成功，共 {0} 项", objs.Length);
             }
             else
             {
                 m_Log = "[LoadAll] 失败：返回 null 或空数组";
-                Logger.LogWarning("[TestResourceLoad] LoadAll 失败");
+                STLogger.LogWarning("[TestResourceLoad] LoadAll 失败");
             }
         }
 
@@ -273,7 +273,7 @@ namespace ST.Core.Test
                 {
                     m_AsyncProgress = 1f;
                     m_Log = string.Format("[异步场景] 加载完成：{0}", sceneName);
-                    Logger.LogInfoF("[TestResourceLoad] 异步场景加载完成：{0}", sceneName);
+                    STLogger.LogInfoF("[TestResourceLoad] 异步场景加载完成：{0}", sceneName);
                 });
         }
 
@@ -287,12 +287,12 @@ namespace ST.Core.Test
             if (bytes != null && bytes.Length > 0)
             {
                 m_Log = string.Format("[Lua byte[]] 成功：{0} 字节", bytes.Length);
-                Logger.LogInfoF("[TestResourceLoad] Lua 字节码加载成功：{0} 字节", bytes.Length);
+                STLogger.LogInfoF("[TestResourceLoad] Lua 字节码加载成功：{0} 字节", bytes.Length);
             }
             else
             {
                 m_Log = "[Lua byte[]] 失败：返回 null 或空";
-                Logger.LogWarning("[TestResourceLoad] Lua 字节码加载失败");
+                STLogger.LogWarning("[TestResourceLoad] Lua 字节码加载失败");
             }
         }
 
@@ -306,7 +306,7 @@ namespace ST.Core.Test
             m_ResLoad.DoInit();
 
             m_Log = string.Format("useAssetBundle = {0}", ResourceLoad.useAssetBundle);
-            Logger.LogInfoF("[TestResourceLoad] 切换 AssetBundle 模式：{0}", ResourceLoad.useAssetBundle);
+            STLogger.LogInfoF("[TestResourceLoad] 切换 AssetBundle 模式：{0}", ResourceLoad.useAssetBundle);
         }
 
         // ══════════════════════════════════════════

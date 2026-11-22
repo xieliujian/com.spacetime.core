@@ -137,7 +137,7 @@ namespace ST.Core.Launch
             }
             catch (Exception exception)
             {
-                Logger.LogException(exception);
+                STLogger.LogException(exception);
             }
 
             m_State = LaunchNodeState.Stopped;

@@ -1,31 +1,31 @@
-using System.IO;
+﻿using System.IO;
 using UnityEngine;
 
 namespace ST.Core.Logging
 {
     /// <summary>
-    /// 日志配置，支持链式调用风格进行参数配置
+    /// 日志配置，保存输出路径、刷新阈值与轮转参数，支持链式设置。
     /// </summary>
     public class LogConfig
     {
-        /// <summary>日志文件输出路径</summary>
+        /// <summary>日志文件完整路径，默认位于 persistentDataPath/Logs/Output.txt。</summary>
         string m_LogFilePath;
 
-        /// <summary>是否为低内存设备（系统内存小于 2GB）</summary>
+        /// <summary>是否按低内存设备处理，影响默认刷新阈值。</summary>
         bool m_IsLowMemoryDevice;
 
-        /// <summary>触发自动刷新的缓存条目数量阈值</summary>
+        /// <summary>缓存多少条日志后自动刷新。</summary>
         int m_MaxFlushCount;
 
-        /// <summary>日志文件最大允许大小（字节），超出后执行轮转</summary>
+        /// <summary>单个日志文件的字节上限，超出后在下次打开时轮转。</summary>
         long m_MaxFileSize;
 
-        /// <summary>超出大小限制时是否保留 .bak 备份文件</summary>
+        /// <summary>超限时是否保留 .bak 备份。</summary>
         bool m_EnableBackup;
 
         /// <summary>
-        /// 构造函数，按设备内存情况自动初始化默认配置
-        /// 低内存设备（小于 2GB）使用更小的刷新阈值以减少内存占用
+        /// 按设备内存情况设置默认值。
+        /// <para>内存小于 2GB 时刷新阈值取 20，否则取 100；文件上限 20MB，默认保留备份。</para>
         /// </summary>
         public LogConfig()
         {
@@ -37,10 +37,10 @@ namespace ST.Core.Logging
         }
 
         /// <summary>
-        /// 设置日志文件输出路径
+        /// 设置日志输出文件路径。
         /// </summary>
-        /// <param name="path">完整文件路径</param>
-        /// <returns>当前实例，支持链式调用</returns>
+        /// <param name="path">完整文件路径。</param>
+        /// <returns>当前实例，支持链式调用。</returns>
         public LogConfig SetLogFilePath(string path)
         {
             m_LogFilePath = path;
@@ -48,10 +48,10 @@ namespace ST.Core.Logging
         }
 
         /// <summary>
-        /// 标记当前设备是否为低内存设备，并自动调整刷新阈值
+        /// 标记是否为低内存设备，并同步调整刷新阈值。
         /// </summary>
-        /// <param name="isLowMemory">true 表示低内存，刷新阈值设为 20；否则设为 100</param>
-        /// <returns>当前实例，支持链式调用</returns>
+        /// <param name="isLowMemory">true 表示低内存，刷新阈值设为 20；否则设为 100。</param>
+        /// <returns>当前实例，支持链式调用。</returns>
         public LogConfig SetLowMemoryDevice(bool isLowMemory)
         {
             m_IsLowMemoryDevice = isLowMemory;
@@ -60,10 +60,10 @@ namespace ST.Core.Logging
         }
 
         /// <summary>
-        /// 手动指定触发刷新的缓存条目数量阈值
+        /// 手动覆盖自动刷新阈值。
         /// </summary>
-        /// <param name="count">缓存条目数量，达到此值时自动刷新</param>
-        /// <returns>当前实例，支持链式调用</returns>
+        /// <param name="count">缓存达到该条数时自动刷新。</param>
+        /// <returns>当前实例，支持链式调用。</returns>
         public LogConfig SetMaxFlushCount(int count)
         {
             m_MaxFlushCount = count;
@@ -71,10 +71,10 @@ namespace ST.Core.Logging
         }
 
         /// <summary>
-        /// 设置日志文件的最大大小，超出后执行文件轮转
+        /// 设置单个日志文件的字节上限。
         /// </summary>
-        /// <param name="size">最大文件大小（字节）</param>
-        /// <returns>当前实例，支持链式调用</returns>
+        /// <param name="size">最大文件大小（字节）。</param>
+        /// <returns>当前实例，支持链式调用。</returns>
         public LogConfig SetMaxFileSize(long size)
         {
             m_MaxFileSize = size;
@@ -82,29 +82,29 @@ namespace ST.Core.Logging
         }
 
         /// <summary>
-        /// 设置文件超出大小限制时是否保留 .bak 备份
+        /// 设置超限时是否保留 .bak 备份。
         /// </summary>
-        /// <param name="enable">true 表示保留备份，false 表示直接删除旧文件</param>
-        /// <returns>当前实例，支持链式调用</returns>
+        /// <param name="enable">true 表示保留备份，false 表示直接删除旧文件。</param>
+        /// <returns>当前实例，支持链式调用。</returns>
         public LogConfig SetEnableBackup(bool enable)
         {
             m_EnableBackup = enable;
             return this;
         }
 
-        /// <summary>获取日志文件路径</summary>
+        /// <summary>读取当前日志文件路径。</summary>
         public string GetLogFilePath() => m_LogFilePath;
 
-        /// <summary>是否为低内存设备</summary>
+        /// <summary>当前是否按低内存设备配置。</summary>
         public bool IsLowMemoryDevice() => m_IsLowMemoryDevice;
 
-        /// <summary>获取最大刷新数量</summary>
+        /// <summary>读取自动刷新阈值。</summary>
         public int GetMaxFlushCount() => m_MaxFlushCount;
 
-        /// <summary>获取最大文件大小（字节）</summary>
+        /// <summary>读取单个日志文件的字节上限。</summary>
         public long GetMaxFileSize() => m_MaxFileSize;
 
-        /// <summary>是否启用备份</summary>
+        /// <summary>当前是否启用备份。</summary>
         public bool EnableBackup() => m_EnableBackup;
     }
 }

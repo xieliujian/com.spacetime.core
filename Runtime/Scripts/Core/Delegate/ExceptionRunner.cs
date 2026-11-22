@@ -22,7 +22,7 @@ namespace ST.Core
             }
             catch (Exception exception)
             {
-                Logger.LogError(exception.ToString());
+                STLogger.LogError(exception.ToString());
                 return false;
             }
 
@@ -47,7 +47,7 @@ namespace ST.Core
             }
             catch (Exception exception)
             {
-                Logger.LogError(exception.ToString());
+                STLogger.LogError(exception.ToString());
                 return false;
             }
 
@@ -74,7 +74,7 @@ namespace ST.Core
             }
             catch (Exception exception)
             {
-                Logger.LogError(exception.ToString());
+                STLogger.LogError(exception.ToString());
                 return false;
             }
 
@@ -103,7 +103,7 @@ namespace ST.Core
             }
             catch (Exception exception)
             {
-                Logger.LogError(exception.ToString());
+                STLogger.LogError(exception.ToString());
                 return false;
             }
 
@@ -134,7 +134,7 @@ namespace ST.Core
             }
             catch (Exception exception)
             {
-                Logger.LogError(exception.ToString());
+                STLogger.LogError(exception.ToString());
                 return false;
             }
 
@@ -167,7 +167,7 @@ namespace ST.Core
             }
             catch (Exception exception)
             {
-                Logger.LogError(exception.ToString());
+                STLogger.LogError(exception.ToString());
                 return false;
             }
 
@@ -200,7 +200,7 @@ namespace ST.Core
             }
             catch (Exception exception)
             {
-                Logger.LogError(exception.ToString());
+                STLogger.LogError(exception.ToString());
                 return default(TResult);
             }
         }
@@ -224,7 +224,7 @@ namespace ST.Core
             }
             catch (Exception exception)
             {
-                Logger.LogError(exception.ToString());
+                STLogger.LogError(exception.ToString());
                 return default(TResult);
             }
         }
@@ -250,7 +250,7 @@ namespace ST.Core
             }
             catch (Exception exception)
             {
-                Logger.LogError(exception.ToString());
+                STLogger.LogError(exception.ToString());
                 return default(TResult);
             }
         }
@@ -278,7 +278,7 @@ namespace ST.Core
             }
             catch (Exception exception)
             {
-                Logger.LogError(exception.ToString());
+                STLogger.LogError(exception.ToString());
                 return default(TResult);
             }
         }
@@ -309,7 +309,7 @@ namespace ST.Core
             }
             catch (Exception exception)
             {
-                Logger.LogError(exception.ToString());
+                STLogger.LogError(exception.ToString());
                 return default(TResult);
             }
         }
@@ -342,7 +342,7 @@ namespace ST.Core
             }
             catch (Exception exception)
             {
-                Logger.LogError(exception.ToString());
+                STLogger.LogError(exception.ToString());
                 return default(TResult);
             }
         }

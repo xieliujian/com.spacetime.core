@@ -1,4 +1,4 @@
-using UnityEngine;
+﻿using UnityEngine;
 using System;
 using System.IO;
 using System.Net;
@@ -6,7 +6,6 @@ using System.Net.Sockets;
 using System.Collections;
 using System.Collections.Generic;
 using ST.Core.Logging;
-using Logger = ST.Core.Logging.Logger;
 
 namespace ST.Core.Network
 {
@@ -91,7 +90,7 @@ namespace ST.Core.Network
             catch (Exception e)
             {
                 Close();
-                Logger.LogError(e.Message);
+                STLogger.LogError(e.Message);
             }
         }
 
@@ -106,7 +105,7 @@ namespace ST.Core.Network
             m_NetStream = m_Client.GetStream();
             m_NetStream.BeginRead(m_ByteBuffer, 0, NetworkDefine.s_MaxReadNum, new AsyncCallback(OnRead), null);
 
-            Logger.LogDebug("======连接=" + m_ip + "=" + m_port + "=======");
+            STLogger.LogDebug("======连接=" + m_ip + "=" + m_port + "=======");
         }
 
         /// <summary>向网络流异步写入消息字节，连接断开时记录错误。</summary>
@@ -118,7 +117,7 @@ namespace ST.Core.Network
             }
             else
             {
-                Logger.LogError("client.connected----->>false");
+                STLogger.LogError("client.connected----->>false");
             }
         }
 
@@ -165,8 +164,8 @@ namespace ST.Core.Network
         /// <summary>断线处理：记录日志并关闭客户端。</summary>
         void OnDisconnected(DisType dis, string msg)
         {
-            Logger.LogDebug("OnDisconnected" + msg);
-            Logger.LogDebug("======断开连接========");
+            STLogger.LogDebug("OnDisconnected" + msg);
+            STLogger.LogDebug("======断开连接========");
             Close();   //关掉客户端链接
         }
 
@@ -179,7 +178,7 @@ namespace ST.Core.Network
                 returnStr += m_ByteBuffer[i].ToString("X2");
             }
 
-            Logger.LogError(returnStr);
+            STLogger.LogError(returnStr);
         }
 
         /// <summary>异步写完成回调：调用 <c>EndWrite</c> 完成写入并捕获异常。</summary>
@@ -191,7 +190,7 @@ namespace ST.Core.Network
             }
             catch (Exception ex)
             {
-                Logger.LogError("OnWrite--->>>" + ex.Message);
+                STLogger.LogError("OnWrite--->>>" + ex.Message);
             }
         }
 
@@ -254,7 +253,7 @@ namespace ST.Core.Network
 
                 m_Client = null;
 
-                Logger.LogDebug("======关闭连接========");
+                STLogger.LogDebug("======关闭连接========");
             }
         }
 

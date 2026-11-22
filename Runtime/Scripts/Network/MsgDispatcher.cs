@@ -1,4 +1,4 @@
-using System.Collections;
+﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using System;
@@ -8,7 +8,6 @@ using System.IO;
 using Google.Protobuf;
 using FlatBuffers;
 using ST.Core.Logging;
-using Logger = ST.Core.Logging.Logger;
 
 namespace ST.Core.Network
 {
@@ -122,7 +121,7 @@ namespace ST.Core.Network
             IFlatBufferProcFun exist;
             if (m_FbMsgProcDict.TryGetValue(hashid, out exist))
             {
-                Logger.LogError("FBMsgProc Exist! " + type.Name);
+                STLogger.LogError("FBMsgProc Exist! " + type.Name);
             }
             else
             {
@@ -156,7 +155,7 @@ namespace ST.Core.Network
             IProtobufProcFun exist;
             if (m_PbMsgProcDict.TryGetValue(hashid, out exist))
             {
-                Logger.LogError("PBMsgProc Exist! " + type.Name);
+                STLogger.LogError("PBMsgProc Exist! " + type.Name);
             }
             else
             {

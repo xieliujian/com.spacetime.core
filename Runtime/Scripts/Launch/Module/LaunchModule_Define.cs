@@ -75,7 +75,7 @@ namespace ST.Core.Launch
             }
 
             m_IsFailureLogged = true;
-            Logger.LogError(m_Error);
+            STLogger.LogError(m_Error);
         }
     }
 }

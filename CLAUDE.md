@@ -20,13 +20,13 @@ The main framework is structured as follows:
   - `IMainThreadTask` - Main thread task interface
 
 - **Runtime/Scripts/Logging/** - Logging system (`ST.Core.Logging` namespace)
-  - `Logger` - **唯一对外入口**（静态门面），所有日志调用均通过此类
+  - `STLogger` - **唯一对外入口**（静态门面），所有日志调用均通过此类
   - `LogManager` - 内部日志管理器，协调文件写入与 Unity 日志捕获
   - `FileLogWriter` - 文件写入器（缓存 + 批量刷新）
   - `DefaultLogFormatter` - 日志格式化器
   - `LogConfig` - 日志配置（链式调用风格）
   - `LogLevel` - 日志级别枚举（Debug / Info / Warning / Error / Exception）
-  - **注意**：`Debugger` 类已作为 `Logger` 的私有嵌套类存在，外部不可直接访问
+  - **注意**：`Debugger` 类已作为 `STLogger` 的私有嵌套类存在，外部不可直接访问
 
 - **Runtime/Scripts/Network/** - Network communication layer
   - `NetManager` - Singleton network manager, handles socket connections and message queuing
@@ -82,21 +82,21 @@ Managers use singleton pattern (accessed via static `S` property).
 
 ### Logging Architecture
 
-调用链路：`Logger.LogXxx()` → 内部私有 `Debugger` 嵌套类 → `UnityEngine.Debug.LogXxx` → `Application.logMessageReceived` → `LogManager` → 写入文件
+调用链路：`STLogger.LogXxx()` → 内部私有 `Debugger` 嵌套类 → `UnityEngine.Debug.LogXxx` → `Application.logMessageReceived` → `LogManager` → 写入文件
 
 **初始化顺序（必须按序）：**
 ```csharp
 var config = new LogConfig();            // 1. 构造配置（链式可选调整）
-Logger.Initialize(config);              // 2. 初始化文件系统
-Logger.SetAllIsLog(true);               // 3. 设置日志级别开关
-Logger.EnableUnityLogCapture(true);     // 4. 开启 Unity 日志捕获
+STLogger.Initialize(config);              // 2. 初始化文件系统
+STLogger.SetAllIsLog(true);               // 3. 设置日志级别开关
+STLogger.EnableUnityLogCapture(true);     // 4. 开启 Unity 日志捕获
 ```
 
 **日志调用规范：**
-- 业务代码**只使用** `Logger`，禁止直接调用 `UnityEngine.Debug` 或旧的 `Debugger` 类
+- 业务代码**只使用** `STLogger`，禁止直接调用 `UnityEngine.Debug` 或旧的 `Debugger` 类
 - 提供 `Log` / `LogInfo` / `LogDebug` / `LogWarning` / `LogError` / `LogException` / `LogFatal`
 - 格式化版本加 `F` 后缀：`LogDebugF` / `LogInfoF` / `LogWarningF` / `LogErrorF` / `LogFatalF`
-- 程序退出前必须调用 `Logger.Close()` 确保日志落盘
+- 程序退出前必须调用 `STLogger.Close()` 确保日志落盘
 
 ### Event System
 Uses `GameEvent` class for decoupled communication between systems.
@@ -280,17 +280,17 @@ public enum PanelHideMask : byte
 
 ### Logging — 禁止直接使用 `UnityEngine.Debug`
 
-业务代码统一通过 `Logger` 静态类输出日志：
+业务代码统一通过 `STLogger` 静态类输出日志：
 
 ```csharp
 // Correct
-Logger.Log("info message");
-Logger.LogWarning("warning");
-Logger.LogError("error");
-Logger.LogDebug("debug");
-Logger.LogException(ex);
-Logger.LogFatal("fatal");
-Logger.LogDebugF("value = {0}", value);   // 格式化版本
+STLogger.Log("info message");
+STLogger.LogWarning("warning");
+STLogger.LogError("error");
+STLogger.LogDebug("debug");
+STLogger.LogException(ex);
+STLogger.LogFatal("fatal");
+STLogger.LogDebugF("value = {0}", value);   // 格式化版本
 
 // Wrong — 禁止直接调用
 UnityEngine.Debug.Log("...");

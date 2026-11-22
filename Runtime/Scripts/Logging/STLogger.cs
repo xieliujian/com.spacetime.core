@@ -1,14 +1,14 @@
-using System;
+﻿using System;
 using System.Diagnostics;
 using UnityEngine;
 
 namespace ST.Core.Logging
 {
     /// <summary>
-    /// 日志系统的唯一对外入口（静态门面）。
+    /// 日志系统的唯一对外入口（静态门面），类名使用 STLogger 以避开 UnityEngine.Logger 的同名冲突。
     /// <para>
     /// 调用链路：<br/>
-    /// <c>Logger.LogXxx()</c> → 内部 <c>Debugger</c>（私有嵌套类）→ <c>UnityEngine.Debug.LogXxx</c><br/>
+    /// <c>STLogger.LogXxx()</c> → 内部 <c>Debugger</c>（私有嵌套类）→ <c>UnityEngine.Debug.LogXxx</c><br/>
     /// → <c>Application.logMessageReceived</c> 事件 → <see cref="LogManager"/> → 写入文件
     /// </para>
     /// <para>
@@ -19,7 +19,7 @@ namespace ST.Core.Logging
     /// 4. 程序退出前调用 <see cref="Close"/> 刷新并释放文件资源。
     /// </para>
     /// </summary>
-    public static class Logger
+    public static class STLogger
     {
         /// <summary>日志管理器实例，负责文件写入，由 <see cref="Initialize"/> 赋值。</summary>
         static LogManager s_Manager;
@@ -31,7 +31,7 @@ namespace ST.Core.Logging
         /// <summary>
         /// 初始化日志文件系统。
         /// <para>若管理器尚未创建则自动构造默认的 <see cref="LogManager"/>，随后使用 <paramref name="config"/> 完成配置。</para>
-        /// <para>可重复调用以重新配置（如切换日志路径），不会重复创建管理器实例。</para>
+        /// <para>重复调用会重新创建文件写入器，旧的文件句柄不会被关闭，因此整个进程只应初始化一次。</para>
         /// </summary>
         /// <param name="config">日志配置，包含路径、文件大小上限、备份策略等参数。</param>
         public static void Initialize(LogConfig config)
@@ -45,7 +45,7 @@ namespace ST.Core.Logging
 
         /// <summary>
         /// 将所有日志级别开关（Info / Debug / Warning / Error / Exception）统一设为同一值。
-        /// <para>须在 <see cref="Initialize"/> 之后调用才能生效。</para>
+        /// <para>开关保存在静态字段中，与是否已调用 <see cref="Initialize"/> 无关。</para>
         /// </summary>
         /// <param name="isLog"><c>true</c> 表示全部开启，<c>false</c> 表示全部关闭。</param>
         public static void SetAllIsLog(bool isLog)
@@ -59,7 +59,8 @@ namespace ST.Core.Logging
         /// 启用后，所有经由 <c>UnityEngine.Debug</c> 输出的日志（包括本类所有 LogXxx 方法）
         /// 均会被 <see cref="LogManager"/> 捕获并写入文件。
         /// </para>
-        /// <para>重复调用相同值时不做任何处理，防止重复订阅。</para>
+        /// <para>未初始化时调用会被直接忽略，不会报错。</para>
+        /// <para>重复设置相同状态时不做任何处理，防止重复订阅。</para>
         /// </summary>
         /// <param name="enable"><c>true</c> 表示开始监听，<c>false</c> 表示停止监听。</param>
         public static void EnableUnityLogCapture(bool enable)
@@ -72,7 +73,7 @@ namespace ST.Core.Logging
 
         /// <summary>
         /// 将缓冲区中尚未写入磁盘的日志立即刷新到文件。
-        /// <para>在程序异常退出前主动调用可防止日志丢失。</para>
+        /// <para>在程序异常退出前主动调用可防止日志丢失；未初始化时调用会被直接忽略。</para>
         /// </summary>
         public static void Flush()
         {
@@ -84,7 +85,7 @@ namespace ST.Core.Logging
 
         /// <summary>
         /// 停止 Unity 日志捕获，刷新剩余缓冲并关闭文件句柄，释放所有文件资源。
-        /// <para>程序正常退出时应调用此方法，确保日志完整落盘。</para>
+        /// <para>程序正常退出时应调用此方法，确保日志完整落盘；未初始化时调用会被直接忽略。</para>
         /// </summary>
         public static void Close()
         {
@@ -265,12 +266,12 @@ namespace ST.Core.Logging
         }
 
         // ══════════════════════════════════════════
-        // 私有嵌套实现类，仅 Logger 可访问
+        // 私有嵌套实现类，仅 STLogger 可访问
         // ══════════════════════════════════════════
 
         /// <summary>
         /// 日志输出核心实现，封装 Unity 控制台输出与级别开关逻辑。
-        /// 此类为 Logger 的私有嵌套类，包内及包外任何其他代码均不可直接访问。
+        /// 此类为 STLogger 的私有嵌套类，包内及包外任何其他代码均不可直接访问。
         /// </summary>
         static class Debugger
         {

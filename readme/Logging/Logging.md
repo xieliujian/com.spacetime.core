@@ -3,7 +3,7 @@
 [← 返回主页](../../README.md)
 
 文件日志系统，支持批量刷新、文件轮转、Unity 日志捕获。  
-所有日志调用统一通过 `Logger` 静态门面完成，内部实现对外不可见。
+所有日志调用统一通过 `STLogger` 静态门面完成，内部实现对外不可见。`STLogger` 的命名用于与 Unity 自带的 `UnityEngine.Logger` 区分，避免同时引用 `UnityEngine` 和 `ST.Core.Logging` 时产生类型歧义。
 
 ---
 
@@ -15,35 +15,35 @@
 using ST.Core.Logging;
 
 // 1. 初始化文件写入系统
-Logger.Initialize(new LogConfig());
+STLogger.Initialize(new LogConfig());
 
 // 2. 开启 Unity 日志捕获（可选，开启后日志自动写入文件）
-Logger.EnableUnityLogCapture(true);
+STLogger.EnableUnityLogCapture(true);
 
 // 3. 写入日志
-Logger.Log("Application started");          // Info 级别（字符串快捷入口）
-Logger.LogInfo("Player loaded");            // Info 级别
-Logger.LogDebug("Frame delta: " + dt);      // Debug 级别
-Logger.LogWarning("Low memory detected");   // Warning 级别
-Logger.LogError("Connection failed");       // Error 级别
-Logger.LogFatal("Critical system failure"); // Fatal 级别（同时触发致命回调）
+STLogger.Log("Application started");          // Info 级别（字符串快捷入口）
+STLogger.LogInfo("Player loaded");            // Info 级别
+STLogger.LogDebug("Frame delta: " + dt);      // Debug 级别
+STLogger.LogWarning("Low memory detected");   // Warning 级别
+STLogger.LogError("Connection failed");       // Error 级别
+STLogger.LogFatal("Critical system failure"); // Fatal 级别（同时触发致命回调）
 
 // 4. 程序退出时刷新并关闭
 void OnApplicationQuit()
 {
-    Logger.Flush();
-    Logger.Close();
+    STLogger.Flush();
+    STLogger.Close();
 }
 ```
 
 ### 格式化输出
 
 ```csharp
-Logger.LogInfoF("Player {0} joined room {1}", playerName, roomId);
-Logger.LogDebugF("Position: ({0:F2}, {1:F2})", x, y);
-Logger.LogWarningF("Retry {0}/{1}", attempt, maxRetry);
-Logger.LogErrorF("Request {0} failed with code {1}", url, code);
-Logger.LogFatalF("Unhandled exception in {0}: {1}", module, ex.Message);
+STLogger.LogInfoF("Player {0} joined room {1}", playerName, roomId);
+STLogger.LogDebugF("Position: ({0:F2}, {1:F2})", x, y);
+STLogger.LogWarningF("Retry {0}/{1}", attempt, maxRetry);
+STLogger.LogErrorF("Request {0} failed with code {1}", url, code);
+STLogger.LogFatalF("Unhandled exception in {0}: {1}", module, ex.Message);
 ```
 
 ### 异常日志
@@ -55,7 +55,7 @@ try
 }
 catch (Exception ex)
 {
-    Logger.LogException(ex);  // 自动包含完整堆栈
+    STLogger.LogException(ex);  // 自动包含完整堆栈
 }
 ```
 
@@ -63,16 +63,16 @@ catch (Exception ex)
 
 ```csharp
 // Release 模式下调用被编译器完全消除，无运行时开销
-Logger.Assert(index >= 0, "Index must be non-negative");
-Logger.Assert(config != null);
+STLogger.Assert(index >= 0, "Index must be non-negative");
+STLogger.Assert(config != null);
 ```
 
 ### 日志级别开关
 
 ```csharp
 // 须在 Initialize() 之后调用
-Logger.SetAllIsLog(false);  // 关闭所有级别输出（如正式发布时）
-Logger.SetAllIsLog(true);   // 全部重新开启
+STLogger.SetAllIsLog(false);  // 关闭所有级别输出（如正式发布时）
+STLogger.SetAllIsLog(true);   // 全部重新开启
 ```
 
 ### 自定义配置
@@ -84,21 +84,21 @@ var config = new LogConfig()
     .SetMaxFileSize(10 * 1024 * 1024)  // 10MB
     .SetEnableBackup(true);
 
-Logger.Initialize(config);
+STLogger.Initialize(config);
 ```
 
 ### Unity 日志捕获
 
-开启后，所有经由 `UnityEngine.Debug` 输出的日志（包括 Logger 本身的所有 LogXxx 调用）
+开启后，所有经由 `UnityEngine.Debug` 输出的日志（包括 STLogger 本身的所有 LogXxx 调用）
 均会被自动捕获并写入文件，无需在每处调用点额外处理。
 
 ```csharp
-Logger.Initialize(new LogConfig());
-Logger.EnableUnityLogCapture(true);
+STLogger.Initialize(new LogConfig());
+STLogger.EnableUnityLogCapture(true);
 
 // 以下所有输出均自动落地到文件
 Debug.Log("Unity native log");
-Logger.LogError("My error");
+STLogger.LogError("My error");
 ```
 
 ### 适配现有项目
@@ -122,12 +122,12 @@ public class ProjectLogConfig : ILogConfig
         => true;
 }
 
-Logger.Initialize(new ProjectLogConfig());
+STLogger.Initialize(new ProjectLogConfig());
 ```
 
 ---
 
-## Logger API 一览
+## STLogger API 一览
 
 | 方法 | 级别 | 说明 |
 |------|------|------|
@@ -155,7 +155,7 @@ Logger.Initialize(new ProjectLogConfig());
 
 ## 核心特性
 
-- **统一入口** - 所有日志调用通过 `Logger` 完成，内部实现不对外暴露
+- **统一入口** - 所有日志调用通过 `STLogger` 完成，内部实现不对外暴露
 - **批量刷新** - 缓存日志，达到阈值后批量写入（低内存 20 条，正常 100 条）
 - **文件轮转** - 文件超过 20MB 自动备份
 - **Unity 日志捕获** - 可选的 Unity 日志自动捕获，经由 `Application.logMessageReceived` 落地
@@ -168,7 +168,7 @@ Logger.Initialize(new ProjectLogConfig());
 ## 架构
 
 ```
-Logger（唯一公开入口）
+STLogger（唯一公开入口）
   ↓
 内部 Debugger（私有嵌套类，包外不可见）
   ↓

@@ -1,7 +1,8 @@
-namespace ST.Core.Logging
+﻿namespace ST.Core.Logging
 {
     /// <summary>
-    /// 日志级别，按严重程度从低到高排列
+    /// 日志级别，按严重程度从低到高排列；与 Unity <see cref="UnityEngine.LogType"/> 的映射见
+    /// <see cref="LogManager"/> 中 Unity 控制台日志回调的处理。
     /// </summary>
     public enum LogLevel
     {

@@ -72,7 +72,7 @@ namespace ST.Core.Launch
                 m_Error = exception.ToString();
                 m_State = LaunchNodeState.Failed;
                 m_IsFailureLogged = true;
-                Logger.LogException(exception);
+                STLogger.LogException(exception);
             }
         }
     }

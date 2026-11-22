@@ -5,7 +5,7 @@ description: >-
   覆盖项目强制的编码规范（m_/s_ 前缀、camelCase 属性、禁止 ?. 与 UnityEngine.Debug、中文 XML 注释、两行式空值守卫），
   以及框架特有陷阱：单例靠构造函数赋值、异步加载没有取消与失败回调、UIManager 的 DoUpdate 是空的需手动驱动、
   Launch 节点全是空壳、AssetBundle 名等于资源相对路径。Use whenever editing C# under Packages/com.spacetime.core,
-  or any code touching NetManager / MsgDispatcher / UIManager / ResourceLoad / TableLoader / Logger / LaunchModule,
+  or any code touching NetManager / MsgDispatcher / UIManager / ResourceLoad / TableLoader / STLogger / LaunchModule,
   including adding a new manager, panel, launch node, or protocol message.
 ---
 
@@ -75,24 +75,24 @@ m_Manager?.Flush();
 
 例外仅限被调用方本身就是"可选回调"的场景（如 `onComplete?.Invoke()`），此时 null 是正常语义；但项目里既有代码已经用了 10 处裸 `?.`，**不要顺手批量重构**，只要求新代码不引入。
 
-### 日志：只用 `Logger`
+### 日志：只用 `STLogger`
 
 业务代码禁止 `UnityEngine.Debug`：
 
 ```csharp
 // 正确
-Logger.Log("info");
-Logger.LogWarning("warning");
-Logger.LogError("error");
-Logger.LogDebugF("value = {0}", value);   // 格式化版本统一加 F 后缀
+STLogger.Log("info");
+STLogger.LogWarning("warning");
+STLogger.LogError("error");
+STLogger.LogDebugF("value = {0}", value);   // 格式化版本统一加 F 后缀
 
 // 错误
 UnityEngine.Debug.LogWarning("...");
 ```
 
-`Logger` 的完整 API：`Initialize(LogConfig)` / `SetAllIsLog(bool)` / `EnableUnityLogCapture(bool)` / `Flush()` / `Close()` / `Assert(...)` 以及 `Log` `LogInfo` `LogDebug` `LogWarning` `LogError` `LogException` `LogFatal`（每个带 `*F` 格式化版）。
+`STLogger` 的完整 API：`Initialize(LogConfig)` / `SetAllIsLog(bool)` / `EnableUnityLogCapture(bool)` / `Flush()` / `Close()` / `Assert(...)` 以及 `Log` `LogInfo` `LogDebug` `LogWarning` `LogError` `LogException` `LogFatal`（每个带 `*F` 格式化版）。
 
-**但要知道 `Logger` 未初始化时是全静默 no-op**：`Logger.Initialize` 目前只有 `Logging/Examples/LoggingExample.cs` 调用过，所以框架自身大量 `Logger.LogError` 实际只进 Console、不落文件。新增日志前先确认初始化链，别以为写了就一定有文件记录。
+**但要知道 `STLogger` 未初始化时是全静默 no-op**：`STLogger.Initialize` 目前只有 `Logging/Examples/LoggingExample.cs` 调用过，所以框架自身大量 `STLogger.LogError` 实际只进 Console、不落文件。新增日志前先确认初始化链，别以为写了就一定有文件记录。
 
 ### XML 注释：全覆盖，中文
 
@@ -210,8 +210,8 @@ UIPanelActive FindRunningByUIID(int uiID) { }
 - `ByteBuffer` 有**两个同名类**（`ST.Core.ByteBuffer` 与 `Google.FlatBuffers.ByteBuffer`）。`MsgDispatcher` 用裸名 `new ByteBuffer()`，靠命名空间优先级解析 —— 在该文件里加 `using FlatBuffers;` 会静默换掉实现。
 - `ST.Core.ByteBuffer` 字节序是混的：`WriteInt/WriteShort/WriteLong` 走 `BinaryWriter`（小端），而 `WriteFloat/WriteDouble` 先 `Array.Reverse`（大端）。类注释承认了但没说清，别想当然。
 - 命名语义错误的历史包袱：`IMsgType` 是**枚举**却带 `I` 前缀；`IProtobufProcFun` / `IFlatBufferProcFun` 是**类**却用接口命名（能被 `new`）。别照着它们猜"这是个接口"。
-- `Logger` 未初始化时 `EnableUnityLogCapture` / `Flush` / `Close` 全部静默 no-op，不报错。
-- `Logger.Initialize` **重复调用会泄漏文件句柄并使后续写入永久失败**（旧 `FileLogWriter` 不 Close，而 `File.Open` 是 `FileShare.None`）。别在反复进入 Play 模式的路径里调它。
+- `STLogger` 未初始化时 `EnableUnityLogCapture` / `Flush` / `Close` 全部静默 no-op，不报错。
+- `STLogger.Initialize` **重复调用会泄漏文件句柄并使后续写入永久失败**（旧 `FileLogWriter` 不 Close，而 `File.Open` 是 `FileShare.None`）。别在反复进入 Play 模式的路径里调它。
 - 日志从**子线程调用不会进文件**：`LogManager` 订阅的是 `Application.logMessageReceived`（仅主线程），而网络层全部在线程池线程打日志。所以网络相关日志只进 Console。
 
 ## 三、动手之前
@@ -244,7 +244,7 @@ Diagnostics     ✅ 可用              未接入任何场景
 
 - [ ] 命名符合 `m_` / `s_` / camelCase 属性规则，没写多余的 `private`
 - [ ] 没有新增 `?.`；空值守卫是两行式且 return 后有空行
-- [ ] 日志走 `Logger`，没有新增 `UnityEngine.Debug`
+- [ ] 日志走 `STLogger`，没有新增 `UnityEngine.Debug`
 - [ ] 新增/修改的类型、方法、字段、枚举值都有中文 XML 注释
 - [ ] 如果新增了需要逐帧驱动的模块，想清楚谁调它的 `DoUpdate`
 - [ ] 如果改了 `Launch` 节点或调度器，同步更新 `Tests/Editor/` 下对应测试

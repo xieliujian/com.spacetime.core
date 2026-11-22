@@ -1,9 +1,8 @@
-using System.Collections;
+﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using System;
 using ST.Core.Logging;
-using Logger = ST.Core.Logging.Logger;
 
 namespace ST.Core
 {
@@ -42,7 +41,7 @@ namespace ST.Core
                     }
                     catch(Exception e)
                     {
-                        Logger.LogError(e.ToString());
+                        STLogger.LogError(e.ToString());
                     }
                 }
             }
