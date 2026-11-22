@@ -4,7 +4,7 @@
     public sealed class SDKInitCheckNode : LaunchNode
     {
         /// <summary>创建 SDK 初始化结果检查节点。</summary>
-        public SDKInitCheckNode() : base("SDKInitCheck") { }
+        public SDKInitCheckNode() : base(LaunchDefine.k_SDKInitCheck) { }
 
         /// <summary>完成占位操作。</summary>
         protected override void OnStart()

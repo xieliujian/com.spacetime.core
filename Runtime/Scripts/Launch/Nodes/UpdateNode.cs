@@ -4,7 +4,7 @@
     public sealed class UpdateNode : LaunchNode
     {
         /// <summary>创建资源更新节点。</summary>
-        public UpdateNode() : base("Update") { }
+        public UpdateNode() : base(LaunchDefine.k_Update) { }
 
         /// <summary>完成占位操作。</summary>
         protected override void OnStart()

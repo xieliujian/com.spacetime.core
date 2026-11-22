@@ -4,7 +4,7 @@
     public sealed class OpenLoginPanelNode : LaunchNode
     {
         /// <summary>创建登录界面打开节点。</summary>
-        public OpenLoginPanelNode() : base("OpenLoginPanel") { }
+        public OpenLoginPanelNode() : base(LaunchDefine.k_OpenLoginPanel) { }
 
         /// <summary>完成占位操作。</summary>
         protected override void OnStart()

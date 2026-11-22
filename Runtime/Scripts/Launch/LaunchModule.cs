@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using ST.Core.Logging;
 
 namespace ST.Core.Launch
@@ -19,6 +20,33 @@ namespace ST.Core.Launch
 
         /// <summary>是否已经记录根节点失败。</summary>
         bool m_IsFailureLogged;
+
+        /// <summary>启动节点创建表，按节点类型索引对应的无参构造函数。</summary>
+        static readonly Dictionary<LaunchNodeType, RFunc<LaunchNode>> s_NodeCreators =
+            new Dictionary<LaunchNodeType, RFunc<LaunchNode>>
+            {
+                { LaunchNodeType.WaitFrame, () => new WaitFrameNode() },
+                { LaunchNodeType.AppInit, () => new AppInitNode() },
+                { LaunchNodeType.OpenLaunchShell, () => new OpenLaunchShellNode() },
+                { LaunchNodeType.SplashGlobalResLoad, () => new SplashGlobalResLoadNode() },
+                { LaunchNodeType.DownloadServerConfig, () => new DownloadServerConfigNode() },
+                { LaunchNodeType.TableLoad, () => new TableLoadNode() },
+                { LaunchNodeType.CheckDownloadServerConfigSuccess, () => new CheckDownloadServerConfigSuccessNode() },
+                { LaunchNodeType.BeforeLoginGlobalResLoad, () => new BeforeLoginGlobalResLoadNode() },
+                { LaunchNodeType.DownloadServerDynamic, () => new DownloadServerDynamicNode() },
+                { LaunchNodeType.CheckDownloadServerDynamicSuccess, () => new CheckDownloadServerDynamicSuccessNode() },
+                { LaunchNodeType.SDKInit, () => new SDKInitNode() },
+                { LaunchNodeType.SDKInitCheck, () => new SDKInitCheckNode() },
+                { LaunchNodeType.CheckVersion, () => new CheckVersionNode() },
+                { LaunchNodeType.Update, () => new UpdateNode() },
+                { LaunchNodeType.ReloadRes, () => new ReloadResNode() },
+                { LaunchNodeType.CompileShader, () => new CompileShaderNode() },
+                { LaunchNodeType.CheckSubpackUpdate, () => new CheckSubpackUpdateNode() },
+                { LaunchNodeType.LaunchGC, () => new LaunchGCNode() },
+                { LaunchNodeType.OpenLoginPanel, () => new OpenLoginPanelNode() },
+                { LaunchNodeType.SDKLogin, () => new SDKLoginNode() },
+                { LaunchNodeType.End, () => new EndNode() },
+            };
 
         /// <summary>模块当前状态。</summary>
         public LaunchNodeState state { get { return m_State; } }
@@ -108,11 +136,11 @@ namespace ST.Core.Launch
         /// <summary>创建标准根节点树。</summary>
         SequenceNode CreateRootNode()
         {
-            SequenceNode rootNode = new SequenceNode("LaunchNode");
+            SequenceNode rootNode = new SequenceNode(LaunchDefine.k_LaunchRoot);
             rootNode.Append(CreateNode(LaunchNodeType.WaitFrame));
             rootNode.Append(CreateNode(LaunchNodeType.AppInit));
 
-            ParallelNode splashNode = new ParallelNode("Splash");
+            ParallelNode splashNode = new ParallelNode(LaunchDefine.k_Splash);
             splashNode.Append(CreateNode(LaunchNodeType.OpenLaunchShell));
             splashNode.Append(CreateNode(LaunchNodeType.SplashGlobalResLoad));
             splashNode.Append(CreateNode(LaunchNodeType.DownloadServerConfig));
@@ -144,53 +172,16 @@ namespace ST.Core.Launch
         /// <returns>与类型对应的新节点。</returns>
         LaunchNode CreateNode(LaunchNodeType type)
         {
-            switch (type)
+            RFunc<LaunchNode> creator;
+            bool hasCreator = s_NodeCreators.TryGetValue(type, out creator);
+
+            if (!hasCreator)
             {
-                case LaunchNodeType.WaitFrame:
-                    return new WaitFrameNode();
-                case LaunchNodeType.AppInit:
-                    return new AppInitNode();
-                case LaunchNodeType.OpenLaunchShell:
-                    return new OpenLaunchShellNode();
-                case LaunchNodeType.SplashGlobalResLoad:
-                    return new SplashGlobalResLoadNode();
-                case LaunchNodeType.DownloadServerConfig:
-                    return new DownloadServerConfigNode();
-                case LaunchNodeType.TableLoad:
-                    return new TableLoadNode();
-                case LaunchNodeType.CheckDownloadServerConfigSuccess:
-                    return new CheckDownloadServerConfigSuccessNode();
-                case LaunchNodeType.BeforeLoginGlobalResLoad:
-                    return new BeforeLoginGlobalResLoadNode();
-                case LaunchNodeType.DownloadServerDynamic:
-                    return new DownloadServerDynamicNode();
-                case LaunchNodeType.CheckDownloadServerDynamicSuccess:
-                    return new CheckDownloadServerDynamicSuccessNode();
-                case LaunchNodeType.SDKInit:
-                    return new SDKInitNode();
-                case LaunchNodeType.SDKInitCheck:
-                    return new SDKInitCheckNode();
-                case LaunchNodeType.CheckVersion:
-                    return new CheckVersionNode();
-                case LaunchNodeType.Update:
-                    return new UpdateNode();
-                case LaunchNodeType.ReloadRes:
-                    return new ReloadResNode();
-                case LaunchNodeType.CompileShader:
-                    return new CompileShaderNode();
-                case LaunchNodeType.CheckSubpackUpdate:
-                    return new CheckSubpackUpdateNode();
-                case LaunchNodeType.LaunchGC:
-                    return new LaunchGCNode();
-                case LaunchNodeType.OpenLoginPanel:
-                    return new OpenLoginPanelNode();
-                case LaunchNodeType.SDKLogin:
-                    return new SDKLoginNode();
-                case LaunchNodeType.End:
-                    return new EndNode();
-                default:
-                    throw new ArgumentOutOfRangeException(nameof(type), type, "Unknown launch node type.");
+                throw new ArgumentOutOfRangeException(nameof(type), type, "Unknown launch node type.");
             }
+
+            LaunchNode node = creator();
+            return node;
         }
 
         /// <summary>同步根节点终态，并只记录一次失败。</summary>

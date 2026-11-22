@@ -4,7 +4,7 @@
     public sealed class CheckDownloadServerConfigSuccessNode : LaunchNode
     {
         /// <summary>创建服务器配置下载结果检查节点。</summary>
-        public CheckDownloadServerConfigSuccessNode() : base("CheckDownloadServerConfigSuccess") { }
+        public CheckDownloadServerConfigSuccessNode() : base(LaunchDefine.k_CheckDownloadServerConfigSuccess) { }
 
         /// <summary>完成占位操作。</summary>
         protected override void OnStart()

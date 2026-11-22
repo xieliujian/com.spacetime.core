@@ -4,7 +4,7 @@
     public sealed class TableLoadNode : LaunchNode
     {
         /// <summary>创建数据表加载节点。</summary>
-        public TableLoadNode() : base("TableLoad") { }
+        public TableLoadNode() : base(LaunchDefine.k_TableLoad) { }
 
         /// <summary>完成占位操作。</summary>
         protected override void OnStart()

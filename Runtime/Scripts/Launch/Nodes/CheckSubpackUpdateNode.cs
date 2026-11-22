@@ -4,7 +4,7 @@
     public sealed class CheckSubpackUpdateNode : LaunchNode
     {
         /// <summary>创建分包更新检查节点。</summary>
-        public CheckSubpackUpdateNode() : base("CheckSubpackUpdate") { }
+        public CheckSubpackUpdateNode() : base(LaunchDefine.k_CheckSubpackUpdate) { }
 
         /// <summary>完成占位操作。</summary>
         protected override void OnStart()

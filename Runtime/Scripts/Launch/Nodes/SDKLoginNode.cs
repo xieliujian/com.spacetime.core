@@ -4,7 +4,7 @@
     public sealed class SDKLoginNode : LaunchNode
     {
         /// <summary>创建 SDK 登录节点。</summary>
-        public SDKLoginNode() : base("SDKLogin") { }
+        public SDKLoginNode() : base(LaunchDefine.k_SDKLogin) { }
 
         /// <summary>完成占位操作。</summary>
         protected override void OnStart()
