@@ -1,7 +1,7 @@
 # FileMgr 与 FilePath 迁移设计
 
 - 日期 2026-11-23
-- 状态 待评审
+- 状态 已实现，待验证
 - 目标包 com.spacetime.core
 - 来源 F:/proj_se/develop/client/project/Assets/Script/LogicModule/FileModule
 
@@ -65,14 +65,35 @@
 
 ```text
 Runtime/Scripts/Core/IO/
-    FilePath.cs              静态类，平台根目录与业务子目录
-    FileMgr.cs               静态类，相对路径解析与同步读取
-    FileLogger.cs            资源访问日志，支持导出快照
-    IFileResolvePolicy.cs    外存清单判定
-    IPlatformFileProvider.cs 平台目录与包内读取
+    Binary/
+        BitStreams.cs
+        ByteBuffer.cs
+    File/
+        Contract/
+            IFileResolvePolicy.cs      外存清单判定
+            IPlatformFileProvider.cs   平台目录与包内读取
+        FileMgr/
+            FileMgr.cs             对外路径解析接口
+            FileMgr_Define.cs      清单、日志与开关状态
+            FileMgr_Read.cs        读取对外接口与包内分发
+            FileMgr_ReadFile.cs    物理读取与读满校验
+            FileMgr_Write.cs       文本写入与包内拷贝
+            FileMgr_AccessLog.cs   资源访问日志记录
+            FileMgr_Android.cs     Android 包内读取
+        FilePath/
+            FilePath.cs            路径属性与缓存刷新
+            FilePath_Define.cs     根目录缓存与平台实现引用
+            FilePath_Platform.cs   平台根目录解析与目录创建
+            FilePath_IO.cs         Windows 超长路径与低层文件操作
+        FileLogger/
+            FileLogger.cs          日志属性与构造
+            FileLogger_Define.cs   日志状态与文件句柄
+            FileLogger_Write.cs    写入、刷新与快照导出
 ```
 
-`Core/IO` 下已有 `ByteBuffer` 与 `BitStreams`，新文件放在一起，不再新建顶层目录。
+`Core/IO` 下只放子目录。字节流放在 `Binary`，文件访问放在 `File`，`File` 下再按类族分文件夹，沿用 `Launch/Module` 的组织方式。
+
+三个类使用 `partial` 拆分，命名沿用仓库已有的 `LaunchModule_Define` / `LaunchModule_Node` 约定。
 
 ### 5.2 核心流程
 
@@ -265,6 +286,9 @@ static int ReadFully(FileStream fileStream, byte[] buffer)
 5. 三个 zstring 重载调用点改用 string 版本，AssetBundleRes 中需要同步删掉本地 zstring 变量。
 6. `FileLogger` 的两个无调用方法移除。
 7. 资源访问日志中的脚本告警过滤开始生效，日志行数会略少于今天。
+8. 外存绝对路径不再出现重复斜杠。旧实现用 `dir + "/" + file` 拼接，而目录本身已带尾斜杠。
+9. 外存读取不再重复解析路径，一次读取只记录一条访问日志。
+10. `GetWindowsWarpPath` 在 Windows Editor 下也生效，不再受当前活动构建目标影响。
 
 ## 8. 旧工程接线
 

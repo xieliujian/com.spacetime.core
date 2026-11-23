@@ -1,4 +1,4 @@
-using UnityEngine;
+﻿using UnityEngine;
 
 #if UNITY_EDITOR
 using UnityEditor;
@@ -33,23 +33,10 @@ namespace ST.Core
         /// <param name="appName">应用/游戏名称，与 <see cref="IResourceConfig.appName"/> 一致。</param>
         public static string GetStreamingAssetsPath(string appName)
         {
-#if UNITY_EDITOR
-            return GetParentDir(Application.dataPath, 1) + "/BuildRes/" + appName.ToLower() + "/";
-#else
-            return Application.streamingAssetsPath + "/" + appName.ToLower() + "/";
-#endif
-        }
-
-        /// <summary>获取指定层级的上级目录。</summary>
-        static string GetParentDir(string dir, int floor = 1)
-        {
-            string subDir = dir;
-            for (int i = 0; i < floor; ++i)
-            {
-                int last = subDir.LastIndexOf('/');
-                subDir = subDir.Substring(0, last);
-            }
-            return subDir;
+            string appDirName = appName.ToLower();
+            string rootPath = FilePath.streamingAssetsPath;
+            string appPath = string.Format("{0}{1}/", rootPath, appDirName);
+            return appPath;
         }
 
 #if UNITY_EDITOR

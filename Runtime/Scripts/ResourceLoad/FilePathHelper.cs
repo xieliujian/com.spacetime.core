@@ -1,6 +1,4 @@
-using UnityEngine;
-
-namespace ST.Core
+﻿namespace ST.Core
 {
     /// <summary>
     /// 运行时文件路径帮助类，依赖 <see cref="IResourceConfig"/> 提供应用名称。
@@ -18,33 +16,16 @@ namespace ST.Core
         }
 
         /// <summary>
-        /// 获取 Bundle 根目录：
-        /// Editor 下返回工程根目录的 <c>BuildRes/</c>（避免放入 Assets 触发 import 卡顿）；
-        /// Windows 独立包返回 exe 上两级的 <c>BuildRes/</c>；
-        /// 移动端返回 <c>StreamingAssets/</c>。
+        /// 获取 Bundle 根目录，统一返回 <see cref="ST.Core.FilePath.streamingAssetsPath"/>。
+        /// Editor 下为工程根目录的 <c>BuildRes/</c>；
+        /// Windows 独立包为 exe 上两级的 <c>BuildRes/</c>；
+        /// 移动端为 <c>StreamingAssets/</c>。
         /// </summary>
         /// <returns>以 <c>/</c> 结尾的根目录路径。</returns>
         public string GetFilePath()
         {
-#if UNITY_EDITOR
-            return GetParentDir(Application.dataPath, 1) + "/BuildRes/";
-#else
-            if (Application.platform == RuntimePlatform.WindowsPlayer)
-                return GetParentDir(Application.dataPath, 2) + "/BuildRes/";
-            return Application.streamingAssetsPath + "/";
-#endif
-        }
-
-        /// <summary>获取指定层级的上级目录。</summary>
-        static string GetParentDir(string dir, int floor = 1)
-        {
-            string subDir = dir;
-            for (int i = 0; i < floor; ++i)
-            {
-                int last = subDir.LastIndexOf('/');
-                subDir = subDir.Substring(0, last);
-            }
-            return subDir;
+            string rootPath = FilePath.streamingAssetsPath;
+            return rootPath;
         }
 
         /// <summary>
@@ -54,7 +35,9 @@ namespace ST.Core
         /// <returns>可直接传入 <c>AssetBundle.LoadFromFile</c> 的完整路径。</returns>
         public string GetBundleFullPath(string respath)
         {
-            return GetFilePath() + m_Config.appName + "/" + respath;
+            string rootPath = GetFilePath();
+            string bundlePath = string.Format("{0}{1}/{2}", rootPath, m_Config.appName, respath);
+            return bundlePath;
         }
     }
 }
