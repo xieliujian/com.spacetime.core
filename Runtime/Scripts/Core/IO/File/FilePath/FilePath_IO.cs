@@ -33,7 +33,7 @@ namespace ST.Core
                 return path;
             }
 
-            bool isShortPath = path.Length <= 240;
+            bool isShortPath = path.Length <= FileDefine.k_WindowsShortPathLength;
             if (isShortPath)
             {
                 return path;

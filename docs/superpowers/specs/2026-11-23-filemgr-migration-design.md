@@ -49,7 +49,7 @@
 | `Debugger` `SafeFormat` | FileMgr 各处 | 只有 `STLogger` | 换日志入口 |
 | `LRFileHandler` `AndroidNative` | FilePath.cs:30 / FileMgr.cs:200 | 无原生库 | 抽 `IPlatformFileProvider` |
 | `ICSharpCode.SharpZipLib` | FileMgr.cs:8 | 未使用 | 删除 using |
-| `FileLogger` | UpdateModule/FileLogger.cs | 只有 `LogFileWriter` | 迁入核心包 |
+| `FileLogger` | UpdateModule/FileLogger.cs | 已有 `LogFileWriter` | 不迁移，复用 `LogFileWriter` |
 
 ### 4.3 既有缺陷
 
@@ -57,7 +57,7 @@
 2. `ReadFile(path)` 同样是单次 `Read`，大文件或慢盘上会静默拿到不完整数据。位置 FileMgr.cs:330。
 3. 各目录 getter 用 `Directory.CreateDirectory` 建目录时没有套 `GetWindowsWarpPath`，超过 260 字符时建目录失败，后续读写用的是扩展路径，日志会指向错误位置。
 4. 访问日志的锁对象是 `string.Empty`，这是进程内驻留字符串，等价于锁全局空串。位置 FileMgr.cs:19。
-5. `FileLogger.PushLog` 先入缓存再判断脚本告警过滤，过滤永远不会生效。
+5. 旧 `FileLogger.PushLog` 先入缓存再判断脚本告警过滤，过滤永远不会生效。迁移后过滤放在 `FileMgr` 记录之前。
 
 ## 5. 架构设计
 
@@ -72,6 +72,8 @@ Runtime/Scripts/Core/IO/
         Contract/
             IFileResolvePolicy.cs      外存清单判定
             IPlatformFileProvider.cs   平台目录与包内读取
+        Define/
+            FileDefine.cs              目录名、文件名与阈值常量
         FileMgr/
             FileMgr.cs             对外路径解析接口
             FileMgr_Define.cs      清单、日志与开关状态
@@ -85,13 +87,9 @@ Runtime/Scripts/Core/IO/
             FilePath_Define.cs     根目录缓存与平台实现引用
             FilePath_Platform.cs   平台根目录解析与目录创建
             FilePath_IO.cs         Windows 超长路径与低层文件操作
-        FileLogger/
-            FileLogger.cs          日志属性与构造
-            FileLogger_Define.cs   日志状态与文件句柄
-            FileLogger_Write.cs    写入、刷新与快照导出
 ```
 
-`Core/IO` 下只放子目录。字节流放在 `Binary`，文件访问放在 `File`，`File` 下再按类族分文件夹，沿用 `Launch/Module` 的组织方式。
+`Core/IO` 下只放子目录。字节流放在 `Binary`，文件访问放在 `File`，`File` 下再按类族分文件夹，沿用 `Launch/Module` 的组织方式。目录名、文件名与阈值常量的字面值统一放在 `FileDefine`。
 
 三个类使用 `partial` 拆分，命名沿用仓库已有的 `LaunchModule_Define` / `LaunchModule_Node` 约定。
 
@@ -207,7 +205,7 @@ public static void ResetCache()
 | --- | --- |
 | `SetResolvePolicy` | 注入外存清单判定 |
 | `isAccessLogEnabled` | 是否记录资源访问日志，代替 `m_LoggerEnable` |
-| `fileLogger` | 资源访问日志实例，未启用时为 null |
+| `fileLogger` | 资源访问日志写入器（`LogFileWriter`），未启用时为 null |
 | `GetResPathInPersistentOrStream` | 外存优先，包内兜底 |
 | `IsInExternal` `IsFileExists` | 存在性判断 |
 | `ReadSync` 两个重载 | 非线程安全读取 |
@@ -247,23 +245,16 @@ static int ReadFully(FileStream fileStream, byte[] buffer)
 
 访问日志改为 `s_FileLogLock` 专用锁对象，修掉缺陷 4。日志文件路径仍为 `persistentDataPath4Temp + "FileLog.txt"`。
 
-### 6.3 FileLogger
+### 6.3 资源访问日志
 
-迁入 `Core/IO/FileLogger.cs`，保留对外 API，供 `FileMgr.fileLogger` 与调试导出使用。
+不迁入旧工程的 `FileLogger`，复用 `Logging/Core/LogFileWriter`，包里只保留一份缓冲写入实现。
 
-| 成员 | 说明 |
-| --- | --- |
-| `maxFlushCount` `filePath` | 属性 |
-| `FileLogger(path, append)` | 打开文件，超过 20MB 先删除 |
-| `PushLog(log, flush)` | 入缓存，达到阈值刷新 |
-| `Flush` `Close` | 落盘与关闭 |
-| `CopyTo(destinationPath)` | 导出快照后重新以追加模式打开 |
+- `FileMgr.fileLogger` 的类型改为 `LogFileWriter`，属性名不变
+- `PushFileLog` 负责开关判断与关键字过滤，再调用 `Write` 写入
+- `LogFileWriter` 增加 `filePath` 属性与 `CopyTo` 快照导出
+- `Write` `Flush` `Close` `CopyTo` 加锁，文件模块的线程读取路径也能安全写入
 
-删除 `BakAndReOpen` 与 `Update`。两者在旧工程零调用，`Update` 依赖逐帧驱动，保留会让人误以为自动刷新生效。
-
-`The referenced script on this Behaviour` 过滤移到入缓存之前，修掉缺陷 5。
-
-日志输出从 `Debugger` 换成 `STLogger`。资源访问日志由文件模块自己持有文件句柄，线程读取路径也能写入，这一点比走 `STLogger` 更可靠。
+旧工程的 DebugModule 把 `PushLog` 改成 `Write`，其余 `CopyTo` `Flush` `Close` `filePath` 调用写法不变。
 
 ### 6.4 保留与删除
 
@@ -284,7 +275,7 @@ static int ReadFully(FileStream fileStream, byte[] buffer)
 3. `InitStreamingAssetPath()` 由 `FilePath.ResetCache()` 取代，调用方改为在平台初始化完成后调用一次。
 4. `m_LoggerEnable` 改名为 `isAccessLogEnabled`，旧工程只有 FileMgr 内部引用。
 5. 三个 zstring 重载调用点改用 string 版本，AssetBundleRes 中需要同步删掉本地 zstring 变量。
-6. `FileLogger` 的两个无调用方法移除。
+6. 资源访问日志改用 `LogFileWriter`，不再保留单独的 `FileLogger` 类。
 7. 资源访问日志中的脚本告警过滤开始生效，日志行数会略少于今天。
 8. 外存绝对路径不再出现重复斜杠。旧实现用 `dir + "/" + file` 拼接，而目录本身已带尾斜杠。
 9. 外存读取不再重复解析路径，一次读取只记录一条访问日志。
@@ -312,6 +303,7 @@ using FileMgr = ST.Core.FileMgr;
 | `FileMgr.S.ReadSync(path)` | `FileMgr.ReadSync(path)` |
 | `FileMgr.S.ReadSyncInThread(...)` | `FileMgr.ReadSyncInThread(...)` |
 | `FileMgr.S.fileLogger` | `FileMgr.fileLogger` |
+| `FileMgr.S.fileLogger.PushLog(...)` | `FileMgr.fileLogger.Write(...)` |
 | `FileMgr.S.m_LoggerEnable` | `FileMgr.isAccessLogEnabled` |
 | `FileMgr.S.InitStreamingAssetPath()` | `FilePath.ResetCache()` |
 | `FileMgr.S.GetResPathInPersistentOrStreamNonGC` | `FileMgr.GetResPathInPersistentOrStream` |
@@ -375,7 +367,7 @@ public sealed class LRFileResolvePolicy : IFileResolvePolicy
 ## 9. 实施步骤
 
 1. 新建 `Runtime/Scripts/Core/IO/FilePath.cs`，迁移路径逻辑，收敛 `FilePathHelper` 与 `AppPlatform.GetStreamingAssetsPath`。
-2. 新建两个接口文件与 `FileLogger.cs`。
+2. 新建两个接口文件与 `FileDefine`。
 3. 新建 `FileMgr.cs`，接入两个接口与新的读取实现。
 4. 旧工程新增策略适配器与 Android provider，替换命名空间与调用写法，删除本地 FileModule 目录。
 5. 按第 10 节验证。
@@ -409,6 +401,6 @@ public sealed class LRFileResolvePolicy : IFileResolvePolicy
 1. 静态状态在 Editor 反复进入 Play 模式时会残留。缓解方式是业务启动时重新注入并调用 `ResetCache`，测试侧在 TearDown 里清理。
 2. Android 首次启动时 native 可能晚于首次读取就绪。缓解方式是在 native 初始化完成后调用 `ResetCache`。
 3. `ST.Core` 里将同时存在 `FilePath.dataPath` 与 `AppPlatform.dataPath`，两者语义不同。后者当前零调用点，本次不动，文档里标注。
-4. `FileLogger` 与 `LogFileWriter` 功能有重叠。保留前者是因为 `CopyTo` 导出快照与追加写入语义，后续可以考虑合并。
+4. 资源访问日志与进程日志共用 `LogFileWriter`，导出快照时会短暂关闭文件句柄。
 5. `ResourceLoad` 目前只读 `BuildRes/<appName>/` 下的 Bundle，不感知外存覆盖。把 AssetBundle 加载接到 `FileMgr` 的解析链上可以作为下一步独立工作。
 

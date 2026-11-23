@@ -100,7 +100,7 @@
             {
                 if (s_PersistentDataPath4ChatMedia == null)
                 {
-                    s_PersistentDataPath4ChatMedia = persistentDataPath + "ChatMedia/";
+                    s_PersistentDataPath4ChatMedia = persistentDataPath + FileDefine.k_ChatMediaDirName;
                     EnsureDirectoryExists(s_PersistentDataPath4ChatMedia);
                 }
 
@@ -115,7 +115,7 @@
             {
                 if (s_PersistentDataPath4CameraMedia == null)
                 {
-                    s_PersistentDataPath4CameraMedia = persistentDataPath + "CameraShot/";
+                    s_PersistentDataPath4CameraMedia = persistentDataPath + FileDefine.k_CameraMediaDirName;
                     EnsureDirectoryExists(s_PersistentDataPath4CameraMedia);
                 }
 
@@ -130,7 +130,7 @@
             {
                 if (s_PersistentDataPath4Log == null)
                 {
-                    s_PersistentDataPath4Log = persistentDataPath + "Log/";
+                    s_PersistentDataPath4Log = persistentDataPath + FileDefine.k_LogDirName;
                     EnsureDirectoryExists(s_PersistentDataPath4Log);
                 }
 
@@ -145,7 +145,7 @@
             {
                 if (s_PersistentDataPath4Temp == null)
                 {
-                    s_PersistentDataPath4Temp = persistentDataPath + "Temp/";
+                    s_PersistentDataPath4Temp = persistentDataPath + FileDefine.k_TempDirName;
                     EnsureDirectoryExists(s_PersistentDataPath4Temp);
                 }
 
@@ -160,7 +160,7 @@
             {
                 if (s_PersistentDataPath4NetTexture == null)
                 {
-                    s_PersistentDataPath4NetTexture = persistentDataPath + "NetTexture/";
+                    s_PersistentDataPath4NetTexture = persistentDataPath + FileDefine.k_NetTextureDirName;
                     EnsureDirectoryExists(s_PersistentDataPath4NetTexture);
                 }
 

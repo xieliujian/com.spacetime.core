@@ -1,4 +1,6 @@
-﻿namespace ST.Core
+﻿using ST.Core.Logging;
+
+namespace ST.Core
 {
     /// <summary>
     /// 原始文件访问层，按外存优先、包内兜底的顺序解析相对路径并同步读取字节。
@@ -7,7 +9,7 @@
     public static partial class FileMgr
     {
         /// <summary>资源访问日志实例，未启用时为 null。</summary>
-        public static FileLogger fileLogger
+        public static LogFileWriter fileLogger
         {
             get { return s_FileLogger; }
         }

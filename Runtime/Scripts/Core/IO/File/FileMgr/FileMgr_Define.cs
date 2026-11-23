@@ -1,4 +1,6 @@
-﻿namespace ST.Core
+﻿using ST.Core.Logging;
+
+namespace ST.Core
 {
     /// <summary>文件模块状态定义部分，集中存放清单、日志与配置开关。</summary>
     public static partial class FileMgr
@@ -7,7 +9,7 @@
         static IFileResolvePolicy s_ResolvePolicy;
 
         /// <summary>资源访问日志实例，未启用时为 null。</summary>
-        static FileLogger s_FileLogger;
+        static LogFileWriter s_FileLogger;
 
         /// <summary>资源访问日志的锁对象。</summary>
         static readonly object s_FileLogLock = new object();

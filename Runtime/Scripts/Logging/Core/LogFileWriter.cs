@@ -30,6 +30,12 @@ namespace ST.Core.Logging
         /// <summary>尚未落盘的日志，按插入顺序批量写出。</summary>
         List<string> m_CacheList = new List<string>();
 
+        /// <summary>日志文件的完整路径。</summary>
+        public string filePath
+        {
+            get { return m_FilePath; }
+        }
+
         /// <summary>
         /// 保存轮转参数，并以覆盖模式打开日志文件。
         /// </summary>
@@ -53,14 +59,19 @@ namespace ST.Core.Logging
         /// <param name="formattedLog">已格式化的日志文本。</param>
         public void Write(string formattedLog)
         {
-            if (m_StreamWriter == null)
-                return;
-
-            m_CacheList.Add(formattedLog);
-
-            if (m_CacheList.Count >= m_MaxFlushCount)
+            lock (m_CacheList)
             {
-                Flush();
+                if (m_StreamWriter == null)
+                {
+                    return;
+                }
+
+                m_CacheList.Add(formattedLog);
+
+                if (m_CacheList.Count >= m_MaxFlushCount)
+                {
+                    Flush();
+                }
             }
         }
 
@@ -70,22 +81,30 @@ namespace ST.Core.Logging
         /// </summary>
         public void Flush()
         {
-            if (m_StreamWriter == null || m_CacheList.Count == 0)
-                return;
-
-            try
+            lock (m_CacheList)
             {
-                foreach (string log in m_CacheList)
+                bool isWriterNull = m_StreamWriter == null;
+                bool isEmptyCache = m_CacheList.Count == 0;
+                bool isSkipFlush = isWriterNull || isEmptyCache;
+                if (isSkipFlush)
                 {
-                    m_StreamWriter.WriteLine(log);
+                    return;
                 }
 
-                m_CacheList.Clear();
-                m_StreamWriter.Flush();
-            }
-            catch (Exception ex)
-            {
-                UnityEngine.Debug.LogError($"[LogFileWriter] Flush failed: {ex.Message}");
+                try
+                {
+                    foreach (string log in m_CacheList)
+                    {
+                        m_StreamWriter.WriteLine(log);
+                    }
+
+                    m_CacheList.Clear();
+                    m_StreamWriter.Flush();
+                }
+                catch (Exception ex)
+                {
+                    UnityEngine.Debug.LogError($"[LogFileWriter] Flush failed: {ex.Message}");
+                }
             }
         }
 
@@ -95,18 +114,49 @@ namespace ST.Core.Logging
         /// </summary>
         public void Close()
         {
-            Flush();
-
-            if (m_StreamWriter != null)
+            lock (m_CacheList)
             {
-                m_StreamWriter.Close();
-                m_StreamWriter = null;
+                Flush();
+
+                if (m_StreamWriter != null)
+                {
+                    m_StreamWriter.Close();
+                    m_StreamWriter = null;
+                }
+
+                if (m_FileStream != null)
+                {
+                    m_FileStream.Close();
+                    m_FileStream = null;
+                }
+            }
+        }
+
+        /// <summary>
+        /// 把当前日志导出为快照，导出后以追加模式重新打开，不影响后续写入。
+        /// </summary>
+        /// <param name="destinationPath">快照目标路径。</param>
+        public void CopyTo(string destinationPath)
+        {
+            bool isEmptyPath = string.IsNullOrEmpty(destinationPath);
+            if (isEmptyPath)
+            {
+                return;
             }
 
-            if (m_FileStream != null)
+            lock (m_CacheList)
             {
-                m_FileStream.Close();
-                m_FileStream = null;
+                Flush();
+                Close();
+
+                try
+                {
+                    File.Copy(m_FilePath, destinationPath);
+                }
+                finally
+                {
+                    OpenFile(true);
+                }
             }
         }
 

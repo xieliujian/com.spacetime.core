@@ -64,13 +64,13 @@ namespace ST.Core
             string result = string.Empty;
 
 #if UNITY_EDITOR
-            string editorPath = GetParentDir(Application.dataPath, 1) + "/BuildRes/";
+            string editorPath = GetParentDir(Application.dataPath, 1) + FileDefine.k_BuildResDirPath;
             result = editorPath;
 #else
             bool isWindowsPlayer = Application.platform == RuntimePlatform.WindowsPlayer;
             if (isWindowsPlayer)
             {
-                string playerPath = GetParentDir(Application.dataPath, 2) + "/BuildRes/";
+                string playerPath = GetParentDir(Application.dataPath, 2) + FileDefine.k_BuildResDirPath;
                 result = playerPath;
             }
             else
@@ -111,7 +111,7 @@ namespace ST.Core
             if (isBundle)
             {
                 string parentDir = GetParentDir(result);
-                result = parentDir + "/split_MainAssetPack.apk";
+                result = string.Format("{0}/{1}", parentDir, FileDefine.k_MainAssetPackFileName);
             }
 #endif
 
@@ -122,10 +122,11 @@ namespace ST.Core
         /// <returns>以 <c>/</c> 结尾的目录路径。</returns>
         static string GetPersistentResPath()
         {
-            string result = persistentDataPath + "Res/";
+            string result = persistentDataPath + FileDefine.k_ResDirName;
 
 #if UNITY_STANDALONE_WIN && EXTERNAL_USE_CUR_DIR && !UNITY_EDITOR
-            string externalPath = GetParentDir(Application.dataPath, 2) + "/Res/";
+            string parentDir = GetParentDir(Application.dataPath, 2);
+            string externalPath = string.Format("{0}/{1}", parentDir, FileDefine.k_ResDirName);
             result = externalPath;
 #endif
 
@@ -136,10 +137,11 @@ namespace ST.Core
         /// <returns>以 <c>/</c> 结尾的目录路径。</returns>
         static string GetPersistentBinPath()
         {
-            string result = persistentDataPath + "Bin/";
+            string result = persistentDataPath + FileDefine.k_BinDirName;
 
 #if UNITY_STANDALONE_WIN && EXTERNAL_USE_CUR_DIR && !UNITY_EDITOR
-            string externalPath = GetParentDir(Application.dataPath, 2) + "/BinRes/";
+            string parentDir = GetParentDir(Application.dataPath, 2);
+            string externalPath = string.Format("{0}/{1}", parentDir, FileDefine.k_BinResDirName);
             result = externalPath;
 #endif
 

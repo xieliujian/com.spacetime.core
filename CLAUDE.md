@@ -199,6 +199,8 @@ m_Manager?.Flush();
 **所有类、方法、字段、属性——无论访问修饰符是什么——都必须添加 XML 文档注释，使用中文描述。**  
 这包括 `public`、`internal`、`protected`、`private` 成员，以及嵌套类、枚举、枚举值。
 
+Define 类内的常量是唯一例外，统一使用行尾 `//` 注释，见下方「Define 类常量」。
+
 #### 类 / 枚举
 
 ```csharp
@@ -256,19 +258,31 @@ public bool isOpened { get { return m_IsOpened; } }
 internal void NotifyPanelReady(UIPanelActive panelActive) { ... }
 ```
 
+#### Define 类常量
+
+Define 类集中存放常量，不使用 XML 注释。常量按用途分组，组内每个常量独占一行，行尾用 `//` 说明含义：
+
+```csharp
+public static class LogDefine
+{
+    // 变量定义
+    public const string k_Debug = "Debug"; // 调试级别标签
+    public const int k_LowMemoryThresholdMB = 2048; // 低内存判定阈值，单位 MB
+}
+```
+
+分组标题使用单行 `//` 注释，例如 `// 目录定义`、`// 文件名定义`、`// 日志定义`。
+
 #### 枚举值
 
-每个枚举值单独一行注释：
+枚举类型保留 XML 注释，枚举值使用行尾 `//` 注释，成员之间不空行：
 
 ```csharp
 public enum PanelHideMask : byte
 {
-    /// <summary>不影响下层。</summary>
-    None = 0,
-    /// <summary>下层不可交互。</summary>
-    UnInteractive = 1 << 0,
-    /// <summary>下层不可见。</summary>
-    Hide = 1 << 1,
+    None = 0, // 不影响下层
+    UnInteractive = 1 << 0, // 下层不可交互
+    Hide = 1 << 1, // 下层不可见
 }
 ```
 

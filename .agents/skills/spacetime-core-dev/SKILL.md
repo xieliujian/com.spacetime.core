@@ -29,6 +29,18 @@ description: >-
 | 命名空间 | `ST.Core`，子模块追加后缀 | `ST.Core.Network`、`ST.Core.Logging`、`ST.Core.Table` |
 | 常量字段 | `s_` + `k_` 语义前缀，PascalCase | `s_ListConst_100`、`k_SortBase_Bottom` |
 
+### Define 类常量
+
+存放常量的 Define 类按用途分组（如 `// 目录定义`、`// 文件名定义`），每个常量独占一行，行尾用中文 `//` 说明含义，不写 XML 注释：
+
+```csharp
+public static class LogDefine
+{
+    // 变量定义
+    public const string k_Debug = "Debug"; // 调试级别标签
+}
+```
+
 ### 省略 `private`
 
 默认访问级别不写出来：

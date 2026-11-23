@@ -124,7 +124,7 @@ FileMgr.SetResolvePolicy(new ProjectFileResolvePolicy());
 | `CopyDataFromAndroidApk(string, string, out string)` | 包内文件拷贝到外存 |
 | `SetResolvePolicy(IFileResolvePolicy)` | 注入清单判定 |
 | `isAccessLogEnabled` | 是否记录资源访问日志 |
-| `fileLogger` | 访问日志实例，供调试导出 |
+| `fileLogger` | 访问日志写入器（`LogFileWriter`），供调试导出 |
 
 ---
 
