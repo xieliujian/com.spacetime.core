@@ -9,16 +9,6 @@ namespace ST.Core.Network
     /// </summary>
     public partial class MsgModule
     {
-        /// <summary>协议中消息长度字段为 ushort，包体长度不能超过该值。</summary>
-        const int MAX_MSG_BODY_LENGTH = ushort.MaxValue;
-
-        /// <summary>FlatBuffers 构建器，跨消息复用。</summary>
-        FlatBuffers.FlatBufferBuilder m_FlatBufferBuilder =
-            new FlatBuffers.FlatBufferBuilder(CommonDefine.s_ListConst_1024);
-
-        /// <summary>发送缓冲，跨消息复用，写出前先 <see cref="ByteBuffer.Reset"/>。</summary>
-        ByteBuffer m_SendBuffer = new ByteBuffer();
-
         /// <summary>清空并返回 FlatBuffers 构建器。读取属性不再隐式重置状态。</summary>
         /// <returns>可继续写入的构建器。</returns>
         public FlatBuffers.FlatBufferBuilder BeginFlatBuffer()

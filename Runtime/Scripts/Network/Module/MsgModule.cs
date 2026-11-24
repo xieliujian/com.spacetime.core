@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Reflection;
 using pb = Google.Protobuf;
 using ST.Core.Logging;
@@ -12,20 +11,6 @@ namespace ST.Core.Network
     /// </summary>
     public partial class MsgModule : ILogicModule
     {
-        /// <summary>当前使用的消息序列化后端。</summary>
-        MsgCodecType m_MsgType = MsgCodecType.Protobuf;
-
-        /// <summary>FlatBuffers 消息处理表。</summary>
-        Dictionary<ulong, FlatBufferProcFunBase> m_FbMsgProcDict =
-            new Dictionary<ulong, FlatBufferProcFunBase>(CommonDefine.s_ListConst_100);
-
-        /// <summary>Protobuf 消息处理表。</summary>
-        Dictionary<ulong, ProtobufProcFunBase> m_PbMsgProcDict =
-            new Dictionary<ulong, ProtobufProcFunBase>(CommonDefine.s_ListConst_100);
-
-        /// <summary>网络模块，在 <see cref="DoInit"/> 中从内核解析。</summary>
-        NetModule m_NetModule;
-
         /// <summary>解析网络模块，供发送消息使用。</summary>
         public override void DoInit()
         {

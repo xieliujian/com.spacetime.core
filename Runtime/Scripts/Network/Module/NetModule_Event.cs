@@ -7,17 +7,6 @@ namespace ST.Core.Network
     /// </summary>
     public partial class NetModule
     {
-        /// <summary>网络线程写入、主线程消费的待分发消息队列。</summary>
-        Queue<KeyValuePair<ulong, byte[]>> m_EventQueue =
-            new Queue<KeyValuePair<ulong, byte[]>>(CommonDefine.s_ListConst_100);
-
-        /// <summary>当帧取出的消息，复用列表避免每帧分配。</summary>
-        List<KeyValuePair<ulong, byte[]>> m_ProcessList =
-            new List<KeyValuePair<ulong, byte[]>>(NetworkDefine.MAX_PROCESS_MSG_PER_FRAME);
-
-        /// <summary>网络线程产生的连接事件，按入队顺序在主线程处理。</summary>
-        Queue<NetSocketEvent> m_SocketEventQueue = new Queue<NetSocketEvent>(CommonDefine.s_ListConst_16);
-
         /// <summary>网络线程调用的消息入队入口。</summary>
         /// <param name="msgid">消息 ID。</param>
         /// <param name="bytearray">消息体字节。</param>

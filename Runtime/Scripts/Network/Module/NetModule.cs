@@ -8,37 +8,10 @@ namespace ST.Core.Network
     /// </summary>
     public partial class NetModule : ILogicModule
     {
-        /// <summary>底层 TCP 客户端实现。</summary>
-        SocketClient m_SocketClient;
-
-        /// <summary>消息分发模块，在 <see cref="DoInit"/> 中从内核解析。</summary>
-        MsgModule m_MsgModule;
-
-        /// <summary>TCP 连接成功后触发的事件。</summary>
-        RunEvent m_OnConnectEvent = new RunEvent();
-
-        /// <summary>连接断开或建立失败时触发的事件，参数为原因。</summary>
-        RunEvent<string> m_OnDisconnectEvent = new RunEvent<string>();
-
-        /// <summary>主线程上、在 <see cref="MsgModule.Dispatcher"/> 之后调用的可选回调，参数为消息 ID 与负载字节。</summary>
-        public Run<ulong, byte[]> onMsgEvent;
-
         /// <summary>创建网络模块并绑定底层客户端。</summary>
         public NetModule()
         {
             m_SocketClient = new SocketClient(this);
-        }
-
-        /// <summary>TCP 建立成功后触发的事件（主线程派发）。</summary>
-        public RunEvent onConnectEvent
-        {
-            get { return m_OnConnectEvent; }
-        }
-
-        /// <summary>连接断开或建立失败时触发的事件（主线程派发）。</summary>
-        public RunEvent<string> onDisconnectEvent
-        {
-            get { return m_OnDisconnectEvent; }
         }
 
         /// <summary>解析消息分发模块；未注册时仍可通过 <see cref="onMsgEvent"/> 取消息。</summary>
