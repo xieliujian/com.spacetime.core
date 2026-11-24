@@ -13,7 +13,8 @@ This is a Unity game project (Unity 2022.3.35f1c1) using the Universal Render Pi
 The main framework is structured as follows:
 
 - **Runtime/Scripts/Core/** - Core framework classes
-  - `IManager` - Base class for all manager systems (DoInit, DoUpdate, DoLateUpdate, DoClose lifecycle)
+  - `ILogicModule` - Base class for all logic modules (DoInit, DoUpdate, DoLateUpdate, DoClose lifecycle)
+  - `IKernel` / `Kernel` - Module lookup entry (GetModule<T>, GetModule(Type), GetModule(string))
   - `GameEvent` - Event system
   - `ByteBuffer` - Binary data handling
   - `CommonDefine` - Common constants and definitions
@@ -66,14 +67,23 @@ The project uses multiple C# assemblies:
 
 ## Architecture Patterns
 
-### Manager System
-All managers inherit from `IManager` base class and follow a consistent lifecycle:
-1. `DoInit()` - Initialize the manager
-2. `DoUpdate()` - Called every frame
-3. `DoLateUpdate()` - Called after Update
-4. `DoClose()` - Cleanup and shutdown
+### Module System
+All logic modules inherit from `ILogicModule` and follow a consistent lifecycle:
+1. `DoInit()` - Initialize the module
+2. `DoUpdate()` - Called every frame when overridden
+3. `DoLateUpdate()` - Called after Update when overridden
+4. `DoClose()` - Cleanup and shutdown, called in reverse registration order
 
-Managers use singleton pattern (accessed via static `S` property).
+`GameWorld` registers modules in list order, injects `m_Kernel` into each module, and drives their lifecycle.
+`GameWorld.gameKernel.GetModule<T>()` returns the registered module of the exact runtime type:
+
+~~~csharp
+IKernel kernel = GameWorld.gameKernel;
+PostEffectsModule module = kernel.GetModule<PostEffectsModule>();
+~~~
+
+Register business modules in `GameLauncher.CollectBusinessModules(List<ILogicModule> modules)`.
+Modules that need a global instance can derive from `TLogicModule<T>` and use `S`.
 
 ### Network Architecture
 - **Message Flow**: SocketClient → NetManager (event queue) → MsgDispatcher → Message handlers

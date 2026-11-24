@@ -1,4 +1,4 @@
-using UnityEngine;
+﻿using UnityEngine;
 using System.Collections.Generic;
 using System;
 using System.IO;
@@ -8,7 +8,7 @@ namespace ST.Core.Network
     /// <summary>
     /// 网络单例管理器：维护 <see cref="SocketClient"/>、连接事件，并在主线程轮询处理消息队列后分发给 <see cref="MsgDispatcher"/> 与 <see cref="onMsgEvent"/>。
     /// </summary>
-    public class NetManager : IManager
+    public class NetManager : ILogicModule
     {
         /// <summary>全局 <see cref="NetManager"/> 单例引用。</summary>
         static NetManager s_Instance;

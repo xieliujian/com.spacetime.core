@@ -14,7 +14,7 @@ namespace ST.Core.Network
     /// <summary>
     /// 消息分发中心：按 <see cref="IMsgType"/> 注册 Protobuf / FlatBuffers 处理器，封装组包发送与主线程上的反序列化回调。
     /// </summary>
-    public class MsgDispatcher : IManager
+    public class MsgDispatcher : ILogicModule
     {
         /// <summary>全局分发器实例。</summary>
         static MsgDispatcher s_Instance;

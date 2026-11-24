@@ -89,7 +89,7 @@ namespace ST.Core.Launch.Tests
             List<string> calls = new List<string>();
             RecordingManager first = new RecordingManager("first", calls);
             RecordingManager second = new RecordingManager("second", calls);
-            List<IManager> modules = new List<IManager>(2);
+            List<ILogicModule> modules = new List<ILogicModule>(2);
             modules.Add(first);
             modules.Add(second);
 
@@ -106,6 +106,40 @@ namespace ST.Core.Launch.Tests
 
             Assert.IsNotNull(gameWorld.launchModule);
             Assert.AreEqual(expected, actual);
+        }
+
+        /// <summary>验证模块注册后可通过内核按类型、类型对象与名称查找。</summary>
+        [Test]
+        public void ModulesAreFindableThroughKernel()
+        {
+            RecordingManager first = new RecordingManager("first", new List<string>());
+            List<ILogicModule> modules = new List<ILogicModule>(1);
+            modules.Add(first);
+
+            GameWorld gameWorld = new GameWorld();
+            gameWorld.DoInit(modules);
+
+            RecordingManager foundByType = gameWorld.kernel.GetModule<RecordingManager>();
+            ILogicModule foundByTypeObject = gameWorld.kernel.GetModule(typeof(RecordingManager));
+            ILogicModule foundByName = gameWorld.kernel.GetModule("RecordingManager");
+
+            Assert.AreSame(first, foundByType);
+            Assert.AreSame(first, foundByTypeObject);
+            Assert.AreSame(first, foundByName);
+            Assert.AreSame(gameWorld.kernel, GameWorld.gameKernel);
+            Assert.AreSame(gameWorld.kernel, first.kernel);
+        }
+
+        /// <summary>验证未注册的类型与名称返回 null。</summary>
+        [Test]
+        public void UnknownModuleLookupReturnsNull()
+        {
+            GameWorld gameWorld = new GameWorld();
+            gameWorld.DoInit();
+
+            Assert.IsNull(gameWorld.kernel.GetModule<RecordingManager>());
+            Assert.IsNull(gameWorld.kernel.GetModule("RecordingManager"));
+            Assert.IsNull(gameWorld.kernel.GetModule((System.Type)null));
         }
 
         /// <summary>读取指定 Unity 生命周期方法。</summary>

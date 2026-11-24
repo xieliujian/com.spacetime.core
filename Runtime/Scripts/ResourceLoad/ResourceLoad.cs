@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -6,7 +6,7 @@ namespace ST.Core
 {
     /// <summary>
     /// 默认资源加载实现：编辑器下可选 AssetDatabase 直读或走 AssetBundle；真机始终走 Bundle。
-    /// 须在 <see cref="BaseResourceLoad.SetConfig"/> 之后再调用 <see cref="IManager.DoInit"/>。
+    /// 须在 <see cref="BaseResourceLoad.SetConfig"/> 之后再调用 <see cref="ILogicModule.DoInit"/>。
     /// </summary>
     public class ResourceLoad : BaseResourceLoad
     {

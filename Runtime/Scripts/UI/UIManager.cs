@@ -1,4 +1,4 @@
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using UnityEngine;
 
 namespace ST.Core.UI
@@ -14,7 +14,7 @@ namespace ST.Core.UI
     /// </list>
     /// </para>
     /// </summary>
-    public class UIManager : IManager
+    public class UIManager : ILogicModule
     {
         // ─── 单例 ──────────────────────────────────────────────────────────
 
@@ -62,7 +62,7 @@ namespace ST.Core.UI
             m_UIRoot       = uiRoot;
         }
 
-        // ─── IManager 生命周期 ─────────────────────────────────────────────
+        // ─── 逻辑模块生命周期 ─────────────────────────────────────────────
 
         public override void DoInit()       { }
         public override void DoUpdate()     { }

@@ -3,13 +3,16 @@
 namespace ST.Core.Launch.Tests
 {
     /// <summary>测试用的模块替身，按调用顺序把生命周期名称写入共享列表。</summary>
-    public sealed class RecordingManager : IManager
+    public sealed class RecordingManager : ILogicModule
     {
         /// <summary>用于区分不同替身的名称。</summary>
         readonly string m_Name;
 
         /// <summary>共享的生命周期调用记录。</summary>
         readonly List<string> m_Calls;
+
+        /// <summary>注册时注入的内核，供测试确认内核注入是否生效。</summary>
+        public IKernel kernel { get { return m_Kernel; } }
 
         /// <summary>创建替身并绑定名称与共享记录列表。</summary>
         /// <param name="name">写入记录时使用的替身名称。</param>

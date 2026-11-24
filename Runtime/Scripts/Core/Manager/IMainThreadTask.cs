@@ -1,4 +1,4 @@
-using System.Collections;
+﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -12,7 +12,7 @@ namespace ST.Core
     /// <summary>
     /// 主线程任务调度抽象：在子线程或异步回调中把逻辑封装为 <see cref="GameEvent"/> 入队，由主线程在 <see cref="DoUpdate"/> 中统一执行。
     /// </summary>
-    public abstract class IMainThreadTask : IManager
+    public abstract class IMainThreadTask : ILogicModule
     {
         /// <summary>当前全局主线程任务实现实例，由派生类构造时赋值。</summary>
         protected static IMainThreadTask s_Instance = null;
@@ -32,7 +32,7 @@ namespace ST.Core
         }
 
         /// <summary>
-        /// 将封装了主线程回调的 <see cref="GameEvent"/> 加入队列，在后续 <see cref="IManager.DoUpdate"/> 中执行。
+        /// 将封装了主线程回调的 <see cref="GameEvent"/> 加入队列，在后续 <see cref="ILogicModule.DoUpdate"/> 中执行。
         /// </summary>
         /// <param name="func">待在主线程调用的 Unity 事件（通常 <c>Invoke</c> 内为业务回调）</param>
         public abstract void AddTask(GameEvent func);

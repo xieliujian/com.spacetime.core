@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -37,7 +37,7 @@ namespace ST.Core
     /// <summary>
     /// 资源加载抽象基类：定义同步/异步加载与场景加载接口，管理 <see cref="IAssetDecorator"/> 链，并通过 <see cref="SetConfig"/> 注入路径配置。
     /// </summary>
-    public abstract class BaseResourceLoad : IManager
+    public abstract class BaseResourceLoad : ILogicModule
     {
         /// <summary>当前派生实例的全局引用，由构造函数赋值。</summary>
         protected static BaseResourceLoad s_Instance = null;
@@ -63,7 +63,7 @@ namespace ST.Core
             m_Decorators.Clear();
         }
 
-        /// <summary>注入资源配置并创建 <see cref="FilePathHelper"/>；须在 <see cref="IManager.DoInit"/> 前调用。</summary>
+        /// <summary>注入资源配置并创建 <see cref="FilePathHelper"/>；须在 <see cref="ILogicModule.DoInit"/> 前调用。</summary>
         /// <param name="config">非空的资源配置实现。</param>
         public void SetConfig(IResourceConfig config)
         {

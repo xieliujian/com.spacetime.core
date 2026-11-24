@@ -12,7 +12,7 @@
 
 | 特性 | 说明 |
 |------|------|
-| 单例管理 | 继承 `IManager`，全局唯一实例 `UIManager.S` |
+| 单例管理 | 继承 `ILogicModule`，全局唯一实例 `UIManager.S` |
 | 面板缓存 | 支持面板关闭后缓存，避免重复加载 |
 | 层级管理 | 三层排序（Bottom / Auto / Top），自动分配 `sortingOrder` |
 | 页面挂载 | 支持动态挂载/卸载子页面，内部页面自动发现 |
@@ -27,7 +27,7 @@
 ```
 Runtime/Scripts/UI/
 ├── UIDefine.cs                  枚举：PanelSortLayer / PanelHideMask / PanelCloseTween
-├── UIManager.cs                 总控（IManager，单例 S）
+├── UIManager.cs                 总控（ILogicModule，单例 S）
 ├── Data/
 │   ├── UIData.cs                面板/页面静态配置数据
 │   ├── UIDataTable.cs           配置注册表（静态）
@@ -140,7 +140,7 @@ public class BagPanel : AbstractPanel
 **职责**：UI 系统总控制器，管理所有面板的打开/关闭/排序。
 
 ```csharp
-public class UIManager : IManager
+public class UIManager : ILogicModule
 {
     public static UIManager S { get; }
 

@@ -16,15 +16,15 @@ namespace ST.Core.Launch
 
         /// <summary>追加业务模块，业务模块会排在基础模块之后初始化并逐帧驱动。</summary>
         /// <param name="modules">按顺序容纳全部管理器模块的列表。</param>
-        protected virtual void CollectBusinessModules(List<IManager> modules)
+        protected virtual void CollectBusinessModules(List<ILogicModule> modules)
         {
         }
 
         /// <summary>按“基础模块 → 业务模块”的顺序组装模块列表。</summary>
         /// <returns>交由 GameWorld 初始化与驱动的模块列表。</returns>
-        List<IManager> CreateModules()
+        List<ILogicModule> CreateModules()
         {
-            List<IManager> modules = new List<IManager>(CommonDefine.s_ListConst_16);
+            List<ILogicModule> modules = new List<ILogicModule>(CommonDefine.s_ListConst_16);
             CollectBaseModules(modules);
             CollectBusinessModules(modules);
 
@@ -33,7 +33,7 @@ namespace ST.Core.Launch
 
         /// <summary>创建框架基础模块，顺序固定为异步任务、资源、UI、消息分发、网络、启动流程。</summary>
         /// <param name="modules">按顺序容纳全部管理器模块的列表。</param>
-        void CollectBaseModules(List<IManager> modules)
+        void CollectBaseModules(List<ILogicModule> modules)
         {
             IResourceConfig resourceConfig = CreateResourceConfig();
             if (resourceConfig == null)

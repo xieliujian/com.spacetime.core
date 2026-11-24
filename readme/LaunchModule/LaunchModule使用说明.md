@@ -105,7 +105,7 @@ public sealed class ProjectGameLauncher : GameLauncher
         return new ProjectResourceConfig();
     }
 
-    protected override void CollectBusinessModules(List<IManager> modules)
+    protected override void CollectBusinessModules(List<ILogicModule> modules)
     {
         modules.Add(new LoginModule());
     }

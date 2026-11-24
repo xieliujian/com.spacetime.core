@@ -20,7 +20,7 @@ namespace ST.Core.Launch
         /// <summary>创建基础模块与业务模块并初始化游戏模块内核；派生类重写时必须调用 base.Awake()。</summary>
         protected virtual void Awake()
         {
-            List<IManager> modules = CreateModules();
+            List<ILogicModule> modules = CreateModules();
             m_GameWorld = new GameWorld();
             m_GameWorld.DoInit(modules);
         }

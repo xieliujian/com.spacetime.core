@@ -1,9 +1,9 @@
-namespace ST.Core
+﻿namespace ST.Core
 {
     /// <summary>
     /// 异步任务管理器抽象基类：维护全局 <see cref="instance"/>，由 <see cref="AsyncTaskManager"/> 具体实现任务的增删与每帧更新。
     /// </summary>
-    public abstract class BaseAsyncTaskManager : IManager
+    public abstract class BaseAsyncTaskManager : ILogicModule
     {
         /// <summary>当前全局管理器引用。</summary>
         protected static BaseAsyncTaskManager s_Instance;
@@ -20,7 +20,7 @@ namespace ST.Core
             s_Instance = this;
         }
 
-        /// <summary>将异步任务加入队列，由 <see cref="IManager.DoUpdate"/> 驱动。</summary>
+        /// <summary>将异步任务加入队列，由 <see cref="ILogicModule.DoUpdate"/> 驱动。</summary>
         /// <param name="asynctask">非空任务实例。</param>
         public abstract void AddTask(AsyncTask asynctask);
 

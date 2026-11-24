@@ -4,29 +4,25 @@ using ST.Core.Logging;
 namespace ST.Core.Launch
 {
     /// <summary>
-    /// 游戏模块内核，负责按顺序初始化、逐帧驱动并关闭全部管理器模块。
+    /// 游戏模块内核，负责按顺序初始化、逐帧驱动并关闭全部逻辑模块。
     /// <para>
-    /// 模块集合与遍历逻辑位于 GameWorld_Module；<see cref="GameLauncher"/> 负责组装模块后交给本类。
+    /// 变量定义位于 GameWorld_Define，模块注册与查找位于 GameWorld_Module。
+    /// <see cref="GameLauncher"/> 负责组装模块后交给本类。
     /// </para>
     /// </summary>
-    public sealed partial class GameWorld : IManager
+    public sealed partial class GameWorld
     {
-        /// <summary>标准启动模块。</summary>
-        LaunchModule m_LaunchModule;
-
-        /// <summary>是否已经初始化。</summary>
-        bool m_IsInitialized;
-
-        /// <summary>是否已经关闭。</summary>
-        bool m_IsClosed;
-
-        /// <summary>标准启动模块；初始化前为空。</summary>
-        public LaunchModule launchModule { get { return m_LaunchModule; } }
-
-        /// <summary>创建标准启动模块并初始化，供不经过 <see cref="GameLauncher"/> 的场景与测试直接调用。</summary>
-        public override void DoInit()
+        /// <summary>创建内核并登记为全局内核；本构造函数不注册任何业务模块。</summary>
+        public GameWorld()
         {
-            List<IManager> modules = new List<IManager>(1);
+            m_Kernel = new Kernel(this);
+            s_GameKernel = m_Kernel;
+        }
+
+        /// <summary>只启动标准启动模块，供不经过 <see cref="GameLauncher"/> 的场景与测试直接调用。</summary>
+        public void DoInit()
+        {
+            List<ILogicModule> modules = new List<ILogicModule>(1);
             DoInit(modules);
         }
 
@@ -35,12 +31,10 @@ namespace ST.Core.Launch
         /// 列表中没有启动模块时会自动追加一个，保证启动流程仍会执行。
         /// </summary>
         /// <param name="modules">基础与业务模块列表；传入 null 时记录错误并忽略本次初始化。</param>
-        public void DoInit(List<IManager> modules)
+        public void DoInit(List<ILogicModule> modules)
         {
             if (m_IsInitialized || m_IsClosed)
-            {
                 return;
-            }
 
             if (modules == null)
             {
@@ -56,35 +50,29 @@ namespace ST.Core.Launch
             m_IsInitialized = true;
         }
 
-        /// <summary>按列表顺序驱动全部模块的逐帧逻辑，启动流程结束后业务模块仍会继续更新。</summary>
-        public override void DoUpdate()
+        /// <summary>按注册顺序驱动全部模块的逐帧逻辑，启动流程结束后业务模块仍会继续更新。</summary>
+        public void DoUpdate()
         {
             if (!m_IsInitialized || m_IsClosed)
-            {
                 return;
-            }
 
             UpdateModules();
         }
 
-        /// <summary>按列表顺序驱动全部模块的滞后帧逻辑。</summary>
-        public override void DoLateUpdate()
+        /// <summary>按注册顺序驱动全部模块的滞后帧逻辑。</summary>
+        public void DoLateUpdate()
         {
             if (!m_IsInitialized || m_IsClosed)
-            {
                 return;
-            }
 
             LateUpdateModules();
         }
 
         /// <summary>按初始化逆序关闭全部模块；重复调用会被忽略。</summary>
-        public override void DoClose()
+        public void DoClose()
         {
             if (m_IsClosed)
-            {
                 return;
-            }
 
             m_IsClosed = true;
             CloseModules();

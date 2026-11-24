@@ -6,9 +6,9 @@ namespace ST.Core.Launch
     /// <summary>
     /// 启动流程总入口，负责构建标准节点树、每帧驱动它并同步终态。
     /// </summary>
-    public sealed partial class LaunchModule : IManager
+    public sealed partial class LaunchModule : ILogicModule
     {
-        /// <summary>IManager 初始化入口；节点树在 Launch 时才创建，这里不做事先准备。</summary>
+        /// <summary>逻辑模块初始化入口；节点树在 Launch 时才创建，这里不做事先准备。</summary>
         public override void DoInit()
         {
         }

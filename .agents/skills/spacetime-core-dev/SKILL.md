@@ -170,15 +170,15 @@ public enum LogLevel
 - `IMainThreadTask.S` 在当前工程里**恒为 null** —— 全项目没有任何一处 `new MainThreadTask()`。`SocketClient` 连接成功时会 `if (MainThreadTask.S != null)` 才投递事件，所以 `NetManager.onConnectEvent` 是永远不会触发的空事件。要接入网络，必须先在某处创建并每帧驱动它。
 - `IResourceConfig` / `IResourceConfig` 类配置要走 `SetConfig()`，不是构造函数注入。
 
-### 2. 框架不驱动 `DoUpdate`，谁拥有 MonoBehaviour 谁驱动
+### 2. 只有注册进 GameWorld 的模块才自动被驱动
 
-`IManager` 只有 4 个抽象方法，**没有任何模块容器或注册表**。`GameApplication` 硬编码持有唯一的 `LaunchModule`，对网络、资源、UI、表、日志零引用。
+`ILogicModule` 提供 `DoInit` / `DoUpdate` / `DoLateUpdate` / `DoClose` 四个虚方法，默认空实现。`GameWorld` 按注册顺序初始化全部模块，只把重写了 `DoUpdate` / `DoLateUpdate` 的模块放进逐帧列表，关闭时逆序调用 `DoClose`。单个模块抛异常只写日志，不会中断其它模块。
 
-具体后果：
-
-- `UIManager.DoInit/DoUpdate/DoLateUpdate` 是**空的**，`ResourceLoad.DoUpdate` 也是空的。写了 `DoUpdate` 逻辑的模块（`NetManager`、`AsyncTaskManager`、`MainThreadTask`）**必须由外部每帧调用**，否则队列只进不出。
-- 新增一个需要逐帧逻辑的管理器，必须同时想清楚谁驱动它 —— 框架不会替你调。
-- 唯一可参考的装配范例是 `Runtime/Scripts/Test/TestUIBoot.cs`（注意它是演示脚本，不是生产代码）。它自己注明了一条硬依赖：**`AsyncTaskManager` 必须在 `ResourceLoad` 之前创建**，因为 `EditorResourceLoad` 会读 `BaseAsyncTaskManager.instance` 且不判空。
+- `GameLauncher.CollectBusinessModules` 是生产代码的注册入口，列表顺序就是初始化与更新顺序；`GameWorld.gameKernel.GetModule<T>()` 按运行时类型精确查找已注册模块。
+- `Runtime/Scripts/Test/` 下的演示脚本自己 `new` 管理器并手动调用生命周期，不受 GameWorld 驱动。
+- 新增需要逐帧逻辑的模块必须加进模块列表，不要假设别的脚本会调用它。
+- `UIManager.DoInit/DoUpdate/DoLateUpdate` 仍是空实现，`ResourceLoad.DoUpdate` 也是空的。
+- 硬依赖：`AsyncTaskManager` 必须在 `ResourceLoad` 之前创建，因为 `EditorResourceLoad` 会读 `BaseAsyncTaskManager.instance` 且不判空。
 
 ### 3. 异步加载没有取消 / 超时 / 失败回调
 
@@ -294,6 +294,6 @@ Diagnostics     ✅ 可用              未接入任何场景
 - [ ] 没有新增 `?.`；空值守卫是两行式且 return 后有空行
 - [ ] 日志走 `STLogger`，没有新增 `UnityEngine.Debug`
 - [ ] 新增/修改的类型、方法、字段、枚举值都有中文 XML 注释
-- [ ] 如果新增了需要逐帧驱动的模块，想清楚谁调它的 `DoUpdate`
+- [ ] 如果新增了需要逐帧驱动的模块，确认它已加入 `GameLauncher` 的模块列表
 - [ ] 如果改了 `Launch` 节点或调度器，同步更新 `Tests/Editor/` 下对应测试
 - [ ] 新代码不依赖"框架会替我取消异步 / 处理失败 / 驱动更新"

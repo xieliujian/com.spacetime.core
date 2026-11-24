@@ -130,7 +130,7 @@ Packager.RegisterConfig(new GameResourceConfig());
 
 ### ResourceLoad（主入口）
 
-继承 `BaseResourceLoad`，实现 `IManager` 接口：
+继承 `BaseResourceLoad`，实现 `ILogicModule` 生命周期：
 
 | 成员 | 说明 |
 |------|------|
@@ -284,7 +284,7 @@ DoClose()                  ← 释放资源
 
 **运行时**
 - `UnityEngine`（`AssetBundle`、`SceneManager`、`Application`）
-- `ST.Core`（`IManager`、`CommonDefine`）
+- `ST.Core`（`ILogicModule`、`CommonDefine`）
 
 **编辑器**
 - `UnityEditor`（`AssetDatabase`、`BuildPipeline`、`EditorSceneManager`）
