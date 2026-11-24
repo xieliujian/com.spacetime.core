@@ -241,7 +241,8 @@ Android 与 iOS 且启用了 UI 或场景类别时改用 `ChunkBasedCompression 
 
 | 文件 | 类型 | 职责 |
 | --- | --- | --- |
-| `Builder/Builder.cs` | static | 命令行入口、收集调度、构建、写库与清理 |
+| `Builder/Builder.cs` | static partial | 命令行入口、主流程与构建执行 |
+| `Builder/Builder_*.cs` | static partial | Define、Collect、Merge、Target、Output、CommandLine 六个职责拆分 |
 | `Builders/ResourceBuilderBase.cs` | abstract | 按前缀过滤并读取 AssetDatabase |
 | `Builders/UIBuilder.cs` | class | 收集 `ui/` |
 | `Builders/CharacterBuilder.cs` | class | 收集 `character/` |
