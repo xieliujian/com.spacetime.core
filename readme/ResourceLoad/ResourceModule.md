@@ -15,8 +15,6 @@ Runtime/Scripts/ResourceLoad/
     Define/          ResourceDefine、ResourceType、ResourceLoadDelegate
     Loader/          EditorResourceLoad
     Module/          ResourceModule（ResourceModule.cs、ResourceModule_Define.cs、ResourceModule_Load.cs）
-Editor/Scripts/ResourceLoad/
-    Packager.cs      菜单打包入口、AB 数据库生成与清单清理
 ```
 
 所有类型位于 `ST.Core` 命名空间。
@@ -123,13 +121,13 @@ resourceModule.DoInit();
 
 | 属性 | 使用位置 | 说明 |
 |------|----------|------|
-| `appName` | `AssetBundleLoad`、`FilePathHelper`、`Packager` | 定位 `BuildRes/<appName>/` 子目录 |
+| `appName` | `AssetBundleLoad`、`FilePathHelper` | 定位 `BuildRes/<appName>/` 子目录 |
 | `bundleSuffix` | `AssetBundleLoad` | 由逻辑路径拼出 Bundle 名称 |
-| `editorPathPrefix` | `EditorResourceLoad`、`Packager` | 编辑器直读路径前缀与打包时的路径裁剪 |
-| `assetBundleDBFile` | `AssetBundleLoad`、`Packager` | 文本依赖数据库文件名 |
+| `editorPathPrefix` | `EditorResourceLoad` | 编辑器直读路径前缀 |
+| `assetBundleDBFile` | `AssetBundleLoad` | 文本依赖数据库文件名 |
 | `assetDir` | 暂无框架内引用 | 预留给业务打包脚本，当前框架不读取 |
 
-这些参数取决于具体游戏工程，包括应用名、资源目录、后缀与数据库文件名。缺少这层配置接口，核心包只能写死常量或增加大量构造参数，`GameLauncher` 与 `Packager` 也会失去统一的配置入口。
+这些参数取决于具体游戏工程，包括应用名、资源目录、后缀与数据库文件名。缺少这层配置接口，核心包只能写死常量或增加大量构造参数，`GameLauncher` 也会失去统一的配置入口。
 
 ### FilePathHelper 的位置
 
@@ -145,32 +143,10 @@ resourceModule.DoInit();
 
 ## 编辑器打包
 
-`Packager` 的菜单位于 `SpaceTime/Build/`。
+正式资源打包见 [资源打包（Editor）](../Build/ResourceBuild.md)。入口为 `ST.Core.Builder.Build`，
+按 UI、角色、特效、场景、剧情、Shader 与音频分类收集构建项，生成五个客户端数据库。
 
-| 菜单项 | 说明 |
-|--------|------|
-| `SpaceTime/Build/Build iPhone Resource` | 切换到 iOS 目标并打包 |
-| `SpaceTime/Build/Build Android Resource` | 切换到 Android 目标并打包 |
-| `SpaceTime/Build/Build Windows Resource` | 切换到 Standalone 目标并打包 |
-
-打包前可以提供配置实例。未调用 `RegisterConfig` 时，`Packager` 会遍历已加载程序集，找到第一个非抽象的 `IResourceConfig` 实现并用无参构造创建，随后缓存结果。工程内存在多个实现时应显式注册，避免按程序集顺序选中其它配置。
-
-```csharp
-using ST.Core;
-
-Packager.RegisterConfig(new GameResourceConfig());
-```
-
-输出目录由 `FilePathHelper.GetAppResPath` 决定，应用名统一转成小写。运行时 `GetBundleFullPath` 直接使用配置值，因此 `appName` 应全部使用小写，避免大小写敏感平台找不到资源。
-
-```text
-BuildRes/
-    <appName 小写>/
-        assetbundledb.txt
-        <bundle 名称>
-```
-
-打包流程依次清空输出目录、扫描 `Assets/Package/` 下的字体、贴图、音频、Prefab、场景与 Lua 资产、调用 `BuildPipeline.BuildAssetBundles`、生成文本依赖数据库，最后删除 Unity 生成的 Manifest 文件。
+旧的 `Packager` 菜单工具已经移除，资源打包统一使用 Build 流程。
 
 ## API 一览
 

@@ -60,3 +60,14 @@ Source: `http://192.168.0.211/dokuwiki/doku.php?id=wiki:codestyle`, DokuWiki pag
     ```
 
 
+
+
+38. Enum types keep XML documentation on the type. Enum members use trailing `//` comments, and there are no blank lines between members.
+
+    ```csharp
+    public enum PanelHideMask : byte
+    {
+        None = 0, // 不影响下层
+        Hide = 1 << 1, // 下层不可见
+    }
+    ```

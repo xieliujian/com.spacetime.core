@@ -22,6 +22,9 @@ TCP网络通信层，支持Protobuf和FlatBuffers消息序列化，提供连接�
 ### [资源加载系统](readme/ResourceLoad/ResourceModule.md)
 统一资源加载框架，支持 AssetBundle 与编辑器 AssetDatabase 双模式、同步/异步加载、场景加载、Lua 资产处理，以及编辑器打包工具。
 
+### [资源打包](readme/Build/ResourceBuild.md)
+Editor 侧 AssetBundle 打包流程，按类别收集资源，生成五个客户端 assetbundledb 与构建清单。
+
 ### [原始文件访问](readme/File/File.md)
 外存优先、包内兜底的原始文件读取，支持外存清单判定、Android APK 包内读取与 Windows 超长路径。
 
