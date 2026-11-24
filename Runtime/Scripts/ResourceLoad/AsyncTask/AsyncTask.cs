@@ -51,7 +51,10 @@
             get { return m_State == ETaskState.End; }
         }
 
-        /// <summary>驱动状态机：首次调用进入 Running 并 <see cref="OnStart"/>，之后每帧 <see cref="OnUpdate"/>，Completed 时转 End 并 <see cref="OnEnd"/>。</summary>
+        /// <summary>
+        /// 驱动状态机：首次调用进入 Running 并 <see cref="OnStart"/>，之后每帧 <see cref="OnUpdate"/>，
+        /// Completed 时转 End 并 <see cref="OnEnd"/>。
+        /// </summary>
         public void Update()
         {
             if (m_State == ETaskState.NotStart)

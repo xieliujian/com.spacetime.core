@@ -4,7 +4,8 @@ using UnityEngine;
 namespace ST.Core
 {
     /// <summary>
-    /// 编辑器模式下通过 <c>AssetDatabase</c> 同步/异步加载资源；路径前缀来自 <see cref="IResourceConfig.editorPathPrefix"/>。
+    /// 编辑器模式下通过 <c>AssetDatabase</c> 同步/异步加载资源；
+    /// 路径前缀来自 <see cref="IResourceConfig.editorPathPrefix"/>。
     /// </summary>
     public class EditorResourceLoad
     {
@@ -49,12 +50,16 @@ namespace ST.Core
             string loadpath = m_Config.editorPathPrefix + realpath + suffix;
             AsyncTask asynctask = new EditorAsyncAssetRequest(loadpath, type);
             if (callback != null)
+            {
                 asynctask.completeEvent = callback;
+            }
+
             BaseAsyncTaskModule.instance.AddTask(asynctask);
         }
 
         /// <summary>编辑器 Play 模式异步加载场景。</summary>
-        public void LoadSceneAsync(string realpath, string suffix, ResourceLoadProgress progress = null, ResourceLoadComplete complete = null)
+        public void LoadSceneAsync(string realpath, string suffix,
+            ResourceLoadProgress progress = null, ResourceLoadComplete complete = null)
         {
 #if UNITY_EDITOR
             string loadpath = m_Config.editorPathPrefix + realpath + suffix;

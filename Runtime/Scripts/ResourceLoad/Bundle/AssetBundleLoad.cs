@@ -1,16 +1,18 @@
-﻿using System.Collections.Generic;
-using System;
+﻿using System;
+using System.Collections.Generic;
 using UnityEngine;
 
 namespace ST.Core
 {
     /// <summary>
-    /// 运行时 AssetBundle 加载中枢：从 StreamingAssets 侧清单构建 <see cref="Bundle"/> 字典，并提供按路径的同步/异步加载入口。
+    /// 运行时 AssetBundle 加载中枢：从 StreamingAssets 侧清单构建 <see cref="Bundle"/> 字典，
+    /// 并提供按路径的同步/异步加载入口。
     /// </summary>
     public class AssetBundleLoad
     {
         /// <summary>按 Bundle 名称索引的全局字典（key 与数据库中名称一致）。</summary>
-        Dictionary<string, Bundle> m_BundleDict = new Dictionary<string, Bundle>(CommonDefine.s_ListConst_1024);
+        Dictionary<string, Bundle> m_BundleDict =
+            new Dictionary<string, Bundle>(ResourceDefine.BUNDLE_DICT_CAPACITY);
         /// <summary>AB 文本数据库管理器，替代 AssetBundleManifest。</summary>
         AssetBundleDBMgr m_DBMgr = new AssetBundleDBMgr();
         /// <summary>路径拼接工具，解析 StreamingAssets 根目录与 Bundle 完整路径。</summary>
@@ -45,9 +47,14 @@ namespace ST.Core
         /// <param name="respath">逻辑资源路径（不含 <see cref="IResourceConfig.bundleSuffix"/>，内部会拼接）。</param>
         public object[] LoadAllSync(string respath)
         {
-            var fullpath = respath + m_Config.bundleSuffix;
-            var bundle = GetBundle(fullpath);
-            if (bundle == null) return null;
+            string fullPath = respath + m_Config.bundleSuffix;
+            Bundle bundle = GetBundle(fullPath);
+
+            if (bundle == null)
+            {
+                return null;
+            }
+
             return bundle.LoadAllSync();
         }
 
@@ -57,27 +64,45 @@ namespace ST.Core
         /// <param name="type">目标类型。</param>
         public object LoadSync(string respath, string filename, Type type)
         {
-            var fullpath = respath + m_Config.bundleSuffix;
-            var bundle = GetBundle(fullpath);
-            if (bundle == null) return null;
+            string fullPath = respath + m_Config.bundleSuffix;
+            Bundle bundle = GetBundle(fullPath);
+
+            if (bundle == null)
+            {
+                return null;
+            }
+
             return bundle.LoadSync(filename, type);
         }
 
         /// <summary>异步加载指定包内资源。</summary>
         public void LoadAsync(string realpath, string filename, Type type, ResourceLoadComplete callback)
         {
-            var fullpath = realpath + m_Config.bundleSuffix;
-            var bundle = GetBundle(fullpath);
-            if (bundle == null) return;
+            string fullPath = realpath + m_Config.bundleSuffix;
+            Bundle bundle = GetBundle(fullPath);
+
+            if (bundle == null)
+            {
+                return;
+            }
+
             bundle.LoadAsync(filename, type, callback);
         }
 
-        /// <summary>异步加载场景（<paramref name="suffix"/> 参与路径拼接规则由上层 <see cref="ResourceModule"/> 决定）。</summary>
-        public void LoadSceneAsync(string realpath, string filename, string suffix, ResourceLoadProgress progress = null, ResourceLoadComplete complete = null)
+        /// <summary>
+        /// 异步加载场景（<paramref name="suffix"/> 参与路径拼接规则由上层 <see cref="ResourceModule"/> 决定）。
+        /// </summary>
+        public void LoadSceneAsync(string realpath, string filename, string suffix,
+            ResourceLoadProgress progress = null, ResourceLoadComplete complete = null)
         {
-            var fullpath = realpath + m_Config.bundleSuffix;
-            var bundle = GetBundle(fullpath);
-            if (bundle == null) return;
+            string fullPath = realpath + m_Config.bundleSuffix;
+            Bundle bundle = GetBundle(fullPath);
+
+            if (bundle == null)
+            {
+                return;
+            }
+
             bundle.LoadSceneAsync(filename, progress, complete);
         }
 
@@ -86,7 +111,9 @@ namespace ST.Core
         public void DoClose(bool unloadAllLoadedObjects = false)
         {
             foreach (var kv in m_BundleDict)
+            {
                 kv.Value.Unload(unloadAllLoadedObjects);
+            }
 
             m_BundleDict.Clear();
         }
@@ -94,32 +121,48 @@ namespace ST.Core
         /// <summary>解析 AB 文本数据库，遍历所有 Bundle 名称并构建 <see cref="m_BundleDict"/>。</summary>
         void InitAllBundle()
         {
-            string dbPath = m_FilePathHelper.GetFilePath() + m_Config.appName + "/" + m_Config.assetBundleDBFile;
+            string rootPath = m_FilePathHelper.GetFilePath();
+            string dbPath = string.Format(ResourceDefine.BUNDLE_FULL_PATH_FORMAT,
+                rootPath, m_Config.appName, m_Config.assetBundleDBFile);
             m_DBMgr.Init(dbPath);
 
-            var allBundleNames = m_DBMgr.GetAllAssetBundleNames();
-            if (allBundleNames == null) return;
-
-            foreach (var bundlename in allBundleNames)
+            List<string> allBundleNames = m_DBMgr.GetAllAssetBundleNames();
+            if (allBundleNames == null)
             {
-                if (bundlename == null) continue;
+                return;
+            }
 
-                var bundle = new Bundle(bundlename, m_FilePathHelper);
+            foreach (string bundleName in allBundleNames)
+            {
+                if (bundleName == null)
+                {
+                    continue;
+                }
+
+                Bundle bundle = new Bundle(bundleName, m_FilePathHelper);
                 bundle.load = this;
 
-                if (!m_BundleDict.ContainsKey(bundlename))
-                    m_BundleDict.Add(bundlename, bundle);
+                if (!m_BundleDict.ContainsKey(bundleName))
+                {
+                    m_BundleDict.Add(bundleName, bundle);
+                }
             }
 
             // 所有 Bundle 创建完毕后，再初始化依赖关系
-            foreach (var bundlename in allBundleNames)
+            foreach (string bundleName in allBundleNames)
             {
-                if (bundlename == null) continue;
+                if (bundleName == null)
+                {
+                    continue;
+                }
 
-                var bundle = GetBundle(bundlename);
-                if (bundle == null) continue;
+                Bundle bundle = GetBundle(bundleName);
+                if (bundle == null)
+                {
+                    continue;
+                }
 
-                var depends = m_DBMgr.GetAssetBundleDepends(bundlename);
+                string[] depends = m_DBMgr.GetAssetBundleDepends(bundleName);
                 bundle.InitDependencies(depends);
             }
         }

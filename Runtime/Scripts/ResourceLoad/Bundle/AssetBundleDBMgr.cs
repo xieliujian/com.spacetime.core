@@ -1,7 +1,7 @@
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.IO;
 using System.Text;
-using UnityEngine;
+using ST.Core.Logging;
 
 namespace ST.Core
 {
@@ -24,7 +24,8 @@ namespace ST.Core
     /// </summary>
     public class AssetBundleDBMgr
     {
-        Dictionary<string, AssetBundleInfo> m_ABInfoDict = new Dictionary<string, AssetBundleInfo>(4096);
+        Dictionary<string, AssetBundleInfo> m_ABInfoDict =
+            new Dictionary<string, AssetBundleInfo>(ResourceDefine.BUNDLE_INFO_DICT_CAPACITY);
         List<string> m_TempStrList = new List<string>();
         List<string> m_TempABNameList = new List<string>();
 
@@ -41,6 +42,7 @@ namespace ST.Core
         public void Init(string[] dbFilePaths)
         {
             m_ABInfoDict.Clear();
+
             for (int i = 0; i < dbFilePaths.Length; ++i)
             {
                 ParseSingleFile(dbFilePaths[i]);
@@ -55,17 +57,20 @@ namespace ST.Core
             {
                 return info.depends;
             }
+
             return null;
         }
 
         /// <summary>获取所有已注册的 AB 名称。</summary>
         public List<string> GetAllAssetBundleNames()
         {
-            var names = new List<string>(m_ABInfoDict.Count);
+            List<string> names = new List<string>(m_ABInfoDict.Count);
+
             foreach (var kv in m_ABInfoDict)
             {
                 names.Add(kv.Key);
             }
+
             return names;
         }
 
@@ -73,7 +78,7 @@ namespace ST.Core
         {
             if (!File.Exists(filePath))
             {
-                Debug.LogError($"AssetBundleDBMgr can not load {filePath}");
+                STLogger.LogErrorF(ResourceDefine.LOG_DB_FILE_NOT_FOUND, filePath);
                 return;
             }
 
@@ -91,9 +96,11 @@ namespace ST.Core
                     ++pos;
                     continue;
                 }
-                else if (str[pos] == '\t')
+
+                if (str[pos] == ResourceDefine.FIELD_SEPARATOR)
                 {
-                    if (IsABAttrHeader(str, pos, "\tDepend:", ref pos))
+                    bool isDependHeader = IsABAttrHeader(str, pos, ResourceDefine.DEPEND_ATTR_HEADER, ref pos);
+                    if (isDependHeader)
                     {
                         AssetBundleInfo info = m_ABInfoDict[abName];
                         info.depends = ReadABAttrStringArray(str, ref pos);
@@ -104,20 +111,19 @@ namespace ST.Core
                         // 跳过未识别的属性行
                         SkipLine(str, ref pos);
                     }
+
                     continue;
                 }
-                else
-                {
-                    abName = ReadABName(str, ref pos);
-                    ++pos;
-                    ReadABAttrInt(str, ref pos);
-                    AssetBundleInfo info = new AssetBundleInfo();
-                    info.name = abName;
-                    info.depends = null;
-                    m_ABInfoDict[abName] = info;
-                    m_TempABNameList.Add(abName);
-                    continue;
-                }
+
+                abName = ReadABName(str, ref pos);
+                ++pos;
+                ReadABAttrInt(str, ref pos);
+
+                AssetBundleInfo newInfo = new AssetBundleInfo();
+                newInfo.name = abName;
+                newInfo.depends = null;
+                m_ABInfoDict[abName] = newInfo;
+                m_TempABNameList.Add(abName);
             }
 
             // 将依赖中的整数 ID 还原为实际 AB 名称
@@ -141,12 +147,16 @@ namespace ST.Core
         bool IsABAttrHeader(string str, int startPos, string header, ref int pos)
         {
             if (startPos + header.Length >= str.Length)
+            {
                 return false;
+            }
 
             for (int i = 0; i < header.Length; ++i)
             {
                 if (str[startPos + i] != header[i])
+                {
                     return false;
+                }
             }
 
             pos = startPos + header.Length;
@@ -156,14 +166,16 @@ namespace ST.Core
         string ReadABName(string str, ref int pos)
         {
             int startPos = pos;
+
             for (int i = startPos; i < str.Length; ++i)
             {
-                if (str[i] == '\r' || str[i] == '\n' || str[i] == '\t')
+                if (str[i] == '\r' || str[i] == '\n' || str[i] == ResourceDefine.FIELD_SEPARATOR)
                 {
                     pos = i;
                     return str.Substring(startPos, i - startPos);
                 }
             }
+
             pos = str.Length;
             return string.Empty;
         }
@@ -171,18 +183,23 @@ namespace ST.Core
         int ReadABAttrInt(string str, ref int pos)
         {
             int startPos = pos;
+
             for (int i = startPos; i < str.Length; ++i)
             {
-                if (str[i] == '\r' || str[i] == '\n' || str[i] == '\t')
+                if (str[i] == '\r' || str[i] == '\n' || str[i] == ResourceDefine.FIELD_SEPARATOR)
                 {
                     pos = i;
                     string intStr = str.Substring(startPos, i - startPos);
                     int result;
                     if (int.TryParse(intStr, out result))
+                    {
                         return result;
+                    }
+
                     return 0;
                 }
             }
+
             pos = str.Length;
             return 0;
         }
@@ -190,7 +207,9 @@ namespace ST.Core
         string[] ReadABAttrStringArray(string str, ref int pos)
         {
             if (str[pos] == '\r' || str[pos] == '\n')
+            {
                 return null;
+            }
 
             int lastItemPos = pos;
             m_TempStrList.Clear();
@@ -200,14 +219,21 @@ namespace ST.Core
                 if (str[i] == '\r' || str[i] == '\n')
                 {
                     if (i != lastItemPos)
+                    {
                         m_TempStrList.Add(str.Substring(lastItemPos, i - lastItemPos));
+                    }
+
                     pos = i;
                     return m_TempStrList.ToArray();
                 }
-                else if (str[i] == '\t')
+
+                if (str[i] == ResourceDefine.FIELD_SEPARATOR)
                 {
                     if (i != lastItemPos)
+                    {
                         m_TempStrList.Add(str.Substring(lastItemPos, i - lastItemPos));
+                    }
+
                     lastItemPos = i + 1;
                 }
             }
@@ -226,18 +252,23 @@ namespace ST.Core
                     return;
                 }
             }
+
             pos = str.Length;
         }
 
         string GetAssetBundleName(List<string> abNameList, string indexStr)
         {
             int index;
-            if (!int.TryParse(indexStr, out index))
-                return indexStr;
-
-            if (index < 0 || index >= abNameList.Count)
+            bool isIndexValid = int.TryParse(indexStr, out index);
+            if (!isIndexValid)
             {
-                Debug.LogError($"AssetBundleDBMgr GetAssetBundleName index out of range: {indexStr}");
+                return indexStr;
+            }
+
+            bool isOutOfRange = index < 0 || index >= abNameList.Count;
+            if (isOutOfRange)
+            {
+                STLogger.LogErrorF(ResourceDefine.LOG_DB_INDEX_OUT_OF_RANGE, indexStr);
                 return string.Empty;
             }
 

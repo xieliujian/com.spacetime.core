@@ -17,6 +17,14 @@
         // 分发定义
         public const int MAX_PROCESS_MSG_PER_FRAME = 64; // 单帧最多分发的消息条数
 
+        // 发送定义
+        public const int SEND_BUFFER_SIZE = 131072; // 发送缓冲初始容量，同一帧的消息在缓冲内批量发送
+        public const int SEND_TIMEOUT_MS = 500; // 同步发送超时时间，单位毫秒
+
+        // 心跳定义
+        public const int HEARTBEAT_INTERVAL_MS = 5000; // 心跳发送间隔，单位毫秒
+        public const int HEARTBEAT_TIMEOUT_MS = 30000; // 心跳超时，超时内未收到任何消息即断开
+
         // 连接定义
         public const int CONNECT_TIMEOUT_MS = 10000; // TCP 连接超时时间，单位毫秒
 
@@ -28,17 +36,20 @@
         public const string REASON_READ_FAILED = "read failed"; // 异步读取失败
         public const string REASON_BEGIN_READ_FAILED = "begin read failed"; // 投递异步读取失败
         public const string REASON_WRITE_FAILED = "write failed"; // 异步发送失败
-        public const string REASON_WRITE_CALLBACK_FAILED = "write callback failed"; // 发送回调处理失败
         public const string REASON_SERVER_CLOSED = "server closed the connection"; // 服务器主动关闭
         public const string REASON_RECV_BUFFER_OVERFLOW = "recv buffer overflow"; // 接收缓冲超过上限
         public const string REASON_INVALID_MESSAGE_LENGTH = "invalid message length"; // 消息长度字段非法
         public const string REASON_NET_MODULE_CLOSED = "net module closed"; // 网络模块关闭
         public const string REASON_CLIENT_CLOSED = "client closed"; // 业务主动断开
+        public const string REASON_HEARTBEAT_TIMEOUT = "heartbeat timeout"; // 心跳超时
 
         // 日志文案定义
         public const string LOG_CLOSE_REASON = "网络连接关闭，地址 {0}:{1}，原因 {2}"; // 关闭连接的基础日志
         public const string LOG_CLOSE_REASON_VALUE = "网络连接关闭，地址 {0}:{1}，原因 {2}，数值 {3}"; // 带整型细节
         public const string LOG_CLOSE_REASON_DETAIL = "网络连接关闭，地址 {0}:{1}，原因 {2}，详情 {3}"; // 带文本细节
+        public const string LOG_CONNECT_START = "网络开始连接，地址 {0}:{1}"; // 发起连接
+        public const string LOG_CONNECT_SUCCESS = "网络连接成功，地址 {0}:{1}"; // 连接建立成功
+        public const string LOG_CLOSE_SUMMARY = "网络模块关闭，累计发送 {0} 字节 / {1} 条，接收 {2} 字节 / {3} 条"; // 关闭时的统计汇总
     }
 
     /// <summary>

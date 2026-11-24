@@ -72,6 +72,8 @@ namespace ST.Core.Network
         /// <param name="bytearray">消息体字节。</param>
         void DispatchMessage(ulong msgid, byte[] bytearray)
         {
+            m_ReceiveIdleElapsed = 0f;
+
             MsgModule msgModule = m_MsgModule;
             bool hasMsgModule = msgModule != null;
             if (hasMsgModule)

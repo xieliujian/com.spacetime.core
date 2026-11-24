@@ -1,11 +1,12 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using UnityEngine;
 
 namespace ST.Core
 {
     /// <summary>
-    /// 将多份 Lua 字节码打包进单个 <see cref="ScriptableObject"/> 资产，便于随 AssetBundle 分发并由运行时按路径查找。
+    /// 将多份 Lua 字节码打包进单个 <see cref="ScriptableObject"/> 资产，
+    /// 便于随 AssetBundle 分发并由运行时按路径查找。
     /// </summary>
     public class LuaScriptableObject : ScriptableObject
     {
@@ -28,10 +29,14 @@ namespace ST.Core
             foreach (var entity in m_lualist)
             {
                 if (entity == null)
+                {
                     continue;
+                }
 
                 if (entity.path == path)
+                {
                     return entity.data;
+                }
             }
 
             return null;

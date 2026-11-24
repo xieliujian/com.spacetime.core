@@ -33,6 +33,22 @@ namespace ST.Core.Network
         /// <summary>网络线程产生的连接事件，按入队顺序在主线程处理。</summary>
         Queue<NetSocketEvent> m_SocketEventQueue = new Queue<NetSocketEvent>(CommonDefine.s_ListConst_16);
 
+        // 心跳定义
+        /// <summary>业务心跳发送委托，未设置时不启用心跳检测。</summary>
+        Run m_HeartbeatSender;
+
+        /// <summary>心跳发送间隔，单位秒。</summary>
+        float m_HeartbeatIntervalSeconds;
+
+        /// <summary>心跳超时时间，单位秒。</summary>
+        float m_HeartbeatTimeoutSeconds;
+
+        /// <summary>距离上次发送心跳的累计时间，单位秒。</summary>
+        float m_HeartbeatSendElapsed;
+
+        /// <summary>距离上次收到消息的累计时间，单位秒。</summary>
+        float m_ReceiveIdleElapsed;
+
         // 公有字段定义
         /// <summary>主线程上、在 <see cref="MsgModule.Dispatcher"/> 之后调用的可选回调，参数为消息 ID 与负载字节。</summary>
         public Run<ulong, byte[]> onMsgEvent;

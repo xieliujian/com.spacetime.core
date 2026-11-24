@@ -26,8 +26,10 @@
 
 ```
 Runtime/Scripts/UI/
-├── UIDefine.cs                  枚举：PanelSortLayer / PanelHideMask / PanelCloseTween
-├── UIModule.cs                 总控（ILogicModule，单例 S）
+├── Define/
+│   └── UIDefine.cs              枚举：PanelSortLayer / PanelHideMask / PanelCloseTween
+├── Module/
+│   └── UIModule.cs              总控（ILogicModule，单例 S）
 ├── Data/
 │   ├── UIData.cs                面板/页面静态配置数据
 │   ├── UIDataTable.cs           配置注册表（静态）
@@ -135,7 +137,7 @@ public class BagPanel : AbstractPanel
 
 ### 4.1 UIModule
 
-**文件**：`Runtime/Scripts/UI/UIModule.cs`
+**文件**：`Runtime/Scripts/UI/Module/UIModule.cs`
 
 **职责**：UI 系统总控制器，管理所有面板的打开/关闭/排序。
 

@@ -4,7 +4,7 @@ namespace ST.Core.Network
 {
     /// <summary>
     /// TCP 客户端的拆包部分：维护接收缓冲，按“2 字节长度 + 8 字节消息 ID + 负载”切出完整消息。
-    /// 连接与发送见 SocketClient.cs。
+    /// 连接见 SocketClient.cs，发送见 SocketClient_Send.cs。
     /// </summary>
     public partial class SocketClient
     {
@@ -128,6 +128,7 @@ namespace ST.Core.Network
 
                 offset += frameLength;
                 m_NetModule.AddEvent(msgId, payload);
+                AddDownMessageStat();
             }
 
             RemoveParsedBytes(offset);

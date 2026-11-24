@@ -29,11 +29,12 @@ namespace ST.Core
         /// <summary>磁盘完整路径拼接工具。</summary>
         FilePathHelper m_FilePathHelper;
         /// <summary>此包的直接依赖包列表。</summary>
-        List<Bundle> m_DependList = new List<Bundle>(CommonDefine.s_ListConst_8);
+        List<Bundle> m_DependList = new List<Bundle>(ResourceDefine.DEPEND_LIST_CAPACITY);
         /// <summary>已加载完成的原生 Unity AssetBundle 对象。</summary>
         AssetBundle m_AssetBundle;
         /// <summary>本包异步加载完成前挂起的资产/场景请求，完成后统一提交给任务管理器。</summary>
-        List<AsyncTask> m_PendingLoadList = new List<AsyncTask>(CommonDefine.s_ListConst_8);
+        List<AsyncTask> m_PendingLoadList =
+            new List<AsyncTask>(ResourceDefine.PENDING_REQUEST_LIST_CAPACITY);
 
         /// <summary>所属 <see cref="AssetBundleLoad"/>，用于按名查找依赖包。</summary>
         public AssetBundleLoad load
@@ -61,9 +62,17 @@ namespace ST.Core
             {
                 foreach (var depend in m_DependList)
                 {
-                    if (depend == null) continue;
-                    if (!depend.isLoaded) return false;
+                    if (depend == null)
+                    {
+                        continue;
+                    }
+
+                    if (!depend.isLoaded)
+                    {
+                        return false;
+                    }
                 }
+
                 return true;
             }
         }
@@ -80,19 +89,32 @@ namespace ST.Core
         /// <param name="dependNames">依赖的 Bundle 名称数组，由 <see cref="AssetBundleDBMgr"/> 提供。</param>
         public void InitDependencies(string[] dependNames)
         {
-            if (m_Load == null || dependNames == null)
+            bool isInvalid = m_Load == null || dependNames == null;
+            if (isInvalid)
+            {
                 return;
+            }
 
             foreach (var dependname in dependNames)
             {
-                if (dependname == null) continue;
+                if (dependname == null)
+                {
+                    continue;
+                }
+
                 var bundle = m_Load.GetBundle(dependname);
-                if (bundle == null) continue;
+                if (bundle == null)
+                {
+                    continue;
+                }
+
                 m_DependList.Add(bundle);
             }
         }
 
-        /// <summary>异步加载本包及依赖（先递归依赖 <see cref="LoadBundleAsync"/>，再提交 <see cref="AsyncBundleRequest"/>）。</summary>
+        /// <summary>
+        /// 异步加载本包及依赖（先递归依赖 <see cref="LoadBundleAsync"/>，再提交 <see cref="AsyncBundleRequest"/>）。
+        /// </summary>
         public void LoadBundleAsync()
         {
             if (m_State == State.Unloaded)
@@ -101,7 +123,11 @@ namespace ST.Core
 
                 foreach (var depend in m_DependList)
                 {
-                    if (depend == null) continue;
+                    if (depend == null)
+                    {
+                        continue;
+                    }
+
                     depend.LoadBundleAsync();
                 }
 
@@ -119,11 +145,15 @@ namespace ST.Core
 
                 foreach (var depend in m_DependList)
                 {
-                    if (depend == null) continue;
+                    if (depend == null)
+                    {
+                        continue;
+                    }
+
                     depend.LoadBundleSync();
                 }
 
-                var fullpath = m_FilePathHelper.GetBundleFullPath(m_Path);
+                string fullpath = m_FilePathHelper.GetBundleFullPath(m_Path);
                 m_AssetBundle = AssetBundle.LoadFromFile(fullpath);
             }
         }
@@ -132,7 +162,11 @@ namespace ST.Core
         public object[] LoadAllSync()
         {
             LoadBundleSync();
-            if (m_AssetBundle == null) return null;
+            if (m_AssetBundle == null)
+            {
+                return null;
+            }
+
             return m_AssetBundle.LoadAllAssets();
         }
 
@@ -140,7 +174,11 @@ namespace ST.Core
         public object LoadSync(string resname, Type type)
         {
             LoadBundleSync();
-            if (m_AssetBundle == null) return null;
+            if (m_AssetBundle == null)
+            {
+                return null;
+            }
+
             return m_AssetBundle.LoadAsset(resname, type);
         }
 
@@ -151,27 +189,40 @@ namespace ST.Core
 
             AsyncTask asynctask = new AsyncAssetRequest(this, resname, type, callback);
             if (isLoaded)
+            {
                 BaseAsyncTaskModule.instance.AddTask(asynctask);
+            }
             else
+            {
                 m_PendingLoadList.Add(asynctask);
+            }
         }
 
         /// <summary>异步加载场景（逻辑同 <see cref="LoadAsync"/> 的挂起机制）。</summary>
-        public void LoadSceneAsync(string resname, ResourceLoadProgress progress = null, ResourceLoadComplete complete = null)
+        public void LoadSceneAsync(string resname, ResourceLoadProgress progress = null,
+            ResourceLoadComplete complete = null)
         {
             LoadBundleAsync();
 
             AsyncTask asynctask = new AsyncSceneRequest(this, resname, progress, complete);
             if (isLoaded)
+            {
                 BaseAsyncTaskModule.instance.AddTask(asynctask);
+            }
             else
+            {
                 m_PendingLoadList.Add(asynctask);
+            }
         }
 
         /// <summary>在已加载的 <see cref="assetBundle"/> 上发起 Unity 异步资源请求。</summary>
         public AssetBundleRequest LoadAssetAsyncFromBundle(string resname, Type type)
         {
-            if (m_AssetBundle == null) return null;
+            if (m_AssetBundle == null)
+            {
+                return null;
+            }
+
             return m_AssetBundle.LoadAssetAsync(resname, type);
         }
 
@@ -184,6 +235,7 @@ namespace ST.Core
                 m_AssetBundle.Unload(unloadAllLoadedObjects);
                 m_AssetBundle = null;
             }
+
             m_State = State.Unloaded;
             m_PendingLoadList.Clear();
         }
@@ -194,16 +246,27 @@ namespace ST.Core
         /// </summary>
         void OnAsyncLoaded(object obj)
         {
-            if (obj == null) return;
+            if (obj == null)
+            {
+                return;
+            }
+
             var bundle = (AssetBundle)obj;
-            if (bundle == null) return;
+            if (bundle == null)
+            {
+                return;
+            }
 
             m_State = State.Loaded;
             m_AssetBundle = bundle;
 
             foreach (var load in m_PendingLoadList)
             {
-                if (load == null) continue;
+                if (load == null)
+                {
+                    continue;
+                }
+
                 BaseAsyncTaskModule.instance.AddTask(load);
             }
 

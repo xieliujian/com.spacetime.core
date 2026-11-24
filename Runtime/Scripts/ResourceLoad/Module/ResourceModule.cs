@@ -1,6 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
-using UnityEngine;
 
 namespace ST.Core
 {
@@ -22,7 +20,9 @@ namespace ST.Core
         public override void DoClose()
         {
             if (m_AssetBundleLoad != null)
+            {
                 m_AssetBundleLoad.DoClose(false);
+            }
         }
 
         /// <summary>
@@ -34,12 +34,14 @@ namespace ST.Core
         /// </summary>
         public override void DoInit()
         {
-            m_EditorResLoad   = new EditorResourceLoad(m_Config);
+            m_EditorResLoad = new EditorResourceLoad(m_Config);
             m_AssetBundleLoad = new AssetBundleLoad(m_FilePathHelper, m_Config);
 
 #if UNITY_EDITOR
             if (useAssetBundle)
+            {
                 m_AssetBundleLoad.DoInit();
+            }
 #else
             m_AssetBundleLoad.DoInit();
 #endif
@@ -53,102 +55,123 @@ namespace ST.Core
         /// <inheritdoc />
         public override object[] LoadAllResourceSync(string path, string filename, string suffix)
         {
-            string realpath = path + filename;
+            string realPath = path + filename;
 
 #if UNITY_EDITOR
             if (!useAssetBundle)
-                return m_EditorResLoad.LoadAllSync(realpath, suffix);
-            else
-                return m_AssetBundleLoad.LoadAllSync(realpath);
+            {
+                return m_EditorResLoad.LoadAllSync(realPath, suffix);
+            }
+
+            return m_AssetBundleLoad.LoadAllSync(realPath);
 #else
-            return m_AssetBundleLoad.LoadAllSync(realpath);
+            return m_AssetBundleLoad.LoadAllSync(realPath);
 #endif
         }
 
         /// <inheritdoc />
-        public override object LoadResourceSync(string path, string filename, string suffix, ResourceType restype = ResourceType.Default)
+        public override object LoadResourceSync(string path, string filename, string suffix,
+            ResourceType restype = ResourceType.Default)
         {
-            string realpath = path + filename;
-            var type = Type2Native(restype);
-            var originType = type;
-            BeforeLoad(ref realpath, ref type);
+            string realPath = path + filename;
+            Type type = Type2Native(restype);
+            Type originType = type;
+            BeforeLoad(ref realPath, ref type);
 
             object obj = null;
 
 #if UNITY_EDITOR
             if (!useAssetBundle)
-                obj = m_EditorResLoad.LoadSync(realpath, suffix, type);
+            {
+                obj = m_EditorResLoad.LoadSync(realPath, suffix, type);
+            }
             else
-                obj = m_AssetBundleLoad.LoadSync(realpath, filename, type);
+            {
+                obj = m_AssetBundleLoad.LoadSync(realPath, filename, type);
+            }
 #else
-            obj = m_AssetBundleLoad.LoadSync(realpath, filename, type);
+            obj = m_AssetBundleLoad.LoadSync(realPath, filename, type);
 #endif
 
-            return AfterLoad(realpath, originType, obj);
+            return AfterLoad(realPath, originType, obj);
         }
 
         /// <inheritdoc />
-        public override void LoadResourceAsync(string path, string filename, string suffix, ResourceLoadComplete callback, ResourceType restype = ResourceType.Default)
+        public override void LoadResourceAsync(string path, string filename, string suffix,
+            ResourceLoadComplete callback, ResourceType restype = ResourceType.Default)
         {
-            string realpath = path + filename;
-            var type = Type2Native(restype);
-            var originType = type;
-            BeforeLoad(ref realpath, ref type);
+            string realPath = path + filename;
+            Type type = Type2Native(restype);
+            Type originType = type;
+            BeforeLoad(ref realPath, ref type);
 
 #if UNITY_EDITOR
             if (!useAssetBundle)
             {
-                m_EditorResLoad.LoadAsync(realpath, suffix, type, (obj) => {
-                    ResourceAsyncCallback(realpath, originType, obj, callback);
+                m_EditorResLoad.LoadAsync(realPath, suffix, type, (obj) =>
+                {
+                    ResourceAsyncCallback(realPath, originType, obj, callback);
                 });
             }
             else
             {
-                m_AssetBundleLoad.LoadAsync(realpath, filename, type, (obj) => {
-                    ResourceAsyncCallback(realpath, originType, obj, callback);
+                m_AssetBundleLoad.LoadAsync(realPath, filename, type, (obj) =>
+                {
+                    ResourceAsyncCallback(realPath, originType, obj, callback);
                 });
             }
 #else
-            m_AssetBundleLoad.LoadAsync(realpath, filename, type, (obj) => {
-                ResourceAsyncCallback(realpath, originType, obj, callback);
+            m_AssetBundleLoad.LoadAsync(realPath, filename, type, (obj) =>
+            {
+                ResourceAsyncCallback(realPath, originType, obj, callback);
             });
 #endif
         }
 
         /// <inheritdoc />
-        public override void LoadSceneAsync(string path, string filename, string suffix, ResourceLoadProgress progress = null, ResourceLoadComplete complete = null)
+        public override void LoadSceneAsync(string path, string filename, string suffix,
+            ResourceLoadProgress progress = null, ResourceLoadComplete complete = null)
         {
-            string realpath = path + filename;
+            string realPath = path + filename;
 
 #if UNITY_EDITOR
             if (!useAssetBundle)
-                m_EditorResLoad.LoadSceneAsync(realpath, suffix, progress, complete);
+            {
+                m_EditorResLoad.LoadSceneAsync(realPath, suffix, progress, complete);
+            }
             else
-                m_AssetBundleLoad.LoadSceneAsync(realpath, filename, suffix, progress, complete);
+            {
+                m_AssetBundleLoad.LoadSceneAsync(realPath, filename, suffix, progress, complete);
+            }
 #else
-            m_AssetBundleLoad.LoadSceneAsync(realpath, filename, suffix, progress, complete);
+            m_AssetBundleLoad.LoadSceneAsync(realPath, filename, suffix, progress, complete);
 #endif
         }
 
         /// <summary>异步完成后按装饰器链处理结果再回调业务。</summary>
         void ResourceAsyncCallback(string assetName, Type type, object obj, ResourceLoadComplete callback)
         {
-            var decoratedObj = AfterLoad(assetName, type, obj);
+            object decoratedObj = AfterLoad(assetName, type, obj);
             callback?.Invoke(decoratedObj);
         }
 
         /// <summary>逆序调用装饰器 <see cref="IAssetDecorator.BeforeLoad"/>。</summary>
         void BeforeLoad(ref string assetName, ref Type type)
         {
-            for (var i = m_Decorators.Count - 1; i >= 0; --i)
+            for (int i = m_Decorators.Count - 1; i >= 0; --i)
+            {
                 m_Decorators[i].BeforeLoad(ref assetName, ref type);
+            }
         }
 
         /// <summary>正序调用装饰器 <see cref="IAssetDecorator.AfterLoad"/> 并返回最终对象。</summary>
         object AfterLoad(string assetName, Type type, object asset)
         {
-            for (var i = 0; i < m_Decorators.Count; ++i)
+            for (int i = 0; i < m_Decorators.Count; ++i)
+            {
                 m_Decorators[i].AfterLoad(assetName, type, ref asset);
+            }
+
             return asset;
         }
     }

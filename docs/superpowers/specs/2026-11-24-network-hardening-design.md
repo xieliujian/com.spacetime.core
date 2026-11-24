@@ -74,6 +74,8 @@
 
 `SocketClient.Send` 在调用 `BeginWrite` 前做一次定长拷贝，因为异步写在回调完成前一直引用传入数组，调用方复用缓冲会破坏在途数据。这次保留这一次拷贝，换掉的是之前的多余拷贝。
 
+第二轮把发送改成复用缓冲加每帧批量阻塞写，异步写与这次定长拷贝都已移除，见第 9 节。
+
 ### 4.4 线程边界与事件顺序
 
 `SocketClient` 的所有回调都在异步 IO 线程执行，只做三件事，入队消息、入队连接事件、记录断线原因。`NetModule` 在 `DoUpdate` 里先分发消息，再派发连接事件，保证断线时队列里已收到的消息仍能处理。
@@ -138,9 +140,72 @@ MSBuild com.spacetime.core.runtime.csproj /t:Rebuild /p:Configuration=Debug
 
 ## 8. 非目标与后续
 
-- 心跳消息需要服务端协议配合，本次没有新增。
+- 心跳消息需要服务端协议配合，第二轮已在传输层提供 `SetHeartbeat` 委托入口，消息本体仍由业务定义。
 - 消息负载数组池化需要业务承诺不跨回调持有数据，本次没有做。
 - Protobuf 消息对象可以通过 `MergeFrom` 复用，本次保持每条新建。
 - `WriteFloat`、`ReadFloat` 仍有 `BitConverter` 数组分配，受 Unity 版本 API 限制，本次没有改。
 - KCP、压缩、加密属于协议能力，保持原样。
+
+## 9. 第二轮加固
+
+- 日期 2026-11-24
+- 状态 已实现，Roslyn 全量编译通过，未跑 Unity PlayMode 与真实服务器
+
+### 9.1 问题
+
+| # | 类别 | 位置 | 现象 | 处理 |
+| --- | --- | --- | --- | --- |
+| 32 | 正确性 | `SocketClient.Send` | 多条消息连续 `BeginWrite`，上一笔未完成时抛 `NotSupportedException`，被当作写失败直接断线 | 改为单缓冲批量阻塞写 |
+| 33 | GC | `SocketClient.Send` | 每条消息 `new byte[length]` 并在异步写期间持有 | 写入复用发送缓冲，稳态零分配 |
+| 34 | 健壮性 | `NetModule` | 没有心跳与收包超时，半开连接无感知 | 新增 `SetHeartbeat` 与超时断开 |
+| 35 | 可观测 | `SocketClient` | 没有收发统计 | 新增字节与消息计数 |
+
+### 9.2 发送模型
+
+`MsgModule` 仍然负责组包，`SocketClient.SendMessage` 把整帧追加到复用发送缓冲，`NetModule.DoUpdate` 末尾调用 `FlushSend`，用 `NetworkStream.Write` 一次阻塞写出。
+
+这样同一时刻只有一个写操作，并发写异常消失，每条消息也不再分配数组。`NetModule.Flush()` 供需要立即发包的场景调用。
+
+参考工程 `NetClient` 在 `Send` 阶段就把所有消息拼进一个 `ByteBuffer`，并在 `ProcessSend` 里一次 `Socket.Send`。本次采用同样的批量思路，保留现有 `TcpClient` 与异步读，不改接收线程模型。
+
+与参考工程的差异，参考工程对 `WouldBlock` 重试 5 次，这里超时直接断开。原因是 `NetworkStream.Write` 不暴露已写字节数，重试可能破坏帧顺序。
+
+### 9.3 心跳
+
+`NetModule_Heartbeat.cs` 提供 `SetHeartbeat(Run sender)` 与带间隔、超时的重载，默认 5 秒发送、30 秒超时，对应参考工程 `GameNetwork.UpdateHeartbeat` 与 `UpdateNoResponse`。
+
+传输层不关心心跳消息 ID，业务在委托里用自己的消息发包。未设置委托时不启用超时，避免没有心跳协议的空闲连接被误杀。
+
+### 9.4 统计
+
+`SocketClient_Stat.cs` 记录收发字节与消息条数，读取侧使用 `Interlocked`。写入分布在 IO 线程与主线程，读取不会读到撕裂值。`NetModule.GetNetStat` 与 `ResetNetStat` 对外暴露。
+
+### 9.5 改动清单
+
+| 位置 | 改动 |
+| --- | --- |
+| `Transport/SocketClient_Send.cs` | 新增，复用发送缓冲、追加、批量 flush、关闭时丢弃 |
+| `Transport/SocketClient_Stat.cs` | 新增，收发字节与消息计数 |
+| `Transport/SocketClient.cs` | 删除写回调与 `OnWrite`，发送超时改用 `SEND_TIMEOUT_MS`，关闭时清空发送缓冲 |
+| `Module/NetModule_Heartbeat.cs` | 新增，心跳发送与超时 |
+| `Module/NetModule.cs` | `DoUpdate` 增加心跳与 flush，新增 `Flush`、`GetNetStat`、`ResetNetStat` |
+| `Module/NetModule_Define.cs` | 新增心跳计时字段 |
+| `Define/NetworkDefine.cs` | 新增发送、心跳常量与心跳超时原因 |
+| `Core/IO/Binary/ByteBuffer.cs` | 新增带初始容量的构造函数 |
+| `Test/TestNetwork.cs` | 展示收发统计 |
+| `readme/Network/Network.md` | 按当前实现重写 |
+
+### 9.6 验证
+
+用 Unity 2022.3.35f1 的 Roslyn 按 runtime 工程引用集编译 `Runtime/Scripts` 下全部 249 个源文件，0 错误 0 警告。
+
+单独编译运行了 `ByteBuffer` 复用自测，覆盖新建容量构造、追加、`Reset` 后重用与只读模式，结果 PASS。
+
+未执行 Unity PlayMode、真实服务器收发与 Profiler 对比。
+
+### 9.7 仍未做
+
+- 接收负载数组池化。`onMsgEvent` 会把数组交给业务，池化回收需要业务承诺不跨回调持有。
+- Protobuf 消息对象复用。
+- 自动重连与重连退避策略。
 

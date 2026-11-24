@@ -1,8 +1,21 @@
-﻿# 资源加载系统
+# 资源加载系统
 
 [← 返回主页](../../README.md)
 
 运行时资源加载框架，统一管理 **AssetBundle 加载**与**编辑器 AssetDatabase 直读**两种模式，支持同步/异步加载、场景加载、Lua 资产处理，以及编辑器打包工具。
+
+## 目录结构
+
+```text
+Runtime/Scripts/ResourceLoad/
+    Asset/           IAssetDecorator、LuaAssetDecorator、LuaScriptableObject
+    AsyncTask/       异步任务基类、运行时与编辑器任务
+    Bundle/          AssetBundleLoad、Bundle、AssetBundleDBMgr
+    Define/          ResourceDefine、ResourceType、ResourceLoadDelegate
+    Module/          BaseResourceModule、ResourceModule、IResourceConfig、FilePathHelper、EditorResourceLoad
+```
+
+所有类型位于 `ST.Core` 命名空间。
 
 ---
 
@@ -192,20 +205,31 @@ AB名称\t序号ID
 
 | 方法 | 说明 |
 |------|------|
-| `GetFilePath()` | Bundle 根目录；Windows 独立包返回 `dataPath/StreamingAssets/`，其余返回 `streamingAssetsPath/` |
+| `GetFilePath()` | Bundle 根目录，统一返回 `FilePath.streamingAssetsPath` |
+| `GetAppResPath(appName)` | 静态方法，应用资源根目录 `根目录 + 小写 appName + "/"`，供编辑器打包工具使用 |
 | `GetBundleFullPath(respath)` | 完整磁盘路径：`GetFilePath() + appName + "/" + respath` |
 
 ---
 
-### AppPlatform（静态工具）
+### ResourceDefine（常量定义）
 
-| 成员 | 说明 |
+资源加载模块的路径模板、容器容量与数据库解析常量集中在此类：
+
+| 常量 | 说明 |
 |------|------|
-| `dataPath` | 数据根目录（Editor 为工程目录，运行时因平台而异） |
-| `GetStreamingAssetsPath(appName)` | `StreamingAssets/<appName>/` 路径 |
-| `GetCurBuildTarget()` *(Editor only)* | 根据编译宏推断 `BuildTarget` |
-| `GetCurBuildTargetGroup()` *(Editor only)* | 根据编译宏推断 `BuildTargetGroup` |
-| `GetPackageResPath(target, appName)` *(Editor only)* | Bundle 打包输出目录 |
+| `BUNDLE_FULL_PATH_FORMAT` | Bundle 完整路径模板 `{0}{1}/{2}` |
+| `APP_RES_PATH_FORMAT` | 应用资源目录模板 `{0}{1}/` |
+| `BUNDLE_DICT_CAPACITY` | Bundle 字典初始容量 |
+| `BUNDLE_INFO_DICT_CAPACITY` | 数据库 Bundle 信息字典初始容量 |
+| `DEPEND_LIST_CAPACITY` | 单个 Bundle 的依赖列表初始容量 |
+| `PENDING_REQUEST_LIST_CAPACITY` | Bundle 加载完成前挂起请求的列表初始容量 |
+| `DECORATOR_LIST_CAPACITY` | 资产装饰器列表初始容量 |
+| `TASK_LIST_CAPACITY` | 异步任务列表初始容量 |
+| `TEMP_TASK_LIST_CAPACITY` | 已结束任务暂存列表初始容量 |
+| `FIELD_SEPARATOR` | 数据库字段分隔符 |
+| `DEPEND_ATTR_HEADER` | 数据库依赖属性行头 |
+| `LOG_DB_FILE_NOT_FOUND` | 数据库文件缺失日志模板 |
+| `LOG_DB_INDEX_OUT_OF_RANGE` | 依赖索引越界日志模板 |
 
 ---
 
@@ -283,8 +307,8 @@ DoClose()                  ← 释放资源
 ## 依赖
 
 **运行时**
-- `UnityEngine`（`AssetBundle`、`SceneManager`、`Application`）
-- `ST.Core`（`ILogicModule`、`CommonDefine`）
+- `UnityEngine`（`AssetBundle`、`SceneManager`）
+- `ST.Core`（`ILogicModule`、`FilePath`）
 
 **编辑器**
 - `UnityEditor`（`AssetDatabase`、`BuildPipeline`、`EditorSceneManager`）

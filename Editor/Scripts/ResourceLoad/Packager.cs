@@ -1,4 +1,4 @@
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.IO;
 using System.Text;
 using System;
@@ -82,29 +82,41 @@ namespace ST.Core
         [MenuItem("SpaceTime/Build/Build iPhone Resource", false, 100)]
         public static void BuildiPhoneResource()
         {
-            if (GetConfig() == null) return;
+            if (GetConfig() == null)
+            {
+                return;
+            }
+
             PlayerSettings.iOS.appleEnableAutomaticSigning = true;
             PlayerSettings.iOS.appleDeveloperTeamID = "24AZABCKN4";
             EditorUserBuildSettings.SwitchActiveBuildTarget(BuildTargetGroup.iOS, BuildTarget.iOS);
-            BuildAssetResource(BuildTarget.iOS, AppPlatform.GetStreamingAssetsPath(s_Config.appName));
+            BuildAssetResource(BuildTarget.iOS, FilePathHelper.GetAppResPath(s_Config.appName));
         }
 
         /// <summary>切换 Android 目标并构建资源到 BuildRes 应用子目录。</summary>
         [MenuItem("SpaceTime/Build/Build Android Resource", false, 101)]
         public static void BuildAndroidResource()
         {
-            if (GetConfig() == null) return;
+            if (GetConfig() == null)
+            {
+                return;
+            }
+
             EditorUserBuildSettings.SwitchActiveBuildTarget(BuildTargetGroup.Android, BuildTarget.Android);
-            BuildAssetResource(BuildTarget.Android, AppPlatform.GetStreamingAssetsPath(s_Config.appName));
+            BuildAssetResource(BuildTarget.Android, FilePathHelper.GetAppResPath(s_Config.appName));
         }
 
         /// <summary>切换 Standalone 目标并构建资源到 BuildRes 应用子目录。</summary>
         [MenuItem("SpaceTime/Build/Build Windows Resource", false, 102)]
         public static void BuildWindowsResource()
         {
-            if (GetConfig() == null) return;
+            if (GetConfig() == null)
+            {
+                return;
+            }
+
             EditorUserBuildSettings.SwitchActiveBuildTarget(BuildTargetGroup.Standalone, BuildTarget.StandaloneWindows64);
-            BuildAssetResource(BuildTarget.StandaloneWindows, AppPlatform.GetStreamingAssetsPath(s_Config.appName));
+            BuildAssetResource(BuildTarget.StandaloneWindows, FilePathHelper.GetAppResPath(s_Config.appName));
         }
 
         /// <summary>清空输出目录、生成 Lua 资产、收集 <see cref="AssetBundleBuild"/> 并调用 <see cref="BuildPipeline.BuildAssetBundles"/>。
@@ -157,16 +169,19 @@ namespace ST.Core
             for (int i = 0; i < allBundles.Length; ++i)
             {
                 string bundleName = allBundles[i];
-                sb.Append(bundleName).Append('\t').Append(i);
+                sb.Append(bundleName).Append(ResourceDefine.FIELD_SEPARATOR).Append(i);
 
                 var deps = manifest.GetAllDependencies(bundleName);
                 if (deps != null && deps.Length > 0)
                 {
                     sb.AppendLine();
-                    sb.Append("\tDepend:");
+                    sb.Append(ResourceDefine.DEPEND_ATTR_HEADER);
                     for (int j = 0; j < deps.Length; ++j)
                     {
-                        if (j > 0) sb.Append('\t');
+                        if (j > 0)
+                        {
+                            sb.Append(ResourceDefine.FIELD_SEPARATOR);
+                        }
                         sb.Append(nameToIndex[deps[j]]);
                     }
                 }
@@ -396,7 +411,11 @@ namespace ST.Core
             List<string> scenes = new List<string>();
             foreach (EditorBuildSettingsScene scene in EditorBuildSettings.scenes)
             {
-                if (!scene.enabled) continue;
+                if (!scene.enabled)
+                {
+                    continue;
+                }
+
                 scenes.Add(scene.path);
             }
             return scenes;

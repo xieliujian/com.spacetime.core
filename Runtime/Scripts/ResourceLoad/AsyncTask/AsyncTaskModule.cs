@@ -3,14 +3,15 @@
 namespace ST.Core
 {
     /// <summary>
-    /// 默认的 <see cref="BaseAsyncTaskModule"/> 实现：在 <see cref="DoUpdate"/> 中遍历任务、调用 <see cref="AsyncTask.Update"/>，并移除已结束任务。
+    /// 默认的 <see cref="BaseAsyncTaskModule"/> 实现：在 <see cref="DoUpdate"/> 中遍历任务、
+    /// 调用 <see cref="AsyncTask.Update"/>，并移除已结束任务。
     /// </summary>
     public class AsyncTaskModule : BaseAsyncTaskModule
     {
         /// <summary>当前所有活跃任务列表。</summary>
-        List<AsyncTask> m_TaskList = new List<AsyncTask>(CommonDefine.s_ListConst_100);
+        List<AsyncTask> m_TaskList = new List<AsyncTask>(ResourceDefine.TASK_LIST_CAPACITY);
         /// <summary>每帧收集已结束任务，延迟从 <see cref="m_TaskList"/> 中移除以避免遍历中修改集合。</summary>
-        List<AsyncTask> m_TempTaskList = new List<AsyncTask>(CommonDefine.s_ListConst_16);
+        List<AsyncTask> m_TempTaskList = new List<AsyncTask>(ResourceDefine.TEMP_TASK_LIST_CAPACITY);
 
         /// <inheritdoc />
         public override void AddTask(AsyncTask asynctask)
@@ -31,21 +32,27 @@ namespace ST.Core
 
             for (int i = 0; i < m_TaskList.Count; i++)
             {
-                var task = m_TaskList[i];
+                AsyncTask task = m_TaskList[i];
                 if (task == null)
+                {
                     continue;
+                }
 
                 task.Update();
 
                 if (task.isEnd)
+                {
                     m_TempTaskList.Add(task);
+                }
             }
 
             for (int i = 0; i < m_TempTaskList.Count; i++)
             {
-                var task = m_TempTaskList[i];
+                AsyncTask task = m_TempTaskList[i];
                 if (task == null)
+                {
                     continue;
+                }
 
                 m_TaskList.Remove(task);
             }

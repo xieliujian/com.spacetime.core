@@ -38,7 +38,7 @@ byte[] result = FileMgr.ReadSyncInThread(relativePath, path, isInExternal);
 | 外存根目录 | `Application.persistentDataPath` | `FilePath.persistentDataPath` |
 | 外存资源目录 | `<外存根目录>/Res/` | `FilePath.persistentDataPath4Res` |
 
-原始资源放在 `BuildRes/` 根下，AssetBundle 放在 `BuildRes/<appName>/` 下。两个目录共用同一个根，`FilePathHelper` 与 `AppPlatform` 都从 `FilePath.streamingAssetsPath` 取值。
+原始资源放在 `BuildRes/` 根下，AssetBundle 放在 `BuildRes/<appName>/` 下。两个目录共用同一个根，`FilePathHelper` 从 `FilePath.streamingAssetsPath` 取值。
 
 ---
 

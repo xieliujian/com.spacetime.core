@@ -1,4 +1,4 @@
-using UnityEngine;
+﻿using UnityEngine;
 
 namespace ST.Core
 {
@@ -30,7 +30,8 @@ namespace ST.Core
         /// <param name="path">Bundle 相对路径（不含 StreamingAssets 根）。</param>
         /// <param name="filePathHelper">路径拼接工具。</param>
         /// <param name="callback">完成时回传 <see cref="assetBundle"/>。</param>
-        public AsyncBundleRequest(Bundle bundle, string path, FilePathHelper filePathHelper, ResourceLoadComplete callback)
+        public AsyncBundleRequest(Bundle bundle, string path, FilePathHelper filePathHelper,
+            ResourceLoadComplete callback)
         {
             m_Bundle = bundle;
             m_Path = path;

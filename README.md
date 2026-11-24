@@ -5,7 +5,7 @@ Unity游戏核心框架，提供网络通信、数据表、事件系统等基础
 ## 功能模块
 
 ### [网络管理](readme/Network/Network.md)
-TCP网络通信层，支持Protobuf和FlatBuffers消息序列化，提供连接管理和消息分发功能。
+TCP网络通信层，支持Protobuf和FlatBuffers消息序列化，提供连接管理、消息分发、心跳超时与收发统计。
 
 ### [数据表系统](readme/Table/Table.md)
 二进制数据表加载和读取系统，支持高效的游戏配置数据管理。

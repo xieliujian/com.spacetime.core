@@ -1,4 +1,4 @@
-#if UNITY_EDITOR
+﻿#if UNITY_EDITOR
 
 using UnityEngine;
 using UnityEngine.SceneManagement;
@@ -19,8 +19,12 @@ namespace ST.Core
         {
             get
             {
-                if (m_Operation == null || m_Operation.isDone)
+                bool isOperationDone = m_Operation == null || m_Operation.isDone;
+                if (isOperationDone)
+                {
                     return 1f;
+                }
+
                 return m_Operation.progress;
             }
         }

@@ -28,6 +28,17 @@ namespace ST.Core
         }
 
         /// <summary>
+        /// 按指定初始容量创建空缓冲并进入写入模式，用于网络发送等需要跨消息复用的场景。
+        /// </summary>
+        /// <param name="capacity">底层流的初始容量，小于等于 0 时按默认容量创建</param>
+        public ByteBuffer(int capacity)
+        {
+            int safeCapacity = capacity > 0 ? capacity : 0;
+            m_Stream = new MemoryStream(safeCapacity);
+            m_Writer = new BinaryWriter(m_Stream);
+        }
+
+        /// <summary>
         /// 从已有字节创建缓冲：<paramref name="data"/> 非空时为只读解析模式，否则等同无参构造。
         /// </summary>
         /// <param name="data">可选的初始字节数组</param>

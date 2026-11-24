@@ -1,4 +1,4 @@
-using UnityEngine;
+﻿using UnityEngine;
 using UnityEngine.SceneManagement;
 
 namespace ST.Core
@@ -23,7 +23,8 @@ namespace ST.Core
         /// <param name="resname">场景名称（与 Build Settings / 包内场景名一致）。</param>
         /// <param name="progress">可选进度回调。</param>
         /// <param name="complete">完成时传入 <see cref="SceneManager.GetSceneByName"/> 结果。</param>
-        public AsyncSceneRequest(Bundle bundle, string resname, ResourceLoadProgress progress = null, ResourceLoadComplete complete = null)
+        public AsyncSceneRequest(Bundle bundle, string resname, ResourceLoadProgress progress = null,
+            ResourceLoadComplete complete = null)
         {
             m_Bundle = bundle;
             m_ResName = resname;

@@ -16,7 +16,7 @@
         }
 
         /// <summary>
-        /// 获取 Bundle 根目录，统一返回 <see cref="ST.Core.FilePath.streamingAssetsPath"/>。
+        /// 获取 Bundle 根目录，统一返回 <see cref="FilePath.streamingAssetsPath"/>。
         /// Editor 下为工程根目录的 <c>BuildRes/</c>；
         /// Windows 独立包为 exe 上两级的 <c>BuildRes/</c>；
         /// 移动端为 <c>StreamingAssets/</c>。
@@ -28,6 +28,17 @@
             return rootPath;
         }
 
+        /// <summary>拼接应用资源根目录（根目录 + 小写应用名），供打包工具定位 BuildRes 应用子目录。</summary>
+        /// <param name="appName">应用/游戏名称，与 <see cref="IResourceConfig.appName"/> 一致。</param>
+        /// <returns>以 <c>/</c> 结尾的应用资源目录。</returns>
+        public static string GetAppResPath(string appName)
+        {
+            string appDirName = appName.ToLower();
+            string rootPath = FilePath.streamingAssetsPath;
+            string appPath = string.Format(ResourceDefine.APP_RES_PATH_FORMAT, rootPath, appDirName);
+            return appPath;
+        }
+
         /// <summary>
         /// 拼接 Bundle 完整磁盘路径：<c>GetFilePath() + appName + "/" + respath</c>。
         /// </summary>
@@ -36,7 +47,8 @@
         public string GetBundleFullPath(string respath)
         {
             string rootPath = GetFilePath();
-            string bundlePath = string.Format("{0}{1}/{2}", rootPath, m_Config.appName, respath);
+            string bundlePath = string.Format(
+                ResourceDefine.BUNDLE_FULL_PATH_FORMAT, rootPath, m_Config.appName, respath);
             return bundlePath;
         }
     }

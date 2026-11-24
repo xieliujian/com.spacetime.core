@@ -6,8 +6,8 @@ using UnityEngine;
 namespace ST.Core.Network
 {
     /// <summary>
-    /// 基于 <see cref="TcpClient"/> 的异步 TCP 客户端，负责连接生命周期与消息发送。
-    /// 粘包拆包在回调线程完成，消息通过 <see cref="NetModule.AddEvent"/> 切回主线程分发，拆包实现见 SocketClient_Frame.cs。
+    /// 基于 <see cref="TcpClient"/> 的 TCP 客户端，负责连接生命周期、接收与批量发送。
+    /// 粘包拆包在回调线程完成，消息通过 <see cref="NetModule.AddEvent"/> 切回主线程分发；发送实现见 SocketClient_Send.cs。
     /// </summary>
     public partial class SocketClient
     {
@@ -32,9 +32,6 @@ namespace ST.Core.Network
         /// <summary>缓存的读回调，避免每次 BeginRead 重新分配委托。</summary>
         AsyncCallback m_ReadCallback;
 
-        /// <summary>缓存的写回调，避免每次 BeginWrite 重新分配委托。</summary>
-        AsyncCallback m_WriteCallback;
-
         /// <summary>缓存的连接回调。</summary>
         AsyncCallback m_ConnectCallback;
 
@@ -56,7 +53,6 @@ namespace ST.Core.Network
         {
             m_NetModule = netModule;
             m_ReadCallback = OnRead;
-            m_WriteCallback = OnWrite;
             m_ConnectCallback = OnConnect;
         }
 
@@ -81,12 +77,13 @@ namespace ST.Core.Network
 
             m_Host = host;
             m_Port = port;
+            STLogger.LogInfoF(NetworkDefine.LOG_CONNECT_START, host, port);
             m_ConnectWaitTime = 0f;
             m_State = SocketState.Connecting;
             ResetRecvBuffer();
 
             TcpClient client = new TcpClient();
-            client.SendTimeout = 1000;
+            client.SendTimeout = NetworkDefine.SEND_TIMEOUT_MS;
             client.ReceiveTimeout = 1000;
             client.NoDelay = true;
             m_Client = client;
@@ -110,8 +107,27 @@ namespace ST.Core.Network
             if (isAlreadyClosed)
                 return;
 
+            bool isConnectionActive = oldState == SocketState.Connected || oldState == SocketState.Connecting;
+            if (isConnectionActive)
+            {
+                STLogger.LogWarningF(NetworkDefine.LOG_CLOSE_REASON, m_Host, m_Port, reason);
+            }
+
+            CloseInternal(reason);
+        }
+
+        /// <summary>关闭连接本体，调用前已完成日志记录。</summary>
+        /// <param name="reason">关闭原因。</param>
+        void CloseInternal(string reason)
+        {
+            SocketState oldState = m_State;
+            bool isAlreadyClosed = oldState == SocketState.Closed;
+            if (isAlreadyClosed)
+                return;
+
             m_State = SocketState.Closed;
             ResetRecvBuffer();
+            ResetSendBuffer();
             CloseSocket();
 
             bool isNeedNotify = oldState == SocketState.Connected || oldState == SocketState.Connecting;
@@ -119,47 +135,6 @@ namespace ST.Core.Network
             {
                 m_NetModule.PostDisconnected(reason);
             }
-        }
-
-        /// <summary>发送一段完整帧数据。</summary>
-        /// <param name="data">源字节。</param>
-        /// <param name="offset">起始下标。</param>
-        /// <param name="length">字节数。</param>
-        public void Send(byte[] data, int offset, int length)
-        {
-            NetworkStream stream = m_NetStream;
-            bool canSend = m_State == SocketState.Connected && stream != null && data != null && length > 0;
-            if (!canSend)
-                return;
-
-            // BeginWrite 在回调完成前一直引用传入数组，这里使用独立副本，避免调用方复用缓冲造成数据错乱。
-            byte[] frame = new byte[length];
-            Buffer.BlockCopy(data, offset, frame, 0, length);
-
-            try
-            {
-                stream.BeginWrite(frame, 0, length, m_WriteCallback, stream);
-            }
-            catch (Exception e)
-            {
-                CloseWithReason(NetworkDefine.REASON_WRITE_FAILED, e.Message);
-            }
-        }
-
-        /// <summary>发送 <see cref="ByteBuffer"/> 中已写入的内容，缓冲由调用方持有，发送后不关闭。</summary>
-        /// <param name="buffer">已写好包体的缓冲实例。</param>
-        public void SendMessage(ByteBuffer buffer)
-        {
-            bool isBufferValid = buffer != null;
-            if (!isBufferValid)
-                return;
-
-            int length = buffer.length;
-            bool hasData = length > 0;
-            if (!hasData)
-                return;
-
-            Send(buffer.GetBuffer(), 0, length);
         }
 
         /// <summary>连接建立回调，完成 <c>EndConnect</c> 后启动首次异步读取。</summary>
@@ -175,6 +150,7 @@ namespace ST.Core.Network
                 client.EndConnect(asr);
                 m_NetStream = client.GetStream();
                 m_State = SocketState.Connected;
+                STLogger.LogInfoF(NetworkDefine.LOG_CONNECT_SUCCESS, m_Host, m_Port);
                 m_NetModule.PostConnected();
                 BeginRead(m_NetStream);
             }
@@ -210,6 +186,8 @@ namespace ST.Core.Network
                 return;
             }
 
+            AddDownBytesStat(bytesRead);
+
             bool isAppended = AppendRecvData(bytesRead);
             if (isAppended)
             {
@@ -220,24 +198,6 @@ namespace ST.Core.Network
             if (isStillConnected)
             {
                 BeginRead(stream);
-            }
-        }
-
-        /// <summary>写完成回调，仅用于完成异步写并捕获异常。</summary>
-        void OnWrite(IAsyncResult asr)
-        {
-            NetworkStream stream = m_NetStream;
-            bool isCurrentStream = stream != null && ReferenceEquals(asr.AsyncState, stream);
-            if (!isCurrentStream)
-                return;
-
-            try
-            {
-                stream.EndWrite(asr);
-            }
-            catch (Exception e)
-            {
-                CloseWithReason(NetworkDefine.REASON_WRITE_CALLBACK_FAILED, e.Message);
             }
         }
 
@@ -279,7 +239,7 @@ namespace ST.Core.Network
         void CloseWithReason(string reason)
         {
             STLogger.LogWarningF(NetworkDefine.LOG_CLOSE_REASON, m_Host, m_Port, reason);
-            Close(reason);
+            CloseInternal(reason);
         }
 
         /// <summary>记录原因与整型细节后关闭连接，细节只写入日志，避免拼接字符串产生 GC。</summary>
@@ -288,7 +248,7 @@ namespace ST.Core.Network
         void CloseWithReason(string reason, int detail)
         {
             STLogger.LogWarningF(NetworkDefine.LOG_CLOSE_REASON_VALUE, m_Host, m_Port, reason, detail);
-            Close(reason);
+            CloseInternal(reason);
         }
 
         /// <summary>记录原因与文本细节后关闭连接，细节只写入日志，避免拼接字符串产生 GC。</summary>
@@ -297,7 +257,7 @@ namespace ST.Core.Network
         void CloseWithReason(string reason, string detail)
         {
             STLogger.LogWarningF(NetworkDefine.LOG_CLOSE_REASON_DETAIL, m_Host, m_Port, reason, detail);
-            Close(reason);
+            CloseInternal(reason);
         }
 
         /// <summary>释放数据流与 TCP 句柄，不改变对外连接状态。</summary>
