@@ -12,10 +12,10 @@ namespace ST.Core.UI
     /// </summary>
     public abstract class AbstractPage : MonoBehaviour
     {
-        int          m_UIID;
-        UIPanelActive m_PanelActive;
-        bool         m_IsCreated;
-        bool         m_IsOpened;
+        int           m_UIID;         // 由 UIModule 在 Prefab 实例化后写入
+        UIPanelActive m_PanelActive;  // 所属面板容器，页面通过它挂载其它子页面
+        bool          m_IsCreated;    // OnCreate 是否已执行，用于保证只初始化一次
+        bool          m_IsOpened;     // 当前是否处于打开状态
 
         /// <summary>UI 整型标识，由 <see cref="UIModule"/> 在加载后赋值。</summary>
         public int uiID
@@ -39,6 +39,7 @@ namespace ST.Core.UI
 
         // ─── 框架内部调用，子类请勿直接调用 ───────────────────────────────
 
+        /// <summary>框架入口：保证 <see cref="OnCreate"/> 在页面生命周期内只执行一次。</summary>
         internal void InternalCreate()
         {
             if (m_IsCreated) return;
@@ -46,34 +47,44 @@ namespace ST.Core.UI
             OnCreate();
         }
 
+        /// <summary>框架入口：标记为已打开并执行 <see cref="OnOpen"/>。</summary>
+        /// <param name="args">打开参数，由调用方透传。</param>
         internal void InternalOpen(object[] args)
         {
             m_IsOpened = true;
             OnOpen(args);
         }
 
+        /// <summary>框架入口：清除打开标记并执行 <see cref="OnClose"/>，不销毁对象。</summary>
         internal void InternalClose()
         {
             m_IsOpened = false;
             OnClose();
         }
 
+        /// <summary>框架入口：执行 <see cref="OnDispose"/>，并把创建标记复位以便对象池复用时重新初始化。</summary>
         internal void InternalDispose()
         {
             m_IsCreated = false;
             OnDispose();
         }
 
+        /// <summary>框架入口：把可见性变化转发给 <see cref="OnVisibleChanged"/>。</summary>
+        /// <param name="visible">计算后的可见性，由 UIModule 根据 HideMask 得出。</param>
         internal void InternalVisibleChanged(bool visible)
         {
             OnVisibleChanged(visible);
         }
 
+        /// <summary>框架入口：播放进场动画，子类需在动画结束时调用 <paramref name="onComplete"/>。</summary>
+        /// <param name="onComplete">动画完成回调，可为 null。</param>
         internal void InternalPlayOpenAnimation(Run onComplete)
         {
             PlayOpenAnimation(onComplete);
         }
 
+        /// <summary>框架入口：播放退场动画，子类需在动画结束时调用 <paramref name="onComplete"/>。</summary>
+        /// <param name="onComplete">动画完成回调，可为 null。</param>
         internal void InternalPlayCloseAnimation(Run onComplete)
         {
             PlayCloseAnimation(onComplete);

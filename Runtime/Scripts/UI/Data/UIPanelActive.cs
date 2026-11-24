@@ -13,25 +13,25 @@ namespace ST.Core.UI
     /// </summary>
     public class UIPanelActive
     {
-        static int s_PanelIDCounter = 0;
+        static int s_PanelIDCounter = 0;         // 面板实例 ID 自增源，全局唯一
 
-        readonly int            m_PanelID;
-        readonly int            m_UIID;
-        readonly PanelSortLayer m_SortLayer;
-        readonly ResourceModule m_ResourceLoad;
-        readonly UIRoot         m_UIRoot;
+        readonly int            m_PanelID;       // 本次运行实例的唯一 ID
+        readonly int            m_UIID;          // 面板类型 ID
+        readonly PanelSortLayer m_SortLayer;     // 排序层级，决定挂载根节点与 sortingOrder 分组
+        readonly ResourceModule m_ResourceLoad;  // 异步加载 Prefab 的资源模块
+        readonly UIRoot         m_UIRoot;        // 提供各层级挂载根节点
 
-        AbstractPanel m_Panel;
-        bool          m_IsVisible  = true;
-        bool          m_IsInteract = true;
-        bool          m_IsLoading;
-        object[]      m_PendingArgs;
+        AbstractPanel m_Panel;                   // 已实例化的面板，加载完成前为 null
+        bool          m_IsVisible  = true;       // 当前可见性，默认可见
+        bool          m_IsInteract = true;       // 当前交互性，默认可交互
+        bool          m_IsLoading;               // 是否正在异步加载 Prefab
+        object[]      m_PendingArgs;             // 加载期间暂存的打开参数，就绪后补发
 
         // 插入顺序，供 UIModule 稳定排序使用
         internal int insertOrder;
 
-        readonly List<PageInfo> m_PageInfos       = new List<PageInfo>(CommonDefine.s_ListConst_8);
-        readonly List<PageInfo> m_CachedPageInfos = new List<PageInfo>(CommonDefine.s_ListConst_8);
+        readonly List<PageInfo> m_PageInfos       = new List<PageInfo>(CommonDefine.s_ListConst_8);  // 已挂载的子页面
+        readonly List<PageInfo> m_CachedPageInfos = new List<PageInfo>(CommonDefine.s_ListConst_8);  // 关闭后缓存的子页面
 
         // ─── 属性 ──────────────────────────────────────────────────────────
 
@@ -72,6 +72,11 @@ namespace ST.Core.UI
 
         // ─── 构造 ──────────────────────────────────────────────────────────
 
+        /// <summary>创建一条面板运行记录，只登记 ID 与依赖，Prefab 由 <see cref="Open"/> 触发异步加载。</summary>
+        /// <param name="uiID">面板类型 ID。</param>
+        /// <param name="sortLayer">排序层级。</param>
+        /// <param name="resourceLoad">资源模块。</param>
+        /// <param name="uiRoot">UI 根节点。</param>
         internal UIPanelActive(int uiID, PanelSortLayer sortLayer,
                                ResourceModule resourceLoad, UIRoot uiRoot)
         {
@@ -113,6 +118,10 @@ namespace ST.Core.UI
                 ResourceType.GameObject);
         }
 
+        /// <summary>
+        /// 面板 Prefab 异步加载完成后的回调：实例化、修正嵌套 Canvas、绑定面板并执行创建与打开流程。
+        /// </summary>
+        /// <param name="asset">资源模块回传的 Prefab 对象，类型不符时记录日志并退出。</param>
         void OnPrefabLoaded(object asset)
         {
             m_IsLoading = false;
@@ -124,6 +133,7 @@ namespace ST.Core.UI
                 return;
             }
 
+            // 按排序层级选择挂载根节点，再把 Prefab 实例化为面板节点
             var root = m_UIRoot != null ? m_UIRoot.GetPanelRoot(m_SortLayer) : null;
             var go   = UnityEngine.Object.Instantiate(prefab, root, false);
 
@@ -184,6 +194,8 @@ namespace ST.Core.UI
                 FinishClose(destroy);
         }
 
+        /// <summary>执行关闭收尾：调用面板回调和销毁或隐藏，动画结束后由这里统一收尾。</summary>
+        /// <param name="destroy">为 <c>true</c> 时销毁 GameObject，否则保留实例等待复用。</param>
         void FinishClose(bool destroy)
         {
             if (m_Panel == null) return;
@@ -204,6 +216,8 @@ namespace ST.Core.UI
 
         // ─── 可见性 / 交互 ─────────────────────────────────────────────────
 
+        /// <summary>写入可见性，只在值变化时通知面板，避免重复触发回调。</summary>
+        /// <param name="visible">目标可见性。</param>
         void ApplyVisible(bool visible)
         {
             if (m_IsVisible == visible) return;
@@ -211,6 +225,8 @@ namespace ST.Core.UI
             m_Panel?.InternalVisibleChanged(visible);
         }
 
+        /// <summary>写入交互性，值变化时同步面板根节点上的 <see cref="CanvasGroup.interactable"/>。</summary>
+        /// <param name="interact">目标交互性。</param>
         void ApplyInteract(bool interact)
         {
             if (m_IsInteract == interact) return;
@@ -257,6 +273,12 @@ namespace ST.Core.UI
                 ResourceType.GameObject);
         }
 
+        /// <summary>
+        /// 子页面 Prefab 异步加载完成后的回调：校验挂载记录、实例化并绑定页面后执行创建与打开流程。
+        /// </summary>
+        /// <param name="asset">资源模块回传的 Prefab 对象，类型不符时放弃本次挂载。</param>
+        /// <param name="info">等待挂载的页面记录，加载期间可能已被 <see cref="DettachPage"/> 移除。</param>
+        /// <param name="args">打开参数，透传给页面的 <see cref="AbstractPage.OnOpen"/>。</param>
         void OnPagePrefabLoaded(object asset, PageInfo info, object[] args)
         {
             // 挂载前可能已被 DettachPage 移除
@@ -362,6 +384,11 @@ namespace ST.Core.UI
 
         // ─── 批量关闭页面 ──────────────────────────────────────────────────
 
+        /// <summary>
+        /// 关闭全部子页面。倒序遍历以便在关闭回调中安全移除记录；
+        /// <paramref name="destroy"/> 为 <c>true</c> 时连同缓存页面一起销毁。
+        /// </summary>
+        /// <param name="destroy">为 <c>true</c> 时销毁页面对象，否则仅隐藏并清空运行列表。</param>
         void CloseAllPages(bool destroy)
         {
             for (int i = m_PageInfos.Count - 1; i >= 0; i--)
@@ -395,6 +422,9 @@ namespace ST.Core.UI
 
         // ─── 辅助查找 ──────────────────────────────────────────────────────
 
+        /// <summary>在运行列表中按页面 ID 查找挂载记录。</summary>
+        /// <param name="pageID">页面类型 ID。</param>
+        /// <returns>找到的记录；未挂载时返回 <c>null</c>。</returns>
         PageInfo FindRunningPage(int pageID)
         {
             foreach (var info in m_PageInfos)
@@ -402,6 +432,9 @@ namespace ST.Core.UI
             return null;
         }
 
+        /// <summary>在缓存列表中按页面 ID 查找可复用的挂载记录。</summary>
+        /// <param name="pageID">页面类型 ID。</param>
+        /// <returns>找到的记录；未缓存时返回 <c>null</c>。</returns>
         PageInfo FindCachedPage(int pageID)
         {
             foreach (var info in m_CachedPageInfos)
@@ -409,6 +442,9 @@ namespace ST.Core.UI
             return null;
         }
 
+        /// <summary>统计缓存列表中指定页面的实例数量，用于判断是否还能继续缓存。</summary>
+        /// <param name="pageID">页面类型 ID。</param>
+        /// <returns>该页面的缓存数量。</returns>
         int CountCachedPages(int pageID)
         {
             int count = 0;
@@ -419,11 +455,17 @@ namespace ST.Core.UI
 
         // ─── 内部数据结构 ─────────────────────────────────────────────────
 
+        /// <summary>子页面的挂载记录，保存页面 ID 与实例引用。</summary>
         class PageInfo
         {
+            /// <summary>页面类型 ID（对应上层 <c>UIID</c> 枚举）。</summary>
             public readonly int uiID;
+
+            /// <summary>页面组件实例；异步加载期间为 <c>null</c>。</summary>
             public AbstractPage page;
 
+            /// <summary>创建一条挂载记录，此时页面实例尚未加载。</summary>
+            /// <param name="uiID">页面类型 ID。</param>
             public PageInfo(int uiID) { this.uiID = uiID; }
         }
     }
