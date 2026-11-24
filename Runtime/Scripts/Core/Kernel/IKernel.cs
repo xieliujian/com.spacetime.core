@@ -29,5 +29,21 @@ namespace ST.Core
         /// <summary>获取全部已注册模块。</summary>
         /// <returns>按注册顺序排列的模块数组，每次调用都会分配新数组。</returns>
         ILogicModule[] GetAllModule();
+
+        /// <summary>注册动态命令回调。</summary>
+        /// <param name="commandID">命令 ID，不能为负数。</param>
+        /// <param name="cb">命令回调，不能为 null。</param>
+        /// <param name="prior">优先级，数值越小越先执行。</param>
+        void AddDynamicCommand(int commandID, LogicEventCallBack cb, int prior = 0);
+
+        /// <summary>注销动态命令回调，未注册时忽略。</summary>
+        /// <param name="commandID">命令 ID。</param>
+        /// <param name="cb">要注销的回调。</param>
+        void RemoveDynamicCommand(int commandID, LogicEventCallBack cb);
+
+        /// <summary>派发动态命令，未注册监听时安全返回。</summary>
+        /// <param name="commandID">命令 ID，不能为负数。</param>
+        /// <param name="args">命令参数，可为 null。</param>
+        void CommandDynamic(int commandID, IVarList args = null);
     }
 }

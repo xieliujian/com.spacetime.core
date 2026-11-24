@@ -1,121 +1,84 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using pbs;
+﻿using pbs;
 using ST.Core.Network;
 using UnityEngine;
 
 namespace ST.Core.Test
 {
     /// <summary>
-    /// 网络模块示例：<see cref="OnGUI"/> 按钮触发连接与 Protobuf 注册消息发送，仅用于本地联调演示。
+    /// 网络模块示例：手动装配 <see cref="NetModule"/> 与 <see cref="MsgModule"/>，按钮触发连接与 Protobuf 发送。
+    /// 仅用于本地联调演示，正式业务应由 <see cref="ST.Core.Launch.GameWorld"/> 注册这两个模块。
     /// </summary>
     public class TestNetwork : MonoBehaviour
     {
-        /// <summary>示例用网络管理器实例（未挂到全局生命周期时需自行 Update 驱动队列）。</summary>
+        /// <summary>示例用网络模块。</summary>
         NetModule m_NetManager = new NetModule();
+
         /// <summary>示例用消息分发器。</summary>
         MsgModule m_MsgDispatcher = new MsgModule();
 
         /// <summary>连接目标 IP，可在 Inspector 中修改。</summary>
         public string ipAddress = "127.0.0.1";
 
-        /// <summary>初始化 <see cref="NetModule"/>。</summary>
-        private void Start()
+        /// <summary>连接目标端口，可在 Inspector 中修改。</summary>
+        public int port = 3580;
+
+        /// <summary>手动装配两个模块并订阅断线事件。</summary>
+        void Start()
         {
-            m_NetManager.DoInit();
+            m_MsgDispatcher.SetNetModule(m_NetManager);
+            m_NetManager.SetMsgModule(m_MsgDispatcher);
+            m_NetManager.onDisconnectEvent.AddListener(OnDisconnected);
         }
 
-        /// <summary>绘制测试按钮：连接、登录、聊天、注册等。</summary>
-        private void OnGUI()
+        /// <summary>驱动网络模块的拆包与消息分发。</summary>
+        void Update()
         {
-            if (GUI.Button(new Rect(0, 0, 300, 100), "SendConnect"))
+            m_NetManager.DoUpdate();
+        }
+
+        /// <summary>释放连接与监听。</summary>
+        void OnDestroy()
+        {
+            m_NetManager.DoClose();
+            m_MsgDispatcher.DoClose();
+        }
+
+        /// <summary>绘制测试按钮。</summary>
+        void OnGUI()
+        {
+            if (GUI.Button(new Rect(0, 0, 300, 60), "SendConnect"))
             {
-                NetModule.S.SendConnect(ipAddress, 3580);
+                m_NetManager.SendConnect(ipAddress, port);
             }
 
-            if (GUI.Button(new Rect(0, 100, 300, 100), "SendLoginMsg"))
+            if (GUI.Button(new Rect(0, 60, 300, 60), "CloseSocket"))
             {
-                SendLoginMsg();
+                m_NetManager.CloseSocket();
             }
 
-            if (GUI.Button(new Rect(0, 200, 300, 100), "SendChatMsg"))
+            if (GUI.Button(new Rect(0, 120, 300, 60), "SendRegisterMsg"))
             {
-                SendChatMsg();
+                SendRegisterAccount();
             }
 
-            if (GUI.Button(new Rect(0, 300, 300, 100), "SendRegisterMsg"))
-            {
-                SendRegisterAccout();
-            }
+            bool isConnected = m_NetManager.IsConnected();
+            GUI.Label(new Rect(320, 0, 400, 60), "Connected: " + isConnected);
         }
 
         /// <summary>构造并发送 <see cref="ReqRegisterAccount"/> 测试包。</summary>
-        void SendRegisterAccout()
+        void SendRegisterAccount()
         {
             ReqRegisterAccount msg = new ReqRegisterAccount();
-            msg.Account = "黄河远上白云间，一片孤城万仞山。" +
-                "羌笛何须怨杨柳，春风不度玉门关。秦时明月汉时关，万里长征人未还。" +
-                "但使龙城飞将在，不教胡马度阴山。";
-            msg.Password = "洛阳女儿对门居，才可颜容十五余。" +
-                "良人玉勒乘骢马，侍女金盘脍鲤鱼。" +
-                "画阁朱楼尽相望，红桃绿柳垂檐向。" +
-                "罗帷送上七香车，宝扇迎归九华帐。" +
-                "狂夫富贵在青春，意气骄奢剧季伦。" +
-                "自怜碧玉亲教舞，不惜珊瑚持与人。" +
-                "春窗曙灭九微火，九微片片飞花琐。" +
-                "戏罢曾无理曲时，妆成祗是熏香坐。" +
-                "城中相识尽繁华，日夜经过赵李家。" +
-                "谁怜越女颜如玉，贫贱江头自浣纱。";
-
-            MsgModule.S.SendPBMsg(ReqRegisterAccount.HashID, msg);
+            msg.Account = "test_account";
+            msg.Password = "test_password";
+            m_MsgDispatcher.SendPBMsg(ReqRegisterAccount.HashID, msg);
         }
 
-        /// <summary>登录消息示例（当前整段为 <c>#if false</c> 占位）。</summary>
-        void SendLoginMsg()
+        /// <summary>断线事件回调，正式业务在这里提示玩家或发起重连。</summary>
+        /// <param name="reason">断线原因。</param>
+        void OnDisconnected(string reason)
         {
-#if false
-            var builder = Network.IMsgDispatcher.instance.flatBufferBuilder;
-            var account = builder.CreateString("黄河远上白云间，一片孤城万仞山。" +
-                "羌笛何须怨杨柳，春风不度玉门关。秦时明月汉时关，万里长征人未还。" +
-                "但使龙城飞将在，不教胡马度阴山。");
-            var password = builder.CreateString("洛阳女儿对门居，才可颜容十五余。" +
-                "良人玉勒乘骢马，侍女金盘脍鲤鱼。" +
-                "画阁朱楼尽相望，红桃绿柳垂檐向。" +
-                "罗帷送上七香车，宝扇迎归九华帐。" +
-                "狂夫富贵在青春，意气骄奢剧季伦。" +
-                "自怜碧玉亲教舞，不惜珊瑚持与人。" +
-                "春窗曙灭九微火，九微片片飞花琐。" +
-                "戏罢曾无理曲时，妆成祗是熏香坐。" +
-                "城中相识尽繁华，日夜经过赵李家。" +
-                "谁怜越女颜如玉，贫贱江头自浣纱。");
-            fbs.ReqLogin.StartReqLogin(builder);
-            fbs.ReqLogin.AddAccount(builder, account);
-            fbs.ReqLogin.AddPassword(builder, password);
-            var orc = fbs.ReqLogin.EndReqLogin(builder);
-            builder.Finish(orc.Value);
-
-            MsgModule.instance.SendFBMsg(fbs.ReqLogin.HashID, builder);
-#endif
-        }
-
-        /// <summary>聊天消息 FlatBuffers 示例（当前为 <c>#if false</c> 占位）。</summary>
-        void SendChatMsg()
-        {
-#if false
-            var builder = IMsgDispatcher.instance.flatBufferBuilder;
-            var say = builder.CreateString("白日依山尽，黄河入海流。欲穷千里目，更上一层楼。" +
-                "红豆生南国，春来发几枝。愿君多采撷，此物最相思。" +
-                "松下问童子，言师采药去。只在此山中，云深不知处。");
-            fbs.ReqChat.StartReqChat(builder);
-            fbs.ReqChat.AddSay(builder, say);
-            var orc = fbs.ReqChat.EndReqChat(builder);
-            builder.Finish(orc.Value);
-
-            MsgModule.instance.SendFBMsg(fbs.ReqChat.HashID, builder);
-#endif
+            Debug.LogWarning("network disconnected: " + reason);
         }
     }
 }

@@ -431,14 +431,14 @@ namespace ST.Core.Test
         }
 
         /// <summary>
-        /// 异步协程执行单个步骤：运行 Action → 若需等待则轮询 Check → 设置 Pass/Fail。
+        /// 异步协程执行单个步骤：运行动作 → 若需等待则轮询检查条件 → 设置 Pass/Fail。
         /// </summary>
         IEnumerator ExecuteStep(ManualTC tc, Step step)
         {
             m_StepRunning = true;
             step.status   = StepStatus.Waiting;
 
-            // 执行 Action
+            // 执行步骤动作
             if (step.action != null)
                 step.action();
 
@@ -1200,16 +1200,16 @@ namespace ST.Core.Test
             /// <summary>期望结果描述，显示在结果列。</summary>
             public readonly string expectDesc;
             /// <summary>步骤执行动作，可为 null（纯检查步骤）。</summary>
-            public readonly System.Action action;
+            public readonly Run action;
             /// <summary>断言检查，返回 true 表示通过；null 表示无需检查。</summary>
-            public readonly System.Func<bool> check;
+            public readonly RFunc<bool> check;
             /// <summary>是否需要异步轮询等待（面板 Prefab 加载）。</summary>
             public readonly bool waitLoad;
             /// <summary>当前执行状态。</summary>
             public StepStatus status = StepStatus.Pending;
 
             public Step(string desc, string expectDesc = "",
-                        System.Action action = null, System.Func<bool> check = null,
+                        Run action = null, RFunc<bool> check = null,
                         bool waitLoad = false)
             {
                 this.desc       = desc;

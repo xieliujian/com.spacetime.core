@@ -1,4 +1,4 @@
-using UnityEngine;
+﻿using UnityEngine;
 using System.Collections;
 using System.IO;
 using System.Text;
@@ -50,16 +50,72 @@ namespace ST.Core
         /// </summary>
         public void Close()
         {
-            if (m_Writer != null) 
+            bool isClosed = m_Stream == null;
+            if (isClosed)
+                return;
+
+            if (m_Writer != null)
                 m_Writer.Close();
 
-            if (m_Reader != null) 
+            if (m_Reader != null)
                 m_Reader.Close();
 
             m_Stream.Close();
             m_Writer = null;
             m_Reader = null;
             m_Stream = null;
+        }
+
+        /// <summary>
+        /// 当前已写入的字节数，供组包时计算发送长度。
+        /// </summary>
+        public int length
+        {
+            get
+            {
+                bool isClosed = m_Stream == null;
+                if (isClosed)
+                    return 0;
+
+                int result = (int)m_Stream.Length;
+                return result;
+            }
+        }
+
+        /// <summary>
+        /// 清空已写入内容并回到起始位置，供发送缓冲跨消息复用。
+        /// </summary>
+        public void Reset()
+        {
+            bool canReset = m_Stream != null && m_Writer != null;
+            if (!canReset)
+                return;
+
+            m_Stream.SetLength(0);
+            m_Stream.Position = 0;
+        }
+
+        /// <summary>
+        /// 返回底层写入流，供 Protobuf 等外部序列化器直接写入，减少中间数组拷贝。
+        /// </summary>
+        /// <returns>底层流；只读模式或已关闭时返回 null。</returns>
+        public Stream GetStream()
+        {
+            return m_Stream;
+        }
+
+        /// <summary>
+        /// 返回底层字节数组，只在写入模式下有效，长度由 <see cref="length"/> 决定。
+        /// </summary>
+        /// <returns>内部数组；只读模式或已关闭时返回 null。</returns>
+        public byte[] GetBuffer()
+        {
+            bool isWritable = m_Stream != null && m_Writer != null;
+            if (!isWritable)
+                return null;
+
+            byte[] result = m_Stream.GetBuffer();
+            return result;
         }
 
         /// <summary>写入单字节。</summary>
@@ -191,9 +247,9 @@ namespace ST.Core
         public string ReadString()
         {
             ushort len = ReadShort();
-            byte[] buffer = new byte[len];
-            buffer = m_Reader.ReadBytes(len);
-            return Encoding.UTF8.GetString(buffer);
+            byte[] buffer = m_Reader.ReadBytes(len);
+            string result = Encoding.UTF8.GetString(buffer);
+            return result;
         }
 
         /// <summary>先读 4 字节长度，再读对应长度的字节数组。</summary>

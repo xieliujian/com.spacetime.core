@@ -144,7 +144,7 @@ namespace ST.Core.Test
         /// 处理函数，参数为按空格解析后的字符串数组（<c>args[0]</c> 为指令名本身）。
         /// </param>
         /// <param name="desc">指令描述，显示在面板左侧快捷列表中。</param>
-        public void RegisterCommand(string cmd, Action<string[]> handler, string desc = "")
+        public void RegisterCommand(string cmd, Run<string[]> handler, string desc = "")
         {
             if (string.IsNullOrEmpty(cmd))
                 return;
@@ -494,12 +494,12 @@ namespace ST.Core.Test
         struct CommandEntry
         {
             /// <summary>指令执行回调，<c>args[0]</c> 为指令名，后续为参数列表。</summary>
-            public Action<string[]> handler;
+            public Run<string[]> handler;
             /// <summary>指令描述文本，显示在面板左侧快捷列表中。</summary>
             public string desc;
 
             /// <summary>以指定的处理函数与描述构造 <see cref="CommandEntry"/>。</summary>
-            public CommandEntry(Action<string[]> h, string d)
+            public CommandEntry(Run<string[]> h, string d)
             {
                 handler = h;
                 desc    = d;

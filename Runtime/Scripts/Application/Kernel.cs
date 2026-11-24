@@ -48,5 +48,30 @@ namespace ST.Core.Launch
         {
             return m_GameWorld.GetAllModule();
         }
+
+        /// <summary>注册动态命令回调。</summary>
+        /// <param name="commandID">命令 ID，不能为负数。</param>
+        /// <param name="cb">命令回调，不能为 null。</param>
+        /// <param name="prior">优先级，数值越小越先执行。</param>
+        public void AddDynamicCommand(int commandID, LogicEventCallBack cb, int prior = 0)
+        {
+            m_GameWorld.AddDynamicCommand(commandID, cb, prior);
+        }
+
+        /// <summary>注销动态命令回调，未注册时忽略。</summary>
+        /// <param name="commandID">命令 ID。</param>
+        /// <param name="cb">要注销的回调。</param>
+        public void RemoveDynamicCommand(int commandID, LogicEventCallBack cb)
+        {
+            m_GameWorld.RemoveDynamicCommand(commandID, cb);
+        }
+
+        /// <summary>派发动态命令，未注册监听时安全返回。</summary>
+        /// <param name="commandID">命令 ID，不能为负数。</param>
+        /// <param name="args">命令参数，可为 null。</param>
+        public void CommandDynamic(int commandID, IVarList args = null)
+        {
+            m_GameWorld.CommandDynamic(commandID, args);
+        }
     }
 }

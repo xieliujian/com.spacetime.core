@@ -15,10 +15,9 @@ The main framework is structured as follows:
 - **Runtime/Scripts/Core/** - Core framework classes
   - `ILogicModule` - Base class for all logic modules (DoInit, DoUpdate, DoLateUpdate, DoClose lifecycle)
   - `IKernel` / `Kernel` - Module lookup entry (GetModule<T>, GetModule(Type), GetModule(string))
-  - `GameEvent` - Event system
+  - `RunEvent` / `Run` / `RFunc` - Event and callback types (replace `Action` / `Func` / `UnityEvent`)
   - `ByteBuffer` - Binary data handling
   - `CommonDefine` - Common constants and definitions
-  - `IMainThreadTask` - Main thread task interface
 
 - **Runtime/Scripts/Logging/** - Logging system (`ST.Core.Logging` namespace)
   - `STLogger` - **唯一对外入口**（静态门面），所有日志调用均通过此类
@@ -29,11 +28,11 @@ The main framework is structured as follows:
   - `LogLevel` - 日志级别枚举（Debug / Info / Warning / Error / Exception）
   - **注意**：`Debugger` 类已作为 `STLogger` 的私有嵌套类存在，外部不可直接访问
 
-- **Runtime/Scripts/Network/** - Network communication layer
-  - `NetModule` - Singleton network manager, handles socket connections and message queuing
-  - `SocketClient` - TCP socket client implementation
-  - `MsgModule` - Message dispatcher supporting both Protobuf and FlatBuffers
-  - `ProtobufProcFun` / `FlatBufferProcFun` - Message processing function interfaces
+- **Runtime/Scripts/Network/** - Network communication layer（根目录只放子文件夹）
+  - `Module/` - `NetModule` / `NetModule_Event` / `MsgModule` / `MsgModule_Send`
+  - `Transport/` - `SocketClient` / `SocketClient_Frame`
+  - `Dispatch/` - `FlatBufferProcFunBase` / `ProtobufProcFunBase` / `FlatBufferProcFun` / `ProtobufProcFun`
+  - `Define/` - `NetworkDefine`（常量、`MsgCodecType`、`NetSocketEvent`）
 
 - **Runtime/Scripts/Middleware/** - Third-party libraries
   - `Protobuf/` - Google Protocol Buffers implementation
@@ -46,9 +45,6 @@ The main framework is structured as follows:
   - `TableLoader` - Table loading system
   - `StblReader` - Binary table reader
   - `DataStreamReader` - Data stream reader
-
-- **Runtime/Scripts/Manager/** - Game managers
-  - `MainThreadTask` - Main thread task execution
 
 - **Runtime/Scripts/Camera/** - 摄像机工具
   - `SceneRoamCamera` - 场景漫游摄像机（MonoBehaviour），支持 WASD 移动、鼠标右键旋转、滚轮调速，兼容 WebGL
@@ -86,9 +82,22 @@ Register business modules in `GameLauncher.CollectBusinessModules(List<ILogicMod
 Modules that need a global instance can derive from `TLogicModule<T>` and use `S`.
 
 ### Network Architecture
+
 - **Message Flow**: SocketClient → NetModule (event queue) → MsgModule → Message handlers
-- **Serialization**: Supports both Protobuf and FlatBuffers (configurable via `IMsgType`)
+- **Serialization**: Supports both Protobuf and FlatBuffers (configurable via `MsgCodecType`)
 - **Thread Safety**: Network messages are queued and processed on the main thread
+
+#### Network 目录组织规则
+
+- `Runtime/Scripts/Network/` 根目录只放子文件夹，不放任何 `.cs` 文件。
+- 按职责分层，新增网络代码放入对应文件夹。
+  - `Module/` 模块入口与模块级 partial 拆分。
+  - `Transport/` 连接、读写与拆包。
+  - `Dispatch/` 消息处理器与反序列化。
+  - `Define/` 常量、枚举、委托与公共数据类型。
+- 单个类超过 200 行或同时承担两类职责时，用 `partial` 按职责拆分，文件命名 `类名_职责.cs`，与主文件放在同一文件夹。
+- 模块之间通过 `IKernel.GetModule<T>()` 获取实例，不使用 `static` 单例字段。
+- 移动或重命名代码文件时必须同步移动对应的 `.meta`，保持 GUID 不变。
 
 ### Logging Architecture
 
@@ -109,7 +118,8 @@ STLogger.EnableUnityLogCapture(true);     // 4. 开启 Unity 日志捕获
 - 程序退出前必须调用 `STLogger.Close()` 确保日志落盘
 
 ### Event System
-Uses `GameEvent` class for decoupled communication between systems.
+Uses `RunEvent` class for decoupled communication between systems. Callbacks use `Run` / `RFunc`
+with `ERunner.Run` / `EFuncer.Run` instead of raw `Action` / `Func`.
 
 ## Development Commands
 

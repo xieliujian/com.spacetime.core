@@ -35,7 +35,7 @@ GameLauncher 负责适配 Unity 的 Awake、Update、LateUpdate、OnDestroy 回�
 模块内部由节点类组成，每个具体节点单独一个 .cs 文件，位于：
 
 ~~~text
-Runtime/Scripts/Launch/Nodes/
+Runtime/Scripts/Module/Launch/Nodes/
 ~~~
 
 基础节点：
@@ -145,10 +145,9 @@ Runtime/Scripts/Application/GameWorld.cs
 Runtime/Scripts/Application/GameWorld_Module.cs
 Runtime/Scripts/Application/GameLauncher.cs
 Runtime/Scripts/Application/GameLauncher_Module.cs
-Runtime/Scripts/Launch/LaunchModule.cs
-Runtime/Scripts/Launch/LaunchNodeType.cs
-Runtime/Scripts/Launch/LaunchNodeState.cs
-Runtime/Scripts/Launch/Nodes/*.cs
+Runtime/Scripts/Module/Launch/Module/LaunchModule.cs
+Runtime/Scripts/Module/Launch/Define/LaunchDefine.cs
+Runtime/Scripts/Module/Launch/Nodes/*.cs
 ~~~
 
 所有公共类型使用命名空间 ST.Core.Launch。测试类型使用

@@ -76,6 +76,7 @@ namespace ST.Core.Launch
 
             m_IsClosed = true;
             CloseModules();
+            ClearDynamicCommands();
         }
     }
 }

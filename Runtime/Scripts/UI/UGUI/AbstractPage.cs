@@ -1,5 +1,4 @@
-﻿using System;
-using UnityEngine;
+﻿using UnityEngine;
 
 namespace ST.Core.UI
 {
@@ -70,12 +69,12 @@ namespace ST.Core.UI
             OnVisibleChanged(visible);
         }
 
-        internal void InternalPlayOpenAnimation(Action onComplete)
+        internal void InternalPlayOpenAnimation(Run onComplete)
         {
             PlayOpenAnimation(onComplete);
         }
 
-        internal void InternalPlayCloseAnimation(Action onComplete)
+        internal void InternalPlayCloseAnimation(Run onComplete)
         {
             PlayCloseAnimation(onComplete);
         }
@@ -101,18 +100,18 @@ namespace ST.Core.UI
         /// 页面打开进场动画；默认立即完成。
         /// 重写时必须在动画结束后调用 <paramref name="onComplete"/>。
         /// </summary>
-        protected virtual void PlayOpenAnimation(Action onComplete)
+        protected virtual void PlayOpenAnimation(Run onComplete)
         {
-            onComplete?.Invoke();
+            ERunner.Run(onComplete);
         }
 
         /// <summary>
         /// 页面关闭退场动画；默认立即完成。
         /// 重写时必须在动画结束后调用 <paramref name="onComplete"/>。
         /// </summary>
-        protected virtual void PlayCloseAnimation(Action onComplete)
+        protected virtual void PlayCloseAnimation(Run onComplete)
         {
-            onComplete?.Invoke();
+            ERunner.Run(onComplete);
         }
     }
 }

@@ -17,7 +17,8 @@ namespace ST.Core.Launch.Tests
             GameWorld gameWorld = new GameWorld();
             gameWorld.DoUpdate();
             gameWorld.DoLateUpdate();
-            Assert.IsNull(gameWorld.launchModule);
+            LaunchModule launchModule = gameWorld.GetModule<LaunchModule>();
+            Assert.IsNull(launchModule);
         }
 
         /// <summary>验证初始化创建并启动唯一模块。</summary>
@@ -26,11 +27,12 @@ namespace ST.Core.Launch.Tests
         {
             GameWorld gameWorld = new GameWorld();
             gameWorld.DoInit();
-            LaunchModule module = gameWorld.launchModule;
+            LaunchModule module = gameWorld.GetModule<LaunchModule>();
             gameWorld.DoInit();
+            LaunchModule currentModule = gameWorld.GetModule<LaunchModule>();
 
             Assert.IsNotNull(module);
-            Assert.AreSame(module, gameWorld.launchModule);
+            Assert.AreSame(module, currentModule);
             Assert.AreEqual(LaunchNodeState.Running, module.state);
         }
 
@@ -41,7 +43,9 @@ namespace ST.Core.Launch.Tests
             GameWorld gameWorld = new GameWorld();
             gameWorld.DoInit();
             gameWorld.DoUpdate();
-            Assert.IsTrue(gameWorld.launchModule.isSucceeded);
+            LaunchModule launchModule = gameWorld.GetModule<LaunchModule>();
+            bool isSucceeded = launchModule.isSucceeded;
+            Assert.IsTrue(isSucceeded);
         }
 
         /// <summary>验证运行中关闭和重复关闭安全。</summary>
@@ -54,7 +58,9 @@ namespace ST.Core.Launch.Tests
             gameWorld.DoClose();
             gameWorld.DoUpdate();
             gameWorld.DoLateUpdate();
-            Assert.AreEqual(LaunchNodeState.Stopped, gameWorld.launchModule.state);
+            LaunchModule launchModule = gameWorld.GetModule<LaunchModule>();
+            LaunchNodeState launchState = launchModule.state;
+            Assert.AreEqual(LaunchNodeState.Stopped, launchState);
         }
 
         /// <summary>验证成功后关闭保留成功状态。</summary>
@@ -65,7 +71,9 @@ namespace ST.Core.Launch.Tests
             gameWorld.DoInit();
             gameWorld.DoUpdate();
             gameWorld.DoClose();
-            Assert.AreEqual(LaunchNodeState.Succeeded, gameWorld.launchModule.state);
+            LaunchModule launchModule = gameWorld.GetModule<LaunchModule>();
+            LaunchNodeState launchState = launchModule.state;
+            Assert.AreEqual(LaunchNodeState.Succeeded, launchState);
         }
 
         /// <summary>验证场景入口的公开类型和生命周期方法。</summary>
@@ -104,7 +112,8 @@ namespace ST.Core.Launch.Tests
                 "first:update,second:update,first:late,second:late,second:close,first:close";
             string actual = string.Join(",", calls);
 
-            Assert.IsNotNull(gameWorld.launchModule);
+            LaunchModule launchModule = gameWorld.GetModule<LaunchModule>();
+            Assert.IsNotNull(launchModule);
             Assert.AreEqual(expected, actual);
         }
 

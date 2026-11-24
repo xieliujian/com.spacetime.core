@@ -34,6 +34,10 @@ namespace ST.Core.Launch
         /// <summary>重写了 <see cref="ILogicModule.DoLateUpdate"/> 的模块，按注册顺序逐帧调用。</summary>
         readonly List<ILogicModule> m_LateUpdateModules = new List<ILogicModule>(CommonDefine.s_ListConst_16);
 
+        /// <summary>按命令 ID 索引的动态命令监听表，UI 与逻辑模块共享。</summary>
+        readonly Dictionary<int, CommandListenerSet> m_DynamicCommandListeners =
+            new Dictionary<int, CommandListenerSet>(CommonDefine.s_ListConst_16);
+
         /// <summary>是否已经完成初始化。</summary>
         bool m_IsInitialized;
 
@@ -58,15 +62,6 @@ namespace ST.Core.Launch
             get
             {
                 return s_GameKernel;
-            }
-        }
-
-        /// <summary>标准启动模块；初始化前为空。</summary>
-        public LaunchModule launchModule
-        {
-            get
-            {
-                return m_LaunchModule;
             }
         }
     }

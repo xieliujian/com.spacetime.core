@@ -238,7 +238,7 @@ public enum LogLevel
 
 ### 8. Launch 节点树全是空壳，且跑完就没有帧驱动
 
-- `LaunchModule` 构建 21 个节点的标准启动流程，但 **20 个具体节点全部是 15 行的 `OnStart() { Complete(); }` 占位**。不要依赖任何节点的行为，要加真实逻辑就在 `Runtime/Scripts/Launch/Nodes/` 对应文件里实现。
+- `LaunchModule` 构建 21 个节点的标准启动流程，但 **20 个具体节点全部是 15 行的 `OnStart() { Complete(); }` 占位**。不要依赖任何节点的行为，要加真实逻辑就在 `Runtime/Scripts/Module/Launch/Nodes/` 对应文件里实现。
 - **`LaunchModule` 进入终态（`Succeeded`/`Failed`/`Stopped`）后，`GameApplication.DoUpdate` 立即 return，整个游戏不再有任何帧驱动。** 只在 Launch 树里放启动逻辑是够的，但业务循环必须另有人驱动。
 - 调度器本身（`LaunchNode`/`SequenceNode`/`ParallelNode`）写得干净、纯 C#、有 841 行单测覆盖，是包内质量最高的部分 —— 改它们时保持"异常边界只在 `Start`/`DoUpdate`/`Stop` 三处"的约束，并同步补 `Tests/Editor/` 下的测试。
 - `ParallelNode` 的子节点若被 Stop，`OnUpdate` 会把它当成失败处理（`child.error` 为空则用默认信息）。
