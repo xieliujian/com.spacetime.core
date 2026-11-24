@@ -14,7 +14,14 @@
 
 ```text
 Editor/Scripts/Build/
-├── Builder/Builder.cs              总入口：参数解析、收集调度、构建、写库、清理
+├── Builder/
+│   ├── Builder.cs                  入口与主流程
+│   ├── Builder_Define.cs           静态状态
+│   ├── Builder_Collect.cs          构建项收集
+│   ├── Builder_Merge.cs            合并与校验
+│   ├── Builder_Target.cs           平台与构建选项
+│   ├── Builder_Output.cs           输出目录与清单清理
+│   └── Builder_CommandLine.cs      命令行参数
 ├── Builders/
 │   ├── ResourceBuilderBase.cs      按前缀过滤并读取 AssetDatabase
 │   ├── UIBuilder.cs                ui/
