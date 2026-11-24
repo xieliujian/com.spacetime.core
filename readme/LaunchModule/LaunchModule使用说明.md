@@ -1,30 +1,33 @@
-# LaunchModule 启动框架
+﻿# LaunchModule 启动框架
 
 ## 目标
 
 LaunchModule 是 com.spacetime.core 包内可复用的启动流程骨架。新游戏只需要引用该包，
-在启动场景显式挂载 GameLauncher，即可获得统一的初始化、逐帧驱动和关闭生命周期。
+继承 ST.Core.Launch.GameLauncher 并在启动场景挂载自己的启动组件，即可获得基础模块的
+初始化、逐帧驱动和关闭生命周期。
 
 启动入口关系如下：
 
 ~~~text
 启动场景
-  └─ GameLauncher（MonoBehaviour，显式挂载）
-      └─ GameApplication（游戏运行入口）
+  └─ GameLauncher 子类（MonoBehaviour，显式挂载）
+      └─ GameWorld（模块内核）
+          ├─ 基础模块（异步任务、资源、UI、消息分发、网络）
+          ├─ 业务模块（派生类追加）
           └─ LaunchModule（启动模块）
               └─ LaunchNode（节点树）
 ~~~
 
-## 为什么保留 GameApplication
+## 为什么保留 GameWorld
 
-GameLauncher 负责适配 Unity 的 Awake、Update、LateUpdate、OnDestroy 回调，
-不应该直接承担业务流程。GameApplication 是纯 C# 的生命周期边界，负责持有唯一的
-LaunchModule，便于单元测试、非场景环境运行和后续替换启动入口。
+GameLauncher 负责适配 Unity 的 Awake、Update、LateUpdate、OnDestroy 回调，并在 Awake 中
+组装基础模块与业务模块。GameWorld 是纯 C# 的模块内核，负责按顺序初始化、逐帧驱动并逆序
+关闭全部模块，便于单元测试、非场景环境运行和后续替换启动入口。
 
 因此建议保留三层职责：
 
-- GameLauncher：只做场景挂载和 Unity 生命周期转发。
-- GameApplication：只做应用级初始化、更新、关闭和模块持有。
+- GameLauncher：创建基础模块、收集业务模块，并转发 Unity 生命周期。
+- GameWorld：按顺序初始化、更新、关闭全部模块，并持有启动模块。
 - LaunchModule：只构建并驱动启动节点树。
 
 ## 节点模型
@@ -87,12 +90,30 @@ SplashGlobalResLoad、BeforeLoginGlobalResLoad、ReloadRes 和 Update 节点。
 ## 启动场景挂载
 
 1. 在 Unity 中创建或打开启动场景。
-2. 创建一个空对象，例如 GameLauncher。
-3. 将包内 Runtime/Scripts/Application/GameLauncher.cs 挂载到该对象。
+2. 在业务程序集中创建 GameLauncher 的派生类，并实现 CreateResourceConfig。
+3. 创建空对象并挂载该派生类。
 4. 将该场景设置为 Build Settings 的第一个场景。
-5. 运行场景；Awake 会创建 GameApplication 并启动 LaunchModule。
+5. 运行场景；基类 Awake 会创建基础模块与 GameWorld，并启动 LaunchModule。
 
-不需要在业务场景中手动 new GameApplication() 或 new LaunchModule()。
+业务模块通过重写 CollectBusinessModules 追加：
+
+~~~csharp
+public sealed class ProjectGameLauncher : GameLauncher
+{
+    protected override IResourceConfig CreateResourceConfig()
+    {
+        return new ProjectResourceConfig();
+    }
+
+    protected override void CollectBusinessModules(List<IManager> modules)
+    {
+        modules.Add(new LoginModule());
+    }
+}
+~~~
+
+派生类如果重写 Awake、Update、LateUpdate 或 OnDestroy，必须调用对应的 base 方法。
+不需要在业务场景中手动 new GameWorld() 或 new LaunchModule()。
 如果需要测试启动模块，可以在纯 C# 测试中直接创建 LaunchModule。
 
 ## 扩展异步节点
@@ -120,8 +141,10 @@ OnStop   -> 取消请求、释放临时句柄
 ## 目录约定
 
 ~~~text
-Runtime/Scripts/Application/GameApplication.cs
+Runtime/Scripts/Application/GameWorld.cs
+Runtime/Scripts/Application/GameWorld_Module.cs
 Runtime/Scripts/Application/GameLauncher.cs
+Runtime/Scripts/Application/GameLauncher_Module.cs
 Runtime/Scripts/Launch/LaunchModule.cs
 Runtime/Scripts/Launch/LaunchNodeType.cs
 Runtime/Scripts/Launch/LaunchNodeState.cs
@@ -135,4 +158,4 @@ ST.Core.Launch.Tests，每个测试替身或测试类也保持单文件。
 
 当前版本的重点是固定启动树、节点边界和生命周期调度。网络请求、热更新、资源下载、
 进度 UI 和 SDK 逻辑保留在对应节点中实现；接入真实系统时不需要改变
-GameLauncher、GameApplication 或组合节点的公共生命周期。
+GameLauncher、GameWorld 或组合节点的公共生命周期。

@@ -1,4 +1,4 @@
-# LaunchModule 实施计划
+﻿# LaunchModule 实施计划
 
 ## 1. 目标与边界
 
@@ -13,7 +13,7 @@
 ~~~text
 GameLauncher（Unity 场景组件）
     ↓ Unity 生命周期转发
-GameApplication（纯 C# 应用入口）
+GameWorld（纯 C# 应用入口）
     ↓ 持有唯一模块
 LaunchModule（启动流程模块）
     ↓ 构建并驱动
@@ -25,14 +25,14 @@ LaunchNode 树（Sequence / Parallel / 具体节点）
 文件：Runtime/Scripts/Application/GameLauncher.cs
 
 - 继承 MonoBehaviour。
-- 在 Awake 创建并初始化 GameApplication。
+- 在 Awake 创建并初始化 GameWorld。
 - 在 Update、LateUpdate 中转发帧调用。
 - 在 OnDestroy 中关闭应用。
 - 不包含网络、资源、SDK 或业务判断。
 
-### GameApplication
+### GameWorld
 
-文件：Runtime/Scripts/Application/GameApplication.cs
+文件：Runtime/Scripts/Application/GameWorld.cs
 
 - 继承包内 IManager。
 - 持有唯一的 LaunchModule。
@@ -176,7 +176,7 @@ OnStop   -> 取消请求、释放临时资源
 4. 将启动场景设置为 Build Settings 第一个场景。
 5. 运行场景，确认 Awake 创建应用并进入 LaunchModule。
 
-业务场景不需要手动 new GameApplication 或 new LaunchModule。
+业务场景不需要手动 new GameWorld 或 new LaunchModule。
 
 ## 9. 测试计划
 
@@ -190,14 +190,14 @@ OnStop   -> 取消请求、释放临时资源
 - BootstrapLaunchNodeTest：首批节点名称与立即成功。
 - RemainingLaunchNodeTest：其余节点一类一测。
 - LaunchModuleTest：工厂映射、根树顺序和模块终态。
-- GameApplicationTest：应用生命周期与 GameLauncher 类型边界。
+- GameWorldTest：应用生命周期与 GameLauncher 类型边界。
 
 每次执行 Unity 测试时，结果目录放在项目外部；提交前要求测试退出码为 0、失败数为 0。
 
 ## 10. 验收清单
 
 - [ ] 新游戏只引用包并挂载 GameLauncher 即可启动。
-- [ ] GameApplication 和 LaunchModule 均可脱离场景进行单元测试。
+- [ ] GameWorld 和 LaunchModule 均可脱离场景进行单元测试。
 - [ ] 每个具体节点类均为独立文件。
 - [ ] 标准启动树顺序与本计划一致。
 - [ ] 组合节点可处理同步完成、异步等待、失败和停止。
@@ -217,7 +217,7 @@ OnStop   -> 取消请求、释放临时资源
 
 ### 批次三：应用入口
 
-加入 GameApplication、场景挂载组件 GameLauncher，验证 Unity 生命周期转发。
+加入 GameWorld、场景挂载组件 GameLauncher，验证 Unity 生命周期转发。
 
 ### 批次四：真实异步业务
 

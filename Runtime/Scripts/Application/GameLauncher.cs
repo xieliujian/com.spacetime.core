@@ -1,54 +1,56 @@
-﻿using UnityEngine;
+﻿using System.Collections.Generic;
+using UnityEngine;
 
 namespace ST.Core.Launch
 {
     /// <summary>
-    /// 启动场景组件，将 Unity 生命周期转发给游戏运行入口。
+    /// 启动场景组件基类，负责 Unity 生命周期转发。
+    /// <para>
+    /// 基础模块创建与业务扩展点位于 GameLauncher_Module；业务项目必须继承本类。
+    /// </para>
     /// </summary>
-    public sealed class GameLauncher : MonoBehaviour
+    public abstract partial class GameLauncher : MonoBehaviour
     {
-        /// <summary>游戏运行入口。</summary>
-        GameApplication m_GameApplication;
+        /// <summary>游戏模块内核。</summary>
+        GameWorld m_GameWorld;
 
-        /// <summary>创建并初始化游戏运行入口。</summary>
-        void Awake()
+        /// <summary>游戏模块内核，派生类可在模块初始化后访问启动模块等状态。</summary>
+        protected GameWorld gameWorld { get { return m_GameWorld; } }
+
+        /// <summary>创建基础模块与业务模块并初始化游戏模块内核；派生类重写时必须调用 base.Awake()。</summary>
+        protected virtual void Awake()
         {
-            m_GameApplication = new GameApplication();
-            m_GameApplication.DoInit();
+            List<IManager> modules = CreateModules();
+            m_GameWorld = new GameWorld();
+            m_GameWorld.DoInit(modules);
         }
 
-        /// <summary>转发 Unity 逐帧更新。</summary>
-        void Update()
+        /// <summary>转发 Unity 逐帧更新；派生类重写时必须调用 base.Update()。</summary>
+        protected virtual void Update()
         {
-            if (m_GameApplication == null)
-            {
+            if (m_GameWorld == null)
                 return;
-            }
 
-            m_GameApplication.DoUpdate();
+            m_GameWorld.DoUpdate();
         }
 
-        /// <summary>转发 Unity 滞后帧更新。</summary>
-        void LateUpdate()
+        /// <summary>转发 Unity 滞后帧更新；派生类重写时必须调用 base.LateUpdate()。</summary>
+        protected virtual void LateUpdate()
         {
-            if (m_GameApplication == null)
-            {
+            if (m_GameWorld == null)
                 return;
-            }
 
-            m_GameApplication.DoLateUpdate();
+            m_GameWorld.DoLateUpdate();
         }
 
-        /// <summary>销毁时关闭游戏运行入口。</summary>
-        void OnDestroy()
+        /// <summary>销毁时关闭游戏模块内核；派生类重写时必须调用 base.OnDestroy()。</summary>
+        protected virtual void OnDestroy()
         {
-            if (m_GameApplication == null)
-            {
+            if (m_GameWorld == null)
                 return;
-            }
 
-            m_GameApplication.DoClose();
-            m_GameApplication = null;
+            m_GameWorld.DoClose();
+            m_GameWorld = null;
         }
     }
 }
