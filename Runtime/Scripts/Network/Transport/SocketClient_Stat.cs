@@ -20,17 +20,27 @@ namespace ST.Core.Network
         /// <summary>累计接收消息条数。</summary>
         long m_DownMessages;
 
+        /// <summary>累计因未连接或缓冲越界被丢弃的发送消息条数。</summary>
+        long m_DroppedMessages;
+
         /// <summary>读取累计收发统计，计数不会被清零。</summary>
         /// <param name="upBytes">累计发送字节数。</param>
         /// <param name="downBytes">累计接收字节数。</param>
         /// <param name="upMessages">累计发送消息条数。</param>
         /// <param name="downMessages">累计接收消息条数。</param>
-        public void GetNetStat(out long upBytes, out long downBytes, out long upMessages, out long downMessages)
+        /// <param name="droppedMessages">累计被丢弃的发送消息条数。</param>
+        public void GetNetStat(
+            out long upBytes,
+            out long downBytes,
+            out long upMessages,
+            out long downMessages,
+            out long droppedMessages)
         {
             upBytes = Interlocked.Read(ref m_UpBytes);
             downBytes = Interlocked.Read(ref m_DownBytes);
             upMessages = Interlocked.Read(ref m_UpMessages);
             downMessages = Interlocked.Read(ref m_DownMessages);
+            droppedMessages = Interlocked.Read(ref m_DroppedMessages);
         }
 
         /// <summary>清零累计收发统计。</summary>
@@ -40,6 +50,13 @@ namespace ST.Core.Network
             Interlocked.Exchange(ref m_DownBytes, 0L);
             Interlocked.Exchange(ref m_UpMessages, 0L);
             Interlocked.Exchange(ref m_DownMessages, 0L);
+            Interlocked.Exchange(ref m_DroppedMessages, 0L);
+        }
+
+        /// <summary>统计一条因未连接或缓冲越界被丢弃的消息。</summary>
+        void AddDroppedMessageStat()
+        {
+            Interlocked.Increment(ref m_DroppedMessages);
         }
 
         /// <summary>统计一条已进入发送缓冲的消息。</summary>

@@ -68,9 +68,12 @@ namespace ST.Core.Test
             long downBytes;
             long upMessages;
             long downMessages;
-            m_NetManager.GetNetStat(out upBytes, out downBytes, out upMessages, out downMessages);
+            long droppedMessages;
+            m_NetManager.GetNetStat(
+                out upBytes, out downBytes, out upMessages, out downMessages, out droppedMessages);
             string statText = string.Format(
-                "Up: {0} B / {1} msgs, Down: {2} B / {3} msgs", upBytes, upMessages, downBytes, downMessages);
+                "Up: {0} B / {1} msgs, Down: {2} B / {3} msgs, Dropped: {4}",
+                upBytes, upMessages, downBytes, downMessages, droppedMessages);
             GUI.Label(new Rect(320, 40, 600, 60), statText);
         }
 

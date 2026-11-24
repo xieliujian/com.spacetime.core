@@ -58,11 +58,14 @@ namespace ST.Core.Network
             long downBytes;
             long upMessages;
             long downMessages;
-            m_SocketClient.GetNetStat(out upBytes, out downBytes, out upMessages, out downMessages);
+            long droppedMessages;
+            m_SocketClient.GetNetStat(
+                out upBytes, out downBytes, out upMessages, out downMessages, out droppedMessages);
             STLogger.LogInfoF(NetworkDefine.LOG_CLOSE_SUMMARY, upBytes, upMessages, downBytes, downMessages);
 
             ClearEventQueue();
             ClearSocketEventQueue();
+            EndSession();
         }
 
         /// <summary>关闭旧连接后向指定地址发起连接。</summary>
@@ -70,6 +73,9 @@ namespace ST.Core.Network
         /// <param name="port">端口号。</param>
         public void SendConnect(string address, int port)
         {
+            // 新会话开始前清掉上一会话残留的消息与事件，避免重连后补发旧数据。
+            ClearEventQueue();
+            ClearSocketEventQueue();
             m_SocketClient.Connect(address, port);
         }
 
@@ -87,9 +93,11 @@ namespace ST.Core.Network
 
         /// <summary>将 <see cref="ByteBuffer"/> 中已写入的内容追加到发送缓冲，随本帧批量发出。</summary>
         /// <param name="buffer">已写好包体的缓冲实例。</param>
-        public void SendMessage(ByteBuffer buffer)
+        /// <returns>已连接并接收整帧时返回 true，未连接或不在主线程时返回 false。</returns>
+        public bool SendMessage(ByteBuffer buffer)
         {
-            m_SocketClient.SendMessage(buffer);
+            bool isSent = m_SocketClient.SendMessage(buffer);
+            return isSent;
         }
 
         /// <summary>立即把发送缓冲中的数据写出，供需要马上发包的场景调用。</summary>
@@ -103,9 +111,16 @@ namespace ST.Core.Network
         /// <param name="downBytes">累计接收字节数，含帧头。</param>
         /// <param name="upMessages">累计发送消息条数。</param>
         /// <param name="downMessages">累计接收消息条数。</param>
-        public void GetNetStat(out long upBytes, out long downBytes, out long upMessages, out long downMessages)
+        /// <param name="droppedMessages">累计被丢弃的发送消息条数。</param>
+        public void GetNetStat(
+            out long upBytes,
+            out long downBytes,
+            out long upMessages,
+            out long downMessages,
+            out long droppedMessages)
         {
-            m_SocketClient.GetNetStat(out upBytes, out downBytes, out upMessages, out downMessages);
+            m_SocketClient.GetNetStat(
+                out upBytes, out downBytes, out upMessages, out downMessages, out droppedMessages);
         }
 
         /// <summary>清零累计收发统计，统计值不会在重连时自动清零。</summary>

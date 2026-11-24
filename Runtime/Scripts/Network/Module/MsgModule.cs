@@ -6,47 +6,53 @@ using ST.Core.Logging;
 namespace ST.Core.Network
 {
     /// <summary>
-    /// 消息分发中心：按 <see cref="MsgCodecType"/> 注册 Protobuf / FlatBuffers 处理器并反序列化回调。
-    /// 组包与发送见 MsgModule_Send.cs，实例由 GameWorld 注册。
+    /// 消息分发中心：按消息 ID 注册处理委托并反序列化回调。
+    /// 处理表不区分 Protobuf 与 FlatBuffers，编码方式由注册时创建的处理器决定，
+    /// 因此两种编码可以在同一进程内共存。组包与发送见 MsgModule_Send.cs，实例由 GameWorld 注册。
     /// </summary>
     public partial class MsgModule : ILogicModule
     {
-        /// <summary>解析网络模块，供发送消息使用。</summary>
+        /// <summary>创建发送缓冲并解析网络模块，供发送消息使用。</summary>
         public override void DoInit()
         {
-            bool isNetModuleResolved = m_NetModule != null;
-            if (isNetModuleResolved)
-                return;
-
             bool isSendBufferMissing = m_SendBuffer == null;
             if (isSendBufferMissing)
             {
-                m_SendBuffer = new ByteBuffer();
+                m_SendBuffer = new ByteBuffer(NetworkDefine.SEND_BUFFER_INITIAL_CAPACITY);
             }
 
-            bool hasKernel = m_Kernel != null;
-            if (!hasKernel)
-                return;
-
-            m_NetModule = m_Kernel.GetModule<NetModule>();
-            bool isNetModuleFound = m_NetModule != null;
-            if (!isNetModuleFound)
+            ResolveNetModule();
+            bool isNetModuleResolved = m_NetModule != null;
+            if (!isNetModuleResolved)
             {
-                STLogger.LogError("MsgModule 未找到 NetModule，发送消息将失败。");
+                STLogger.LogWarning("MsgModule 初始化时未找到 NetModule，发送时会再次尝试解析。");
             }
         }
 
-        /// <summary>清空处理表并释放发送缓冲。</summary>
+        /// <summary>清空处理表并释放发送缓冲与 FlatBuffers 构建器。</summary>
         public override void DoClose()
         {
-            m_FbMsgProcDict.Clear();
-            m_PbMsgProcDict.Clear();
+            m_MsgProcDict.Clear();
             m_NetModule = null;
+            m_IsFlatBufferBuilding = false;
 
-            bool isSendBufferValid = m_SendBuffer != null;
+            // 构建器持有整块 byte 数组，关闭时置空交回 GC，下次使用时重新创建。
+            m_FlatBufferBuilder = null;
+
+            // 先释放 Protobuf 写入器，它绑定发送缓冲的流，需要在流关闭前 Dispose。
+            Google.Protobuf.CodedOutputStream pbOutputStream = m_PbOutputStream;
+            bool isPbOutputStreamValid = pbOutputStream != null;
+            if (isPbOutputStreamValid)
+            {
+                pbOutputStream.Dispose();
+                m_PbOutputStream = null;
+            }
+
+            ByteBuffer sendBuffer = m_SendBuffer;
+            bool isSendBufferValid = sendBuffer != null;
             if (isSendBufferValid)
             {
-                m_SendBuffer.Close();
+                sendBuffer.Close();
                 m_SendBuffer = null;
             }
         }
@@ -58,150 +64,143 @@ namespace ST.Core.Network
             m_NetModule = netModule;
         }
 
-        /// <summary>设置后续 <see cref="Dispatcher"/> 与注册接口所使用的序列化类型。</summary>
-        /// <param name="msgType">Protobuf 或 FlatBuffer。</param>
-        public void RegisterMsgType(MsgCodecType msgType)
-        {
-            m_MsgType = msgType;
-        }
-
-        /// <summary>根据当前序列化类型把二进制负载分发给已注册的处理器。</summary>
+        /// <summary>
+        /// 根据消息 ID 把二进制负载交给已注册的处理器。
+        /// 帧里只有消息 ID，处理器自己知道该按 Protobuf 还是 FlatBuffers 解析。
+        /// </summary>
         /// <param name="msgid">消息 ID。</param>
         /// <param name="bytearray">消息体字节。</param>
         public void Dispatcher(ulong msgid, byte[] bytearray)
         {
-            bool isFlatBuffer = m_MsgType == MsgCodecType.FlatBuffer;
-            if (isFlatBuffer)
+            MsgProcFunBase procfunc;
+            bool isFound = m_MsgProcDict.TryGetValue(msgid, out procfunc);
+            if (!isFound)
             {
-                DispatcherFbMsg(msgid, bytearray);
+                STLogger.LogErrorF("未注册的消息，msgid:{0}", msgid);
                 return;
             }
 
-            bool isProtobuf = m_MsgType == MsgCodecType.Protobuf;
-            if (isProtobuf)
+            try
             {
-                DispatcherPbMsg(msgid, bytearray);
+                procfunc.Invoke(bytearray);
+            }
+            catch (Exception e)
+            {
+                STLogger.LogErrorF("处理消息失败，msgid:{0}，异常:{1}", msgid, e);
             }
         }
 
-        /// <summary>通过消息类型的静态 <c>HashID</c> 注册 FlatBuffers 处理委托。</summary>
+        /// <summary>通过类型的静态 <c>HashID</c> 注册 FlatBuffers 处理委托。</summary>
         /// <typeparam name="T">实现 <see cref="FlatBuffers.IFlatbufferObject"/> 的表结构类型。</typeparam>
         /// <param name="fbfunc">解析后的消息回调。</param>
         public void RegisterFBMsg<T>(Run<T> fbfunc) where T : struct, FlatBuffers.IFlatbufferObject
         {
-            ulong hashid;
-            bool isHashIdFound = TryGetHashId(typeof(T), out hashid);
-            if (!isHashIdFound)
-                return;
-
-            bool isRegistered = m_FbMsgProcDict.ContainsKey(hashid);
-            if (isRegistered)
+            bool isCallbackValid = fbfunc != null;
+            if (!isCallbackValid)
             {
-                STLogger.LogErrorF("FlatBuffers 消息 {0} 重复注册，hashid:{1}", typeof(T).Name, hashid);
+                STLogger.LogErrorF("FlatBuffers 消息 {0} 的回调为 null，注册被忽略。", typeof(T).Name);
                 return;
             }
 
-            m_FbMsgProcDict.Add(hashid, new FlatBufferProcFun<T>(fbfunc));
-        }
-
-        /// <summary>按类型静态 <c>HashID</c> 移除 FlatBuffers 注册。</summary>
-        /// <typeparam name="T">表类型。</typeparam>
-        /// <param name="fbfunc">未使用，仅为签名一致保留。</param>
-        public void UnRegisterFBMsg<T>(Run<T> fbfunc) where T : struct, FlatBuffers.IFlatbufferObject
-        {
             ulong hashid;
             bool isHashIdFound = TryGetHashId(typeof(T), out hashid);
             if (!isHashIdFound)
+            {
                 return;
+            }
 
-            m_FbMsgProcDict.Remove(hashid);
+            bool isRegistered = m_MsgProcDict.ContainsKey(hashid);
+            if (isRegistered)
+            {
+                STLogger.LogErrorF("消息 {0} 重复注册，hashid:{1}", typeof(T).Name, hashid);
+                return;
+            }
+
+            m_MsgProcDict.Add(hashid, new FlatBufferProcFun<T>(fbfunc));
         }
 
-        /// <summary>通过类型静态 <c>HashID</c> 注册 Protobuf 处理委托。</summary>
+        /// <summary>按类型的静态 <c>HashID</c> 移除 FlatBuffers 注册。</summary>
+        /// <typeparam name="T">表类型。</typeparam>
+        /// <param name="fbfunc">保留参数，用于与注册接口保持对称。</param>
+        public void UnRegisterFBMsg<T>(Run<T> fbfunc) where T : struct, FlatBuffers.IFlatbufferObject
+        {
+            UnRegisterMsg(typeof(T));
+        }
+
+        /// <summary>通过类型的静态 <c>HashID</c> 注册 Protobuf 处理委托。</summary>
         /// <typeparam name="T">实现 <see cref="pb.IMessage"/> 的消息类型。</typeparam>
         /// <param name="pbfunc">反序列化后的消息回调。</param>
         public void RegisterPBMsg<T>(Run<T> pbfunc) where T : pb::IMessage
         {
+            bool isCallbackValid = pbfunc != null;
+            if (!isCallbackValid)
+            {
+                STLogger.LogErrorF("Protobuf 消息 {0} 的回调为 null，注册被忽略。", typeof(T).Name);
+                return;
+            }
+
             ulong hashid;
             bool isHashIdFound = TryGetHashId(typeof(T), out hashid);
             if (!isHashIdFound)
+            {
                 return;
+            }
 
-            bool isRegistered = m_PbMsgProcDict.ContainsKey(hashid);
+            bool isRegistered = m_MsgProcDict.ContainsKey(hashid);
             if (isRegistered)
             {
-                STLogger.LogErrorF("Protobuf 消息 {0} 重复注册，hashid:{1}", typeof(T).Name, hashid);
+                STLogger.LogErrorF("消息 {0} 重复注册，hashid:{1}", typeof(T).Name, hashid);
                 return;
             }
 
-            m_PbMsgProcDict.Add(hashid, new ProtobufProcFun<T>(pbfunc));
+            m_MsgProcDict.Add(hashid, new ProtobufProcFun<T>(pbfunc));
         }
 
-        /// <summary>按类型静态 <c>HashID</c> 移除 Protobuf 注册。</summary>
+        /// <summary>按类型的静态 <c>HashID</c> 移除 Protobuf 注册。</summary>
         /// <typeparam name="T">消息类型。</typeparam>
-        /// <param name="pbfunc">未使用，仅为签名一致保留。</param>
+        /// <param name="pbfunc">保留参数，用于与注册接口保持对称。</param>
         public void UnRegisterPBMsg<T>(Run<T> pbfunc) where T : pb::IMessage
         {
+            UnRegisterMsg(typeof(T));
+        }
+
+        /// <summary>从内核解析网络模块，发送时找不到会再次尝试。</summary>
+        void ResolveNetModule()
+        {
+            bool isResolved = m_NetModule != null;
+            if (isResolved)
+            {
+                return;
+            }
+
+            IKernel kernel = m_Kernel;
+            bool hasKernel = kernel != null;
+            if (!hasKernel)
+            {
+                return;
+            }
+
+            m_NetModule = kernel.GetModule<NetModule>();
+        }
+
+        /// <summary>按消息类型的静态 <c>HashID</c> 从统一处理表移除。</summary>
+        /// <param name="type">消息类型。</param>
+        void UnRegisterMsg(Type type)
+        {
             ulong hashid;
-            bool isHashIdFound = TryGetHashId(typeof(T), out hashid);
+            bool isHashIdFound = TryGetHashId(type, out hashid);
             if (!isHashIdFound)
-                return;
-
-            m_PbMsgProcDict.Remove(hashid);
-        }
-
-        /// <summary>查找 FlatBuffers 处理器并调用，异常按消息 ID 记录。</summary>
-        /// <param name="msgid">消息 ID。</param>
-        /// <param name="bytearray">消息体字节。</param>
-        void DispatcherFbMsg(ulong msgid, byte[] bytearray)
-        {
-            FlatBufferProcFunBase procfunc;
-            bool isFound = m_FbMsgProcDict.TryGetValue(msgid, out procfunc);
-            if (!isFound)
             {
-                STLogger.LogErrorF("未注册的 FlatBuffers 消息，msgid:{0}", msgid);
                 return;
             }
 
-            try
-            {
-                procfunc.Invoke(bytearray);
-            }
-            catch (Exception e)
-            {
-                STLogger.LogErrorF("处理 FlatBuffers 消息失败，msgid:{0}", msgid);
-                STLogger.LogError(e.ToString());
-            }
-        }
-
-        /// <summary>查找 Protobuf 处理器并调用，异常按消息 ID 记录。</summary>
-        /// <param name="msgid">消息 ID。</param>
-        /// <param name="bytearray">消息体字节。</param>
-        void DispatcherPbMsg(ulong msgid, byte[] bytearray)
-        {
-            ProtobufProcFunBase procfunc;
-            bool isFound = m_PbMsgProcDict.TryGetValue(msgid, out procfunc);
-            if (!isFound)
-            {
-                STLogger.LogErrorF("未注册的 Protobuf 消息，msgid:{0}", msgid);
-                return;
-            }
-
-            try
-            {
-                procfunc.Invoke(bytearray);
-            }
-            catch (Exception e)
-            {
-                STLogger.LogErrorF("处理 Protobuf 消息失败，msgid:{0}", msgid);
-                STLogger.LogError(e.ToString());
-            }
+            m_MsgProcDict.Remove(hashid);
         }
 
         /// <summary>读取类型上的静态 <c>HashID</c>。</summary>
         /// <param name="type">消息类型。</param>
         /// <param name="hashid">读到的 HashID。</param>
-        /// <returns>字段存在且值有效时返回 true。</returns>
+        /// <returns>字段存在、值非空且能转换为 ulong 时返回 true。</returns>
         static bool TryGetHashId(Type type, out ulong hashid)
         {
             hashid = 0;
@@ -221,8 +220,41 @@ namespace ST.Core.Network
                 return false;
             }
 
-            hashid = Convert.ToUInt64(value);
-            return true;
+            bool isConverted = TryConvertHashId(value, out hashid);
+            if (!isConverted)
+            {
+                STLogger.LogErrorF("类型 {0} 的 HashID 无法转换为 ulong，消息无法注册。", type.Name);
+            }
+
+            return isConverted;
+        }
+
+        /// <summary>把 HashID 字段值转换为 ulong，非法值只记录失败，不向注册流程抛异常。</summary>
+        /// <param name="value">HashID 字段值。</param>
+        /// <param name="hashid">转换结果。</param>
+        /// <returns>转换成功时返回 true。</returns>
+        static bool TryConvertHashId(object value, out ulong hashid)
+        {
+            hashid = 0;
+            try
+            {
+                ulong converted = Convert.ToUInt64(value);
+                hashid = converted;
+                return true;
+            }
+            catch (FormatException)
+            {
+                return false;
+            }
+            catch (OverflowException)
+            {
+                return false;
+            }
+            catch (InvalidCastException)
+            {
+                return false;
+            }
         }
     }
 }
+

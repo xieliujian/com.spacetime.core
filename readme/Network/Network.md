@@ -16,16 +16,19 @@ TCP 长连接客户端，负责连接生命周期、粘包拆包、主线程消�
 | `Module/` | `MsgModule.cs` | 消息处理表、注册与分发 |
 | `Module/` | `MsgModule_Send.cs` | Protobuf / FlatBuffers 组包与发送入口 |
 | `Module/` | `MsgModule_Define.cs` | 序列化后端、处理表、发送缓冲等成员变量 |
-| `Module/` | `NetModule.cs` | 连接生命周期、对外接口、模块依赖 |
-| `Module/` | `NetModule_Event.cs` | 主线程消息队列与连接事件队列 |
+| `Module/` | `NetModule.cs` | 连接接口、生命周期、收发统计入口 |
+| `Module/` | `NetModule_Event.cs` | 主线程消息队列、连接事件队列、会话过滤 |
 | `Module/` | `NetModule_Heartbeat.cs` | 心跳发送与收包超时 |
 | `Module/` | `NetModule_Define.cs` | 底层客户端、事件、队列、心跳计时等成员变量 |
-| `Transport/` | `SocketClient.cs` | TcpClient 连接状态、连接超时、异步读取 |
+| `Transport/` | `SocketClient.cs` | 连接状态与关闭流程 |
+| `Transport/` | `SocketClient_Connect.cs` | 建连、域名解析、连接回调、连接超时 |
+| `Transport/` | `SocketClient_Read.cs` | 异步读取回调与继续监听 |
 | `Transport/` | `SocketClient_Frame.cs` | 接收缓冲、拆包、残留数据前移 |
-| `Transport/` | `SocketClient_Send.cs` | 复用发送缓冲与每帧批量写 |
-| `Transport/` | `SocketClient_Stat.cs` | 收发字节与消息条数统计 |
-| `Dispatch/` | `ProtobufProcFun*.cs` | Protobuf 消息解析与回调基类 |
-| `Dispatch/` | `FlatBufferProcFun*.cs` | FlatBuffers 消息解析与回调基类 |
+| `Transport/` | `SocketClient_Send.cs` | 复用发送缓冲、批量写、线程校验 |
+| `Transport/` | `SocketClient_Stat.cs` | 收发字节、消息条数与丢弃计数 |
+| `Dispatch/` | `MsgProcFunBase.cs` | 消息处理基类 |
+| `Dispatch/` | `ProtobufProcFun*.cs` | Protobuf 消息解析与回调 |
+| `Dispatch/` | `FlatBufferProcFun*.cs` | FlatBuffers 消息解析与回调 |
 
 ## 接入方式
 
@@ -55,6 +58,21 @@ void Update()
 }
 ~~~
 
+## 连接与重连
+
+~~~csharp
+netModule.SendConnect("127.0.0.1", 3580);
+netModule.CloseSocket();
+bool isConnected = netModule.IsConnected();
+~~~
+
+- `SendConnect` 会先关闭旧连接，再向新地址发起连接。
+- 主动重连不投递 `onDisconnectEvent`，避免业务在断线回调里重连造成事件自激。
+- 只有异常断开与主动 `CloseSocket` 才会派发断线事件。
+- 域名解析在线程池完成，解析结果回到主线程再发起连接，DNS 慢不会卡主线程。
+- 连接超时 10 秒，DNS 解析时间也计入超时。
+- 每次连接递增会话序号，上一会话的残留消息与事件会被丢弃。
+
 ## 分帧协议
 
 每帧由三部分组成。
@@ -75,20 +93,25 @@ void Update()
 
 ~~~csharp
 ReqLogin msg = new ReqLogin();
-msgModule.SendPBMsg(ReqLogin.HashID, msg);
+bool isSent = msgModule.SendPBMsg(ReqLogin.HashID, msg);
+if (!isSent)
+{
+    // 未连接或缓冲越界，消息没有进入发送队列
+}
 ~~~
 
-同一次 flush 之前产生的多条消息会合并成一次写操作。业务模块在 `Update` 里发出的消息，最晚在下一帧刷出。需要立刻发包时调用 `netModule.Flush()`。
-
-发送缓冲初始 128 KB，跨消息复用，不会为每条消息分配数组。单次写阻塞上限由 `SEND_TIMEOUT_MS` 控制，当前 500 毫秒，写失败会记录原因并断开。
+- 同一次 flush 之前产生的多条消息会合并成一次写操作。
+- 发送缓冲初始 128 KB，上限 4 MB，超过上限会记录错误并断开连接。
+- Protobuf 发送复用同一个 `CodedOutputStream`，不再为每条消息分配 4 KB 内部缓冲。
+- 发送入口只能在主线程调用，子线程调用会丢弃本次数据并记录一次错误。
+- 写失败或超过 500 毫秒未完成会记录原因并断开连接。
+- 需要立刻发包时调用 `netModule.Flush()`。
 
 ## 接收与分发
 
 1. 读取回调在 IO 线程完成 `EndRead`，字节追加到拆包缓冲。
-2. 按分帧协议循环切出完整消息，负载复制一份独立数组后入队。
-3. 主线程在 `NetModule.DoUpdate` 中每帧最多取出 64 条，先交给 `MsgModule.Dispatcher`，再派发可选的 `onMsgEvent`。
-
-断线前已经收到的消息仍会先分发，再派发 `onDisconnectEvent`。
+2. 按分帧协议循环切出完整消息，负载复制一份独立数组后按会话序号入队。
+3. 主线程在 `NetModule.DoUpdate` 中每帧最多取出 64 条消息、16 个连接事件。
 
 ~~~csharp
 netModule.onMsgEvent = OnAnyMessage;
@@ -98,6 +121,11 @@ void OnAnyMessage(ulong msgid, byte[] payload)
     // 未注册强类型处理器的消息可以在这里统一处理
 }
 ~~~
+
+- 消息先交给 `MsgModule.Dispatcher`，再派发 `onMsgEvent`。
+- 已入队的消息在断线后仍会优先分发一次，随后派发 `onDisconnectEvent`。
+- 分发过程中连接断开时，本帧剩余消息会被丢弃并记录调试日志。
+- 上一会话残留的消息按会话序号过滤，不会串到新连接。
 
 ## 消息注册
 
@@ -146,14 +174,14 @@ void SendHeartbeat()
 
 收到任意消息都会清零空闲计时。超时断开原因为 `heartbeat timeout`，随后走正常断线事件。需要自定义节奏时使用 `SetHeartbeat(sender, intervalMilliseconds, timeoutMilliseconds)`。
 
-不调用 `SetHeartbeat` 时不启用超时检测，避免空闲连接被误判。
+不调用 `SetHeartbeat` 时不启用超时检测，避免空闲连接被误判。`DoClose` 会清理心跳设置，模块重新 `DoInit` 后需要业务再次调用 `SetHeartbeat`。
 
 ## 断线原因
 
 | 常量 | 值 | 触发场景 |
 | --- | --- | --- |
 | `REASON_NEW_CONNECT` | new connect | 重连前关闭旧连接 |
-| `REASON_CONNECT_FAILED` | connect failed | 建立连接抛异常 |
+| `REASON_CONNECT_FAILED` | connect failed | 建立连接或域名解析失败 |
 | `REASON_CONNECT_CALLBACK_FAILED` | connect callback failed | 连接回调处理失败 |
 | `REASON_CONNECT_TIMEOUT` | connect timeout | 10 秒内未建立连接 |
 | `REASON_READ_FAILED` | read failed | 异步读取异常 |
@@ -162,36 +190,46 @@ void SendHeartbeat()
 | `REASON_SERVER_CLOSED` | server closed the connection | 服务端关闭 |
 | `REASON_RECV_BUFFER_OVERFLOW` | recv buffer overflow | 未解析数据超过 4 MB |
 | `REASON_INVALID_MESSAGE_LENGTH` | invalid message length | 长度字段小于 8 |
+| `REASON_SEND_BUFFER_OVERFLOW` | send buffer overflow | 待发送数据超过 4 MB |
 | `REASON_NET_MODULE_CLOSED` | net module closed | 模块关闭 |
 | `REASON_CLIENT_CLOSED` | client closed | 业务主动断开 |
 | `REASON_HEARTBEAT_TIMEOUT` | heartbeat timeout | 心跳超时 |
 
+业务主动关闭与模块关闭使用 Info 级别日志，异常关闭使用 Warning 级别。
+
 ## 收发统计
 
 ~~~csharp
-netModule.GetNetStat(out long upBytes, out long downBytes, out long upMessages, out long downMessages);
+netModule.GetNetStat(
+    out long upBytes,
+    out long downBytes,
+    out long upMessages,
+    out long downMessages,
+    out long droppedMessages);
 netModule.ResetNetStat();
 ~~~
 
-字节数包含帧头，消息条数按完整帧统计。统计值在重连后保留，需要对比单次会话时先调用 `ResetNetStat`。
+字节数包含帧头，消息条数按完整帧统计，`droppedMessages` 统计未连接或缓冲越界时被丢弃的发送消息。统计值在重连后保留，需要对比单次会话时先调用 `ResetNetStat`。
 
 ## 线程边界
 
 | 操作 | 所在线程 |
 | --- | --- |
 | `Connect`、`CloseSocket`、`SendPBMsg`、`SendFBMsg`、`Flush` | 主线程 |
+| 域名解析 | 线程池 |
 | `EndRead`、拆包、入队 | 异步 IO 线程 |
-| 消息分发、连接事件、心跳检测 | 主线程 |
+| 消息分发、连接事件、心跳检测、批量写 | 主线程 |
 
-业务回调都在主线程执行，可以安全访问 Unity API 与其它模块。发送入口不要在子线程调用。
+业务回调都在主线程执行，可以安全访问 Unity API 与其它模块。发送入口有运行时校验，子线程调用会被丢弃并记录错误。
 
 ## 已知限制
 
 - 接收侧每条消息仍会分配一个负载数组，便于业务在回调外持有数据。
-- Protobuf 消息每条解析都会新建对象，没有做实例复用。
+- Protobuf 收包在消息类型提供 `Clear` 时会复用实例。当前 pbs 生成代码没有 `Clear`，实际仍逐条新建对象，需要生成器补上后才会生效。
 - 发送是主线程阻塞写，网络拥塞时单帧最多卡顿 `SEND_TIMEOUT_MS`。
 - 底层使用 `System.Net.Sockets.TcpClient`，WebGL 平台不可用。
 - 不包含自动重连、KCP、压缩与加密，这些由业务或服务端协议层提供。
+- 没有自动化测试覆盖网络层，现有验证以编译和手工联调为主。
 
 ---
 [← 返回主页](../../README.md)

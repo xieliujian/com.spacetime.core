@@ -1,5 +1,7 @@
 ﻿using System.Collections.Generic;
 
+using ST.Core.Logging;
+
 namespace ST.Core.Network
 {
     /// <summary>
@@ -10,30 +12,58 @@ namespace ST.Core.Network
         /// <summary>网络线程调用的消息入队入口。</summary>
         /// <param name="msgid">消息 ID。</param>
         /// <param name="bytearray">消息体字节。</param>
-        internal void AddEvent(ulong msgid, byte[] bytearray)
+        /// <param name="sessionID">消息所属会话序号。</param>
+        internal void AddEvent(ulong msgid, byte[] bytearray, int sessionID)
         {
             lock (m_EventQueue)
             {
+                // 连接已关闭或正在重连时，读回调里的残留数据不再接收。
+                bool isConnected = m_SocketClient != null && m_SocketClient.IsConnected();
+                if (!isConnected)
+                    return;
+
+                // 上一会话的读回调可能晚于关闭到达，按会话序号丢弃，避免新会话收到旧数据。
+                bool isCurrentSession = sessionID == m_AcceptedSessionID;
+                if (!isCurrentSession)
+                    return;
+
                 m_EventQueue.Enqueue(new KeyValuePair<ulong, byte[]>(msgid, bytearray));
             }
         }
 
+        /// <summary>开始一个新会话，之后的残留数据按会话序号过滤。</summary>
+        /// <param name="sessionID">新会话序号。</param>
+        internal void BeginSession(int sessionID)
+        {
+            m_AcceptedSessionID = sessionID;
+        }
+
+        /// <summary>结束当前会话，之后到达的旧数据全部丢弃。</summary>
+        internal void EndSession()
+        {
+            m_AcceptedSessionID = 0;
+        }
+
         /// <summary>网络线程调用的连接成功入口。</summary>
-        internal void PostConnected()
+        /// <param name="sessionID">连接成功时所属会话序号。</param>
+        internal void PostConnected(int sessionID)
         {
             NetSocketEvent socketEvent = new NetSocketEvent();
             socketEvent.type = NetSocketEventType.Connected;
             socketEvent.reason = string.Empty;
+            socketEvent.sessionID = sessionID;
             EnqueueSocketEvent(socketEvent);
         }
 
         /// <summary>网络线程调用的断线入口。</summary>
         /// <param name="reason">断线原因。</param>
-        internal void PostDisconnected(string reason)
+        /// <param name="sessionID">断线时所属会话序号。</param>
+        internal void PostDisconnected(string reason, int sessionID)
         {
             NetSocketEvent socketEvent = new NetSocketEvent();
             socketEvent.type = NetSocketEventType.Disconnected;
             socketEvent.reason = reason;
+            socketEvent.sessionID = sessionID;
             EnqueueSocketEvent(socketEvent);
         }
 
@@ -62,6 +92,15 @@ namespace ST.Core.Network
             {
                 KeyValuePair<ulong, byte[]> message = m_ProcessList[i];
                 DispatchMessage(message.Key, message.Value);
+
+                bool isStillConnected = m_SocketClient.IsConnected();
+                if (!isStillConnected)
+                {
+                    // 连接已断开，本帧剩余消息不再交给业务，随列表清空丢弃。
+                    int remainingCount = m_ProcessList.Count - i - 1;
+                    STLogger.LogDebugF(NetworkDefine.LOG_DISPATCH_STOPPED, remainingCount);
+                    break;
+                }
             }
 
             m_ProcessList.Clear();
@@ -92,7 +131,8 @@ namespace ST.Core.Network
         /// <summary>在主线程按入队顺序派发连接与断线事件。</summary>
         void UpdateSocketEventQueue()
         {
-            while (true)
+            int processedCount = 0;
+            while (processedCount < NetworkDefine.MAX_PROCESS_SOCKET_EVENT_PER_FRAME)
             {
                 NetSocketEvent socketEvent;
                 bool hasEvent;
@@ -108,6 +148,7 @@ namespace ST.Core.Network
                     break;
                 }
 
+                processedCount++;
                 DispatchSocketEvent(socketEvent);
             }
         }
@@ -116,6 +157,10 @@ namespace ST.Core.Network
         /// <param name="socketEvent">套接字事件。</param>
         void DispatchSocketEvent(NetSocketEvent socketEvent)
         {
+            bool isCurrentSession = socketEvent.sessionID == m_AcceptedSessionID;
+            if (!isCurrentSession)
+                return;
+
             bool isConnectedEvent = socketEvent.type == NetSocketEventType.Connected;
             if (isConnectedEvent)
             {

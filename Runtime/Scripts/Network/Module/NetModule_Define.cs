@@ -49,6 +49,9 @@ namespace ST.Core.Network
         /// <summary>距离上次收到消息的累计时间，单位秒。</summary>
         float m_ReceiveIdleElapsed;
 
+        /// <summary>当前接受的会话序号，用于丢弃上一会话残留的消息与事件。</summary>
+        volatile int m_AcceptedSessionID;
+
         // 公有字段定义
         /// <summary>主线程上、在 <see cref="MsgModule.Dispatcher"/> 之后调用的可选回调，参数为消息 ID 与负载字节。</summary>
         public Run<ulong, byte[]> onMsgEvent;

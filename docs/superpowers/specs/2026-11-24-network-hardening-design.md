@@ -209,3 +209,83 @@ MSBuild com.spacetime.core.runtime.csproj /t:Rebuild /p:Configuration=Debug
 - Protobuf 消息对象复用。
 - 自动重连与重连退避策略。
 
+## 10. 第三轮加固
+
+- 日期 2026-11-24
+- 状态 已实现，Roslyn 全量编译通过，未跑 Unity PlayMode 与真实服务器
+- 范围 `Runtime/Scripts/Network`、`readme/Network/Network.md`
+
+### 10.1 问题
+
+| # | 类别 | 位置 | 现象 | 处理 |
+| --- | --- | --- | --- | --- |
+| 36 | 正确性 | `SocketClient.Connect` | 重连先走 `Close` 并投递断线事件，业务在 `onDisconnectEvent` 里重连会在一帧内反复触发 | 内部重连不投递事件，并给连接事件派发加每帧上限 |
+| 37 | 正确性 | `NetModule.DoClose` | 清空队列后，IO 线程仍可能把上一会话的消息入队 | 消息与连接事件携带会话序号，跨会话直接丢弃 |
+| 38 | 线程 | `SocketClient.Send` | 复用发送缓冲没有线程约束，子线程调用会破坏缓冲 | 记录主线程 ID，子线程发送丢弃并记录一次错误 |
+| 39 | 内存 | `SocketClient.Send` | 发送缓冲无上限，异常发包可持续扩容 | 新增 4 MB 上限，超限记录错误并断开 |
+| 40 | 卡顿 | `SocketClient.Connect` | `TcpClient.BeginConnect` 会在主线程同步做 DNS 解析 | 域名解析改到线程池，结果回主线程再建连 |
+| 41 | 状态 | `NetModule.UpdateEventQueue` | 一批消息中触发关闭后，剩余消息仍继续分发 | 每条分发后检查连接状态，断开则丢弃剩余 |
+| 42 | 可观测 | `SocketClient` | 未连接时发送被静默丢弃 | `SendMessage` 返回 bool，并累计丢弃条数 |
+| 43 | 日志 | `SocketClient.Close` | 业务主动关闭与异常关闭同为 Warning | 预期关闭用 Info，异常关闭用 Warning |
+| 44 | 线程 | `SocketClient.m_State` | IO 线程写、主线程读，缺少可见性保证 | 改为 `volatile` 字段 |
+
+### 10.2 重连语义
+
+`Connect` 先调用 `CloseInternal(REASON_NEW_CONNECT, notify: false)` 清理旧连接，不向业务投递断线事件。只有异常断开和业务主动 `CloseSocket` 才派发 `onDisconnectEvent`。
+
+`UpdateSocketEventQueue` 每帧最多派发 16 个连接事件，即使业务在同一帧内反复操作连接，也不会无限循环。
+
+### 10.3 会话隔离
+
+`SocketClient` 每次 `Connect` 自增 `m_SessionID`，并通过 `NetModule.BeginSession` 同步给模块。读回调把会话序号带进 `AddEvent`，连接事件也携带序号。
+
+- `AddEvent` 在队列锁内比对序号，不一致直接丢弃。
+- `DispatchSocketEvent` 在派发前比对序号，丢弃上一会话的残留事件。
+- `DoClose` 清理队列后调用 `EndSession`，把接受序号置 0。
+- `SendConnect` 在发起新连接前清空消息与事件队列。
+
+### 10.4 发送保护
+
+- 构造时记录主线程 ID，`SendMessage` 和原始 `Send` 都走 `TryBufferFrame` 统一校验。
+- 缓冲超过 `SEND_BUFFER_MAX_SIZE` 时记录错误、累计丢弃并断开连接。
+- `SendMessage` 返回 bool，未连接、缓冲越界或线程错误都返回 false。
+- `m_DroppedMessages` 通过 `GetNetStat` 的第五个参数暴露。
+
+### 10.5 域名解析
+
+新增 `Transport/SocketClient_Connect.cs`，包含建连、DNS 解析、连接回调与连接超时。
+
+- IP 地址直接 `BeginConnect`。
+- 域名走 `Dns.BeginGetHostAddresses`，回调只保存不可变结果对象。
+- 主线程 `Update` 读取结果，校验会话序号后再发起连接。
+- 超时计时从 `Connect` 开始，DNS 阶段同样计入 10 秒。
+
+### 10.6 分发中断
+
+`UpdateEventQueue` 每分发一条消息检查一次 `IsConnected`，连接已断开时记录剩余条数并停止本帧后续分发。剩余消息随列表清空丢弃，不再交给已关闭连接的业务状态。
+
+### 10.7 文件拆分
+
+`SocketClient` 超过 200 行后按职责拆分。
+
+| 文件 | 行数 | 职责 |
+| --- | --- | --- |
+| `SocketClient.cs` | 196 | 状态字段、构造、`Update`、关闭流程、关闭日志 |
+| `SocketClient_Connect.cs` | 213 | `Connect`、DNS、建连回调、连接超时 |
+| `SocketClient_Read.cs` | 73 | `OnRead`、`BeginRead` |
+| `SocketClient_Send.cs` | 160 | 发送缓冲、批量写、线程校验 |
+| `SocketClient_Frame.cs` | 171 | 接收缓冲与拆包 |
+| `SocketClient_Stat.cs` | 83 | 收发与丢弃统计 |
+
+### 10.8 验证
+
+用 Unity 2022.3.35f1 的 Roslyn 按 runtime 工程引用集编译 `Runtime/Scripts` 下全部 252 个源文件，0 错误 0 警告。
+
+未执行 Unity PlayMode、真实服务器收发、DNS 慢查询与断线重连联调。
+
+### 10.9 仍未做
+
+- 网络层自动化测试，包括会话过滤、重连不派发事件、发送缓冲越界。
+- 接收负载数组池化与 Protobuf 消息对象复用。
+- 自动重连与退避策略，目前仍由业务通过 `onDisconnectEvent` 自行处理。
+

@@ -13,12 +13,16 @@
         // 协议头定义
         public const int MSG_LENGTH_SIZE = sizeof(ushort); // 消息长度字段占用的字节数
         public const int MSG_ID_SIZE = sizeof(ulong); // 消息 ID 字段占用的字节数
+        public const int MAX_MSG_FRAME_LENGTH = ushort.MaxValue; // 单帧总长度上限，包含消息 ID 与负载
 
         // 分发定义
         public const int MAX_PROCESS_MSG_PER_FRAME = 64; // 单帧最多分发的消息条数
+        public const int MAX_PROCESS_SOCKET_EVENT_PER_FRAME = 16; // 单帧最多派发的连接事件条数
 
         // 发送定义
+        public const int SEND_BUFFER_INITIAL_CAPACITY = 4096; // 单条消息组包缓冲初始容量，超长消息自动扩容
         public const int SEND_BUFFER_SIZE = 131072; // 发送缓冲初始容量，同一帧的消息在缓冲内批量发送
+        public const int SEND_BUFFER_MAX_SIZE = 4 * 1024 * 1024; // 发送缓冲上限，超过视为异常发包
         public const int SEND_TIMEOUT_MS = 500; // 同步发送超时时间，单位毫秒
 
         // 心跳定义
@@ -42,6 +46,7 @@
         public const string REASON_NET_MODULE_CLOSED = "net module closed"; // 网络模块关闭
         public const string REASON_CLIENT_CLOSED = "client closed"; // 业务主动断开
         public const string REASON_HEARTBEAT_TIMEOUT = "heartbeat timeout"; // 心跳超时
+        public const string REASON_SEND_BUFFER_OVERFLOW = "send buffer overflow"; // 待发送数据超过上限
 
         // 日志文案定义
         public const string LOG_CLOSE_REASON = "网络连接关闭，地址 {0}:{1}，原因 {2}"; // 关闭连接的基础日志
@@ -50,15 +55,9 @@
         public const string LOG_CONNECT_START = "网络开始连接，地址 {0}:{1}"; // 发起连接
         public const string LOG_CONNECT_SUCCESS = "网络连接成功，地址 {0}:{1}"; // 连接建立成功
         public const string LOG_CLOSE_SUMMARY = "网络模块关闭，累计发送 {0} 字节 / {1} 条，接收 {2} 字节 / {3} 条"; // 关闭时的统计汇总
-    }
-
-    /// <summary>
-    /// 消息序列化后端选择，供 <see cref="MsgModule"/> 使用。
-    /// </summary>
-    public enum MsgCodecType
-    {
-        FlatBuffer, // 使用 FlatBuffers 编解码
-        Protobuf, // 使用 Google Protobuf 编解码
+        public const string LOG_SEND_THREAD_INVALID = "网络发送必须在主线程调用，当前线程 {0}"; // 子线程调用发送
+        public const string LOG_SEND_BUFFER_OVERFLOW = "待发送数据 {0} 字节超过缓冲上限，连接将被关闭"; // 发送缓冲越界
+        public const string LOG_DISPATCH_STOPPED = "连接已关闭，丢弃本帧剩余 {0} 条消息"; // 分发过程中断线
     }
 
     /// <summary>
@@ -80,5 +79,8 @@
 
         /// <summary>断线或失败原因，连接成功时为空字符串。</summary>
         public string reason;
+
+        /// <summary>产生事件时的会话序号，用于丢弃上一会话的残留事件。</summary>
+        public int sessionID;
     }
 }

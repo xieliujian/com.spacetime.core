@@ -86,7 +86,8 @@ namespace ST.Core.Network
         /// 按“2 字节长度 + 8 字节消息 ID + 负载”循环拆包。
         /// 分帧格式与协议保持一致，改动会影响服务端兼容性。
         /// </summary>
-        void ParseFrames()
+        /// <param name="sessionID">解析时所属的会话序号，用于丢弃跨会话残留。</param>
+        void ParseFrames(int sessionID)
         {
             int offset = 0;
             while (true)
@@ -127,7 +128,7 @@ namespace ST.Core.Network
                 }
 
                 offset += frameLength;
-                m_NetModule.AddEvent(msgId, payload);
+                m_NetModule.AddEvent(msgId, payload, sessionID);
                 AddDownMessageStat();
             }
 
