@@ -1,4 +1,4 @@
-using System.IO;
+﻿using System.IO;
 using ST.Core.Test;
 using UnityEditor;
 using UnityEngine;
@@ -88,6 +88,7 @@ namespace ST.Core.Editor.Test
         ///    └─ Label       (Text "×")
         /// </code>
         /// </summary>
+        /// <returns>构建完成的 Prefab 根节点，尚未保存。</returns>
         static GameObject BuildGMBoxPrefab()
         {
             var root   = MakeRoot("ui_panel_gm_box", new Color(0.05f, 0.05f, 0.10f, 0.88f));
@@ -122,6 +123,7 @@ namespace ST.Core.Editor.Test
         /// └─ Content     (内容容器)
         /// </code>
         /// </summary>
+        /// <returns>构建完成的 Prefab 根节点，尚未保存。</returns>
         static GameObject BuildTestPrefab()
         {
             var root   = MakeRoot("ui_panel_test", new Color(0f, 0f, 0f, 0.55f));
@@ -154,6 +156,7 @@ namespace ST.Core.Editor.Test
         /// └─ Content           (内容容器)
         /// </code>
         /// </summary>
+        /// <returns>构建完成的 Prefab 根节点，尚未保存。</returns>
         static GameObject BuildTestModalPrefab()
         {
             var root   = MakeRoot("ui_panel_test_modal", new Color(0f, 0f, 0f, 0.72f));
@@ -193,6 +196,7 @@ namespace ST.Core.Editor.Test
         /// <summary>
         /// 构建测试子页面 A 的 Prefab 节点树（无 Canvas，由父面板 Canvas 渲染）。
         /// </summary>
+        /// <returns>构建完成的 Prefab 根节点，尚未保存。</returns>
         static GameObject BuildPageAPrefab()
         {
             var root = new GameObject("ui_page_test_a");
@@ -265,6 +269,7 @@ namespace ST.Core.Editor.Test
         ///    └─ CountText
         /// </code>
         /// </summary>
+        /// <returns>构建完成的 Prefab 根节点，尚未保存。</returns>
         static GameObject BuildBagPrefab()
         {
             var root  = MakeRoot("ui_panel_test_bag", new Color(0.08f, 0.06f, 0.04f, 0.93f));
@@ -296,6 +301,7 @@ namespace ST.Core.Editor.Test
         /// 创建 ScrollView 节点树（ScrollRect + Viewport + Content），
         /// Content 挂 <c>GridLayoutGroup</c> + <c>ContentSizeFitter</c>。
         /// </summary>
+        /// <param name="parent">ScrollView 挂载的父节点。</param>
         /// <returns>(ScrollView 根节点 GameObject, Content RectTransform)</returns>
         static (GameObject sv, RectTransform content) AddScrollView(Transform parent)
         {
@@ -358,6 +364,8 @@ namespace ST.Core.Editor.Test
         /// <summary>
         /// 创建格子模板节点（挂 <see cref="TestBagItem"/>），默认 SetActive(false) 由调用方负责。
         /// </summary>
+        /// <param name="parent">模板节点挂载的父节点。</param>
+        /// <returns>构建完成的模板节点。</returns>
         static GameObject CreateBagItemTemplate(Transform parent)
         {
             var go   = CreateChild("ItemTemplate", parent);
@@ -448,6 +456,9 @@ namespace ST.Core.Editor.Test
         /// 确保面板铺满 PanelRoot 容器。
         /// </para>
         /// </summary>
+        /// <param name="name">Prefab 根节点名。</param>
+        /// <param name="bgColor">全屏背景颜色。</param>
+        /// <returns>带 Canvas、GraphicRaycaster、CanvasGroup 与背景的根节点。</returns>
         static GameObject MakeRoot(string name, Color bgColor)
         {
             var root = new GameObject(name);
@@ -490,6 +501,10 @@ namespace ST.Core.Editor.Test
         /// <summary>
         /// 在 <paramref name="parent"/> 下添加高度 80 的顶部标题条，返回 (titleBar, TitleText)。
         /// </summary>
+        /// <param name="parent">标题条挂载的父节点。</param>
+        /// <param name="title">标题文字。</param>
+        /// <param name="barColor">标题条背景颜色。</param>
+        /// <returns>标题条根节点与标题文本组件。</returns>
         static (GameObject bar, Text text) AddTitleBar(Transform parent, string title, Color barColor)
         {
             var bar      = CreateChild("TitleBar", parent);
@@ -515,6 +530,8 @@ namespace ST.Core.Editor.Test
         }
 
         /// <summary>在 <paramref name="parent"/> 右上角添加 80×80 关闭按钮，返回 Button 组件。</summary>
+        /// <param name="parent">关闭按钮挂载的父节点。</param>
+        /// <returns>关闭按钮组件。</returns>
         static Button AddCloseBtn(Transform parent)
         {
             var go    = CreateChild("CloseBtn", parent);
@@ -540,6 +557,7 @@ namespace ST.Core.Editor.Test
         }
 
         /// <summary>在 <paramref name="parent"/> 下添加铺满（留出 TitleBar）的内容容器。</summary>
+        /// <param name="parent">内容容器挂载的父节点。</param>
         static void AddContent(Transform parent)
         {
             var content = CreateChild("Content", parent);
@@ -553,6 +571,9 @@ namespace ST.Core.Editor.Test
         // ─── 工具方法 ────────────────────────────────────────────────────
 
         /// <summary>创建子 GameObject（含 RectTransform）并挂到 <paramref name="parent"/>。</summary>
+        /// <param name="name">子节点名。</param>
+        /// <param name="parent">父节点。</param>
+        /// <returns>创建完成的子节点。</returns>
         static GameObject CreateChild(string name, Transform parent)
         {
             var go = new GameObject(name);
@@ -562,6 +583,7 @@ namespace ST.Core.Editor.Test
         }
 
         /// <summary>将 RectTransform 拉伸为完全铺满父节点。</summary>
+        /// <param name="rt">待拉伸的 RectTransform。</param>
         static void StretchFull(RectTransform rt)
         {
             rt.anchorMin = Vector2.zero;
@@ -576,6 +598,7 @@ namespace ST.Core.Editor.Test
         /// UICamera 默认只渲染 UI 层，Prefab 若未设置正确 Layer，在 Game 视图中将不可见。
         /// </para>
         /// </summary>
+        /// <param name="go">需要设置为 UI 层的根节点。</param>
         static void SetLayerRecursive(GameObject go)
         {
             int uiLayer = LayerMask.NameToLayer("UI");
@@ -587,6 +610,9 @@ namespace ST.Core.Editor.Test
             SetLayerRecursiveImpl(go.transform, uiLayer);
         }
 
+        /// <summary>递归设置节点及其全部子节点的 Layer。</summary>
+        /// <param name="t">当前节点。</param>
+        /// <param name="layer">目标 Layer。</param>
         static void SetLayerRecursiveImpl(Transform t, int layer)
         {
             t.gameObject.layer = layer;
@@ -602,6 +628,8 @@ namespace ST.Core.Editor.Test
         }
 
         /// <summary>将 <paramref name="root"/> 保存为 Prefab，并立即 DestroyImmediate 根节点。</summary>
+        /// <param name="filename">Prefab 文件名，不含扩展名。</param>
+        /// <param name="root">待保存的根节点，保存后会被销毁。</param>
         /// <returns>保存成功返回 true。</returns>
         static bool SavePrefab(string filename, GameObject root)
         {
@@ -618,7 +646,9 @@ namespace ST.Core.Editor.Test
             return saved;
         }
 
-        /// <summary>单个 Prefab 的创建+弹窗入口。</summary>
+        /// <summary>单个 Prefab 的创建与结果弹窗入口。</summary>
+        /// <param name="filename">Prefab 文件名，不含扩展名。</param>
+        /// <param name="root">待保存的根节点。</param>
         static void CreateSingle(string filename, GameObject root)
         {
             EnsureDir();

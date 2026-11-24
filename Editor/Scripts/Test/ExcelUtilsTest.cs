@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Data;
 using System.Text;
 using UnityEditor;
@@ -12,13 +12,25 @@ namespace ST.Core.Editor.Test
     /// </summary>
     public class ExcelUtilsTest : EditorWindow
     {
+        /// <summary>待读取的 Excel 文件绝对路径。</summary>
         string m_FilePath      = string.Empty;
+
+        /// <summary>按索引读取时使用的 Sheet 序号，从 0 开始。</summary>
         int    m_SheetIndex    = 0;
+
+        /// <summary>按名称读取时使用的 Sheet 名。</summary>
         string m_SheetName     = string.Empty;
+
+        /// <summary>列名所在行的行索引，从 0 开始。</summary>
         int    m_HeaderRowIndex = 0;
+
+        /// <summary>数据起始行的行索引，从 0 开始。</summary>
         int    m_StartRowIndex  = 1;
+
+        /// <summary>Console 最多打印的数据行数。</summary>
         int    m_MaxPrintRows   = 10;
 
+        /// <summary>窗口内容的滚动位置。</summary>
         Vector2 m_Scroll;
 
         // ─── 菜单入口 ────────────────────────────────────────────────────
@@ -32,6 +44,7 @@ namespace ST.Core.Editor.Test
 
         // ─── GUI ─────────────────────────────────────────────────────────
 
+        /// <summary>绘制参数输入区与读取按钮。</summary>
         void OnGUI()
         {
             m_Scroll = EditorGUILayout.BeginScrollView(m_Scroll);
@@ -68,12 +81,14 @@ namespace ST.Core.Editor.Test
 
         // ─── 操作 ────────────────────────────────────────────────────────
 
+        /// <summary>按当前 Sheet 索引读取并打印表格。</summary>
         void OnReadByIndex()
         {
             var table = ExcelUtils.ReadExcel(m_FilePath, m_SheetIndex, m_HeaderRowIndex, m_StartRowIndex);
             PrintTable(table, $"Sheet[{m_SheetIndex}]", m_FilePath);
         }
 
+        /// <summary>按当前 Sheet 名称读取并打印表格，名称为空时只输出警告。</summary>
         void OnReadByName()
         {
             if (string.IsNullOrEmpty(m_SheetName))
@@ -86,6 +101,7 @@ namespace ST.Core.Editor.Test
             PrintTable(table, $"Sheet \"{m_SheetName}\"", m_FilePath);
         }
 
+        /// <summary>打印文件中全部 Sheet 的名称与序号。</summary>
         void OnPrintSheetNames()
         {
             var names = ExcelUtils.GetSheetNames(m_FilePath);
@@ -105,6 +121,10 @@ namespace ST.Core.Editor.Test
 
         // ─── 打印工具 ────────────────────────────────────────────────────
 
+        /// <summary>把表格的列名与前若干行格式化输出到 Console。</summary>
+        /// <param name="table">待打印的表格，允许为空。</param>
+        /// <param name="label">打印标题中使用的表格标识。</param>
+        /// <param name="filePath">打印标题中使用的文件路径。</param>
         void PrintTable(DataTable table, string label, string filePath)
         {
             if (table == null)
@@ -142,6 +162,7 @@ namespace ST.Core.Editor.Test
 
         // ─── 辅助 UI ─────────────────────────────────────────────────────
 
+        /// <summary>绘制文件路径输入框与浏览按钮。</summary>
         void DrawFileField()
         {
             EditorGUILayout.BeginHorizontal();

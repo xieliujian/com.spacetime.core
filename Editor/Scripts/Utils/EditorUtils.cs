@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.IO;
 using System.Text;
 using System.Diagnostics;
@@ -36,7 +36,11 @@ namespace ST.Core
             return "Assets" + System.IO.Path.GetFullPath(absPath).Substring(assetRootPath.Length).Replace("\\", "/");
         }
 
-        /// <summary>将路径规范为当前编辑器平台常用分隔符（Windows 用 <c>\</c>，macOS 用 <c>/</c>）。</summary>
+        /// <summary>
+        /// 将路径规范为当前编辑器平台常用分隔符（Windows 用 <c>\</c>，macOS 用 <c>/</c>）。
+        /// </summary>
+        /// <param name="path">待规范化的路径，调用方需保证非空。</param>
+        /// <returns>替换分隔符后的路径。</returns>
         public static string FormatPath(string path)
         {
             path = path.Replace("/", "\\");
@@ -49,6 +53,7 @@ namespace ST.Core
 
         /// <summary>计算文件内容的 MD5 十六进制小写字符串。</summary>
         /// <param name="file">文件完整路径。</param>
+        /// <returns>32 位小写 MD5 文本；读取失败时抛出异常。</returns>
         public static string Md5file(string file)
         {
             try
@@ -77,6 +82,7 @@ namespace ST.Core
         /// <param name="cmd">可执行文件路径（Windows）或 shell 参数（macOS）。</param>
         /// <param name="args">命令行参数。</param>
         /// <param name="workingDir">工作目录，为空时不指定。</param>
+        /// <returns>已启动的进程；macOS 分支会等待进程退出后再返回。</returns>
         public static Process CreateShellExProcess(string cmd, string args, string workingDir = "")
         {
 #if UNITY_EDITOR_OSX
@@ -88,6 +94,7 @@ namespace ST.Core
             if (!string.IsNullOrEmpty(workingDir))
                 pStartInfo.WorkingDirectory = workingDir;
             var p = Process.Start(pStartInfo);
+            // 读取标准输出以避免子进程写入管道时阻塞，当前实现不使用输出内容。
             string strOutput = p.StandardOutput.ReadToEnd();
             p.WaitForExit();
             return p;
@@ -106,6 +113,9 @@ namespace ST.Core
         }
 
         /// <summary>执行批处理或脚本后关闭进程句柄。</summary>
+        /// <param name="batfile">批处理或脚本文件路径。</param>
+        /// <param name="args">命令行参数。</param>
+        /// <param name="workingDir">工作目录，为空时不指定。</param>
         public static void RunBat(string batfile, string args, string workingDir = "")
         {
             var p = CreateShellExProcess(batfile, args, workingDir);
@@ -115,6 +125,7 @@ namespace ST.Core
         /// <summary>同步启动进程并读取标准错误；有错误输出时记日志并返回 <c>false</c>。</summary>
         /// <param name="file">可执行文件路径。</param>
         /// <param name="args">命令行参数。</param>
+        /// <returns>标准错误为空时返回 true，不检查进程退出码。</returns>
         public static bool ExecuteProcess(string file, string args)
         {
             var info = new ProcessStartInfo()
@@ -132,6 +143,7 @@ namespace ST.Core
             var err = string.Empty;
             using (var process = Process.Start(info))
             {
+                // 只根据标准错误判断执行结果，标准输出仅用于日志。
                 err = process.StandardError.ReadToEnd();
                 if (!string.IsNullOrEmpty(err))
                     UnityEngine.Debug.LogError(err);

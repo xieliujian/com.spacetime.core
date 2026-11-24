@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEditor;
@@ -8,7 +8,8 @@ using UnityEngine.Rendering;
 namespace ST.Core
 {
     /// <summary>
-    /// Shader 变体收集辅助：校验材质上 Pass 与关键字组合是否可构造有效 <see cref="ShaderVariantCollection.ShaderVariant"/>。
+    /// Shader 变体收集辅助：校验材质上 Pass 与关键字组合是否可构造有效
+    /// <see cref="ShaderVariantCollection.ShaderVariant"/>。
     /// </summary>
     public class ShaderVariantTools
     {
@@ -23,7 +24,8 @@ namespace ST.Core
         {
             try
             {
-                ShaderVariantCollection.ShaderVariant sv = new ShaderVariantCollection.ShaderVariant(mat.shader, passType, keywords);
+                ShaderVariantCollection.ShaderVariant sv =
+                    new ShaderVariantCollection.ShaderVariant(mat.shader, passType, keywords);
                 return true;
             }
             catch (Exception)

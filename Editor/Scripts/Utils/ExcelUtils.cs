@@ -1,4 +1,4 @@
-using System.Data;
+﻿using System.Data;
 using System.IO;
 using ExcelDataReader;
 
@@ -18,7 +18,8 @@ namespace ST.Core
         /// <param name="headerRowIndex">列名所在行的行索引（0-based），默认 0。</param>
         /// <param name="startRowIndex">数据起始行的行索引（0-based），默认 1。</param>
         /// <returns>读取成功返回 DataTable，文件不存在或读取失败返回 null。</returns>
-        public static DataTable ReadExcel(string filePath, int sheetIndex = 0, int headerRowIndex = 0, int startRowIndex = 1)
+        public static DataTable ReadExcel(string filePath, int sheetIndex = 0,
+            int headerRowIndex = 0, int startRowIndex = 1)
         {
             if (string.IsNullOrEmpty(filePath) || !File.Exists(filePath))
                 return null;
@@ -44,7 +45,8 @@ namespace ST.Core
         /// <param name="headerRowIndex">列名所在行的行索引（0-based），默认 0。</param>
         /// <param name="startRowIndex">数据起始行的行索引（0-based），默认 1。</param>
         /// <returns>找到指定 Sheet 返回 DataTable，否则返回 null。</returns>
-        public static DataTable ReadExcel(string filePath, string sheetName, int headerRowIndex = 0, int startRowIndex = 1)
+        public static DataTable ReadExcel(string filePath, string sheetName,
+            int headerRowIndex = 0, int startRowIndex = 1)
         {
             if (string.IsNullOrEmpty(filePath) || !File.Exists(filePath))
                 return null;
@@ -87,6 +89,13 @@ namespace ST.Core
             return names.ToArray();
         }
 
+        /// <summary>
+        /// 按表头行与数据起始行把当前 Sheet 读成 DataTable。
+        /// </summary>
+        /// <param name="reader">已定位到目标 Sheet 的读取器。</param>
+        /// <param name="headerRowIndex">列名所在行的行索引（0-based）。</param>
+        /// <param name="startRowIndex">数据起始行的行索引（0-based）。</param>
+        /// <returns>读取完成的 DataTable，所有单元格统一转成字符串。</returns>
         static DataTable ReadSheet(IExcelDataReader reader, int headerRowIndex, int startRowIndex)
         {
             var dataTable = new DataTable();
@@ -94,23 +103,59 @@ namespace ST.Core
 
             while (reader.Read())
             {
+                // 表头行只用于建列，不写入数据行。
                 if (currentRow == headerRowIndex)
                 {
                     for (int col = 0; col < reader.FieldCount; col++)
                     {
-                        string colName = reader.GetValue(col)?.ToString() ?? string.Empty;
-                        if (!dataTable.Columns.Contains(colName))
+                        object headerValue = reader.GetValue(col);
+                        string colName = string.Empty;
+                        if (headerValue != null)
+                        {
+                            colName = headerValue.ToString();
+                        }
+
+                        bool isColumnNameNull = colName == null;
+                        if (isColumnNameNull)
+                        {
+                            colName = string.Empty;
+                        }
+
+                        // 空表头或重名表头追加列序号，保证 DataColumn 名称唯一。
+                        bool isColumnNameExists = dataTable.Columns.Contains(colName);
+                        if (!isColumnNameExists)
+                        {
                             dataTable.Columns.Add(new DataColumn(colName));
+                        }
                         else
+                        {
                             dataTable.Columns.Add(new DataColumn(colName + "_" + col));
+                        }
                     }
                 }
                 else if (currentRow >= startRowIndex)
                 {
+                    // 单元格数量取表头列数与当前行字段数的较小值，超出表头的字段丢弃。
                     var dataRow = dataTable.NewRow();
                     int colCount = System.Math.Min(dataTable.Columns.Count, reader.FieldCount);
                     for (int col = 0; col < colCount; col++)
-                        dataRow[col] = reader.GetValue(col)?.ToString() ?? string.Empty;
+                    {
+                        object cellValue = reader.GetValue(col);
+                        string cellText = string.Empty;
+                        if (cellValue != null)
+                        {
+                            cellText = cellValue.ToString();
+                        }
+
+                        bool isCellTextNull = cellText == null;
+                        if (isCellTextNull)
+                        {
+                            cellText = string.Empty;
+                        }
+
+                        dataRow[col] = cellText;
+                    }
+
                     dataTable.Rows.Add(dataRow);
                 }
 

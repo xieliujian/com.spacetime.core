@@ -91,6 +91,13 @@
         public const string ARG_SCOPES = "-resourceScopes"; // 新式类别参数
         public const string ARG_CLEAN = "-resourceClean"; // 打包前清空输出目录
 
+        // 平台文本值
+        public const string PLATFORM_VALUE_ANDROID = "android"; // Android 平台文本
+        public const string PLATFORM_VALUE_IOS = "ios"; // iOS 平台文本
+        public const string PLATFORM_VALUE_IPHONE = "iphone"; // iPhone 平台文本，等价于 ios
+        public const string PLATFORM_VALUE_STANDALONE = "standalone"; // Standalone 平台文本
+        public const string PLATFORM_VALUE_WINDOWS = "windows"; // Windows 平台文本
+
         // 日志模板
         public const string LOG_OPTIONS_NULL = "资源打包：选项为空。"; // 选项为空
         public const string LOG_OUTPUT_MISSING = "资源打包：输出根目录为空。"; // 缺输出目录
