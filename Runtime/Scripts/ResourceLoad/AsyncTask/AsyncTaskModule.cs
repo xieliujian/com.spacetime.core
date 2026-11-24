@@ -1,11 +1,11 @@
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 
 namespace ST.Core
 {
     /// <summary>
-    /// 默认的 <see cref="BaseAsyncTaskManager"/> 实现：在 <see cref="DoUpdate"/> 中遍历任务、调用 <see cref="AsyncTask.Update"/>，并移除已结束任务。
+    /// 默认的 <see cref="BaseAsyncTaskModule"/> 实现：在 <see cref="DoUpdate"/> 中遍历任务、调用 <see cref="AsyncTask.Update"/>，并移除已结束任务。
     /// </summary>
-    public class AsyncTaskManager : BaseAsyncTaskManager
+    public class AsyncTaskModule : BaseAsyncTaskModule
     {
         /// <summary>当前所有活跃任务列表。</summary>
         List<AsyncTask> m_TaskList = new List<AsyncTask>(CommonDefine.s_ListConst_100);

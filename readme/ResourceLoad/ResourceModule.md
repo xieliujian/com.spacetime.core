@@ -1,4 +1,4 @@
-# 资源加载系统
+﻿# 资源加载系统
 
 [← 返回主页](../../README.md)
 
@@ -27,17 +27,17 @@ public class GameResourceConfig : IResourceConfig
 
 ### 2. 初始化加载器
 
-在游戏启动阶段完成初始化（依赖 `AsyncTaskManager` 的 `DoUpdate` 驱动异步任务）：
+在游戏启动阶段完成初始化（依赖 `AsyncTaskModule` 的 `DoUpdate` 驱动异步任务）：
 
 ```csharp
 using ST.Core;
 
 // 异步任务管理器（须每帧调用 DoUpdate）
-var asyncMgr = new AsyncTaskManager();
+var asyncMgr = new AsyncTaskModule();
 asyncMgr.DoInit();
 
 // 资源加载器
-var resLoad = new ResourceLoad();
+var resLoad = new ResourceModule();
 resLoad.SetConfig(new GameResourceConfig());
 resLoad.DoInit();  // 解析 assetbundledb.txt，构建 Bundle 字典
 ```
@@ -46,11 +46,11 @@ resLoad.DoInit();  // 解析 assetbundledb.txt，构建 Bundle 字典
 
 ```csharp
 // 加载 Prefab
-var prefab = ResourceLoad.instance.LoadResourceSync(
+var prefab = ResourceModule.instance.LoadResourceSync(
     "ui/panel/", "MainPanel", ".prefab") as GameObject;
 
 // 加载 Texture
-var tex = ResourceLoad.instance.LoadResourceSync(
+var tex = ResourceModule.instance.LoadResourceSync(
     "art/texture/", "hero_icon", ".png",
     ResourceType.Default) as Texture2D;
 ```
@@ -58,7 +58,7 @@ var tex = ResourceLoad.instance.LoadResourceSync(
 ### 4. 异步加载资源
 
 ```csharp
-ResourceLoad.instance.LoadResourceAsync(
+ResourceModule.instance.LoadResourceAsync(
     "ui/panel/", "MainPanel", ".prefab",
     (obj) => {
         var prefab = obj as GameObject;
@@ -69,7 +69,7 @@ ResourceLoad.instance.LoadResourceAsync(
 ### 5. 异步加载场景
 
 ```csharp
-ResourceLoad.instance.LoadSceneAsync(
+ResourceModule.instance.LoadSceneAsync(
     "scenes/", "BattleScene", ".unity",
     (progress) => {
         loadingBar.value = progress;
@@ -85,7 +85,7 @@ ResourceLoad.instance.LoadSceneAsync(
 
 ```csharp
 // 强制使用 AssetBundle（验证包体时使用）
-ResourceLoad.useAssetBundle = true;
+ResourceModule.useAssetBundle = true;
 ```
 
 ---
@@ -128,9 +128,9 @@ Packager.RegisterConfig(new GameResourceConfig());
 
 ---
 
-### ResourceLoad（主入口）
+### ResourceModule（主入口）
 
-继承 `BaseResourceLoad`，实现 `ILogicModule` 生命周期：
+继承 `BaseResourceModule`，实现 `ILogicModule` 生命周期：
 
 | 成员 | 说明 |
 |------|------|
@@ -188,7 +188,7 @@ AB名称\t序号ID
 
 ### FilePathHelper
 
-运行时路径拼接工具，由 `BaseResourceLoad.SetConfig` 自动创建：
+运行时路径拼接工具，由 `BaseResourceModule.SetConfig` 自动创建：
 
 | 方法 | 说明 |
 |------|------|
@@ -227,11 +227,11 @@ public interface IAssetDecorator
 
 ### 异步任务系统
 
-`AsyncTaskManager` 每帧驱动所有 `AsyncTask` 子类，完成后自动移除：
+`AsyncTaskModule` 每帧驱动所有 `AsyncTask` 子类，完成后自动移除：
 
 | 类 | 说明 |
 |----|------|
-| `AsyncTaskManager` | 默认任务管理器，须每帧调用 `DoUpdate()` |
+| `AsyncTaskModule` | 默认任务管理器，须每帧调用 `DoUpdate()` |
 | `AsyncAssetRequest` | Bundle 内单个资产异步加载 |
 | `AsyncBundleRequest` | Bundle 文件异步加载（自动等待依赖完成） |
 | `AsyncSceneRequest` | 运行时场景异步加载 |
@@ -243,7 +243,7 @@ public interface IAssetDecorator
 ## 架构
 
 ```
-ResourceLoad（唯一公开入口）
+ResourceModule（唯一公开入口）
   ├── UNITY_EDITOR & !useAssetBundle
   │     └── EditorResourceLoad
   │           ├── AssetDatabase.LoadAssetAtPath（同步）
@@ -258,7 +258,7 @@ ResourceLoad（唯一公开入口）
               │     └── AsyncSceneRequest（场景异步加载）
               └── AssetBundleDBMgr（解析 assetbundledb.txt，提供名称枚举与依赖查询）
 
-AsyncTaskManager（每帧驱动所有 AsyncTask）
+AsyncTaskModule（每帧驱动所有 AsyncTask）
 
 IAssetDecorator 链（BeforeLoad → 加载 → AfterLoad）
   └── LuaAssetDecorator（string/byte[] ↔ TextAsset 互转）

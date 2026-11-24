@@ -1,4 +1,4 @@
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using UnityEngine;
 
 namespace ST.Core.UI
@@ -6,7 +6,7 @@ namespace ST.Core.UI
     /// <summary>
     /// UI 配置注册表（静态单例字典）。
     /// 上层工程在游戏启动时调用 <see cref="Register"/> 注册所有面板/页面数据；
-    /// <see cref="UIManager"/> 在打开面板时通过 <see cref="GetData"/> 查询配置。
+    /// <see cref="UIModule"/> 在打开面板时通过 <see cref="GetData"/> 查询配置。
     /// </summary>
     public static class UIDataTable
     {

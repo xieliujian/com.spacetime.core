@@ -37,10 +37,10 @@ namespace ST.Core
     /// <summary>
     /// 资源加载抽象基类：定义同步/异步加载与场景加载接口，管理 <see cref="IAssetDecorator"/> 链，并通过 <see cref="SetConfig"/> 注入路径配置。
     /// </summary>
-    public abstract class BaseResourceLoad : ILogicModule
+    public abstract class BaseResourceModule : ILogicModule
     {
         /// <summary>当前派生实例的全局引用，由构造函数赋值。</summary>
-        protected static BaseResourceLoad s_Instance = null;
+        protected static BaseResourceModule s_Instance = null;
 
         /// <summary>已注册的资产装饰器列表（去重）。</summary>
         protected readonly List<IAssetDecorator> m_Decorators = new List<IAssetDecorator>(CommonDefine.s_ListConst_8);
@@ -51,13 +51,13 @@ namespace ST.Core
         protected FilePathHelper m_FilePathHelper;
 
         /// <summary>全局资源加载器实例（与最后一次构造的派生类对应）。</summary>
-        public static BaseResourceLoad instance
+        public static BaseResourceModule instance
         {
             get { return s_Instance; }
         }
 
         /// <summary>构造时注册 <see cref="instance"/> 并清空装饰器列表。</summary>
-        public BaseResourceLoad()
+        public BaseResourceModule()
         {
             s_Instance = this;
             m_Decorators.Clear();

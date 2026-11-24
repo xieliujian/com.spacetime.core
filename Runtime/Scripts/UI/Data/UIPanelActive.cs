@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
@@ -9,7 +9,7 @@ namespace ST.Core.UI
     /// 管理单个面板（<see cref="AbstractPanel"/>）的完整生命周期：
     /// 异步资源加载、GameObject 实例化、子页面（<see cref="AbstractPage"/>）的挂载与卸载、
     /// 可见性与交互状态的刷新。
-    /// <para>由 <see cref="UIManager"/> 创建并持有，外部不应直接构造。</para>
+    /// <para>由 <see cref="UIModule"/> 创建并持有，外部不应直接构造。</para>
     /// </summary>
     public class UIPanelActive
     {
@@ -18,7 +18,7 @@ namespace ST.Core.UI
         readonly int           m_PanelID;
         readonly int           m_UIID;
         readonly PanelSortLayer m_SortLayer;
-        readonly BaseResourceLoad m_ResourceLoad;
+        readonly BaseResourceModule m_ResourceLoad;
         readonly UIRoot        m_UIRoot;
 
         AbstractPanel m_Panel;
@@ -27,7 +27,7 @@ namespace ST.Core.UI
         bool          m_IsLoading;
         object[]      m_PendingArgs;
 
-        // 插入顺序，供 UIManager 稳定排序使用
+        // 插入顺序，供 UIModule 稳定排序使用
         internal int insertOrder;
 
         readonly List<PageInfo> m_PageInfos       = new List<PageInfo>(CommonDefine.s_ListConst_8);
@@ -35,7 +35,7 @@ namespace ST.Core.UI
 
         // ─── 属性 ──────────────────────────────────────────────────────────
 
-        /// <summary>本次运行实例的唯一 ID（自增），可通过 <see cref="UIManager.ClosePanelByPanelID"/> 精确关闭。</summary>
+        /// <summary>本次运行实例的唯一 ID（自增），可通过 <see cref="UIModule.ClosePanelByPanelID"/> 精确关闭。</summary>
         public int panelID    { get { return m_PanelID; } }
 
         /// <summary>面板类型 ID（对应上层 <c>UIID</c> 枚举的 int 值）。</summary>
@@ -44,20 +44,20 @@ namespace ST.Core.UI
         /// <summary>面板的 MonoBehaviour 实例；异步加载完成前为 <c>null</c>。</summary>
         public AbstractPanel panel { get { return m_Panel; } }
 
-        /// <summary>面板排序层级，由 <see cref="UIData.sortLayer"/> 或 <see cref="UIManager.OpenTopPanel"/> 决定。</summary>
+        /// <summary>面板排序层级，由 <see cref="UIData.sortLayer"/> 或 <see cref="UIModule.OpenTopPanel"/> 决定。</summary>
         public PanelSortLayer sortLayer { get { return m_SortLayer; } }
 
         /// <summary>面板在同层内的自定义排序索引；加载完成前返回 0。</summary>
         public int sortIndex  { get { return m_Panel != null ? m_Panel.sortIndex : 0; } }
 
-        /// <summary>面板是否处于可见状态；由 <see cref="UIManager"/> 根据 HideMask 计算后写入。</summary>
+        /// <summary>面板是否处于可见状态；由 <see cref="UIModule"/> 根据 HideMask 计算后写入。</summary>
         public bool isVisible
         {
             get { return m_IsVisible; }
             set { ApplyVisible(value); }
         }
 
-        /// <summary>面板是否可交互；由 <see cref="UIManager"/> 根据 HideMask 计算后写入。</summary>
+        /// <summary>面板是否可交互；由 <see cref="UIModule"/> 根据 HideMask 计算后写入。</summary>
         public bool isInteract
         {
             get { return m_IsInteract; }
@@ -73,7 +73,7 @@ namespace ST.Core.UI
         // ─── 构造 ──────────────────────────────────────────────────────────
 
         internal UIPanelActive(int uiID, PanelSortLayer sortLayer,
-                               BaseResourceLoad resourceLoad, UIRoot uiRoot)
+                               BaseResourceModule resourceLoad, UIRoot uiRoot)
         {
             m_PanelID      = ++s_PanelIDCounter;
             m_UIID         = uiID;
@@ -167,8 +167,8 @@ namespace ST.Core.UI
             m_Panel.InternalOpen(m_PendingArgs);
             m_PendingArgs = null;
 
-            // 通知 UIManager 重新排序（面板就绪后 sortingOrder 才能被赋值）
-            UIManager.S?.NotifyPanelReady(this);
+            // 通知 UIModule 重新排序（面板就绪后 sortingOrder 才能被赋值）
+            UIModule.S?.NotifyPanelReady(this);
         }
 
         /// <summary>关闭面板。<paramref name="destroy"/> 为 <c>true</c> 时销毁 GameObject，否则仅 SetActive(false)。</summary>

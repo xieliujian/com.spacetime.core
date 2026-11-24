@@ -1,19 +1,19 @@
-using ST.Core.UI;
+﻿using ST.Core.UI;
 using UnityEngine;
 using UnityEngine.UI;
 
 namespace ST.Core.Test
 {
     /// <summary>
-    /// GM 调试面板的 UIManager 适配层。
+    /// GM 调试面板的 UIModule 适配层。
     /// <para>
     /// 挂载于 <c>ui_panel_gm_box.prefab</c> 根节点，使该 Prefab 满足
     /// <see cref="UIPanelActive"/> 对 <see cref="AbstractPanel"/> 的要求，
-    /// 从而可通过 <c>UIManager.S.OpenPanel(TestUIID.GMBoxPanel)</c> 正常加载。
+    /// 从而可通过 <c>UIModule.S.OpenPanel(TestUIID.GMBoxPanel)</c> 正常加载。
     /// </para>
     /// <para>
     /// 实际 GM 指令输入/输出由场景中挂载的 <see cref="TestGMBoxPanel"/>（IMGUI）负责；
-    /// 本类仅在 UIManager 生命周期回调中控制该 IMGUI 面板的显示与隐藏。
+    /// 本类仅在 UIModule 生命周期回调中控制该 IMGUI 面板的显示与隐藏。
     /// </para>
     /// </summary>
     public class GMBoxPanel : AbstractPanel
@@ -89,8 +89,8 @@ namespace ST.Core.Test
         /// <summary>关闭按钮点击回调。</summary>
         void OnClickClose()
         {
-            if (UIManager.S != null)
-                UIManager.S.ClosePanel(uiID);
+            if (UIModule.S != null)
+                UIModule.S.ClosePanel(uiID);
         }
     }
 }

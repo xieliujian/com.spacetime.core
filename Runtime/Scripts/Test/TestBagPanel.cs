@@ -1,4 +1,4 @@
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using ST.Core.UI;
 using UnityEngine;
 using UnityEngine.UI;
@@ -199,7 +199,7 @@ namespace ST.Core.Test
         /// <summary>关闭按钮点击回调。</summary>
         void CloseSelf()
         {
-            UIManager.S?.ClosePanel(uiID);
+            UIModule.S?.ClosePanel(uiID);
         }
     }
 }

@@ -45,9 +45,9 @@ namespace ST.Core.Test
         // ──────────────────────────────────────────
 
         /// <summary>异步任务管理器。</summary>
-        AsyncTaskManager m_AsyncTaskMgr;
-        /// <summary>当前 ResourceLoad 实例引用，用于切换模式时重新初始化。</summary>
-        ResourceLoad m_ResLoad;
+        AsyncTaskModule m_AsyncTaskMgr;
+        /// <summary>当前 ResourceModule 实例引用，用于切换模式时重新初始化。</summary>
+        ResourceModule m_ResLoad;
         /// <summary>异步加载进度（0~1），用于 OnGUI 进度条显示。</summary>
         float m_AsyncProgress = 0f;
         /// <summary>当前操作日志，显示在屏幕状态面板中。</summary>
@@ -60,10 +60,10 @@ namespace ST.Core.Test
         /// <summary>初始化异步任务管理器与资源加载器。</summary>
         void Start()
         {
-            m_AsyncTaskMgr = new AsyncTaskManager();
+            m_AsyncTaskMgr = new AsyncTaskModule();
             m_AsyncTaskMgr.DoInit();
 
-            m_ResLoad = new ResourceLoad();
+            m_ResLoad = new ResourceModule();
             m_ResLoad.SetConfig(new TestResourceConfig());
             m_ResLoad.DoInit();
 
@@ -147,7 +147,7 @@ namespace ST.Core.Test
         /// <summary>同步加载 Prefab，成功时打印对象名称。</summary>
         void LoadPrefabSync()
         {
-            var obj = ResourceLoad.instance.LoadResourceSync(
+            var obj = ResourceModule.instance.LoadResourceSync(
                 prefabPath, prefabName, prefabSuffix) as GameObject;
 
             if (obj != null)
@@ -168,7 +168,7 @@ namespace ST.Core.Test
             m_Log = "[异步 Prefab] 请求已发出...";
             m_AsyncProgress = 0.01f;
 
-            ResourceLoad.instance.LoadResourceAsync(
+            ResourceModule.instance.LoadResourceAsync(
                 prefabPath, prefabName, prefabSuffix,
                 (obj) =>
                 {
@@ -190,7 +190,7 @@ namespace ST.Core.Test
         /// <summary>同步加载 Texture，成功时打印尺寸信息。</summary>
         void LoadTextureSync()
         {
-            var tex = ResourceLoad.instance.LoadResourceSync(
+            var tex = ResourceModule.instance.LoadResourceSync(
                 texturePath, textureName, textureSuffix) as Texture2D;
 
             if (tex != null)
@@ -211,7 +211,7 @@ namespace ST.Core.Test
             m_Log = "[异步 Texture] 请求已发出...";
             m_AsyncProgress = 0.01f;
 
-            ResourceLoad.instance.LoadResourceAsync(
+            ResourceModule.instance.LoadResourceAsync(
                 texturePath, textureName, textureSuffix,
                 (obj) =>
                 {
@@ -234,7 +234,7 @@ namespace ST.Core.Test
         /// <summary>同步加载指定路径下全部资源，打印每项名称。</summary>
         void LoadAllSync()
         {
-            var objs = ResourceLoad.instance.LoadAllResourceSync(
+            var objs = ResourceModule.instance.LoadAllResourceSync(
                 prefabPath, prefabName, prefabSuffix);
 
             if (objs != null && objs.Length > 0)
@@ -263,7 +263,7 @@ namespace ST.Core.Test
             m_Log = "[异步场景] 请求已发出...";
             m_AsyncProgress = 0.01f;
 
-            ResourceLoad.instance.LoadSceneAsync(
+            ResourceModule.instance.LoadSceneAsync(
                 scenePath, sceneName, sceneSuffix,
                 (progress) =>
                 {
@@ -280,7 +280,7 @@ namespace ST.Core.Test
         /// <summary>同步加载 Lua 字节码（ResourceType.Bytes），打印字节长度。</summary>
         void LoadLuaSync()
         {
-            var bytes = ResourceLoad.instance.LoadResourceSync(
+            var bytes = ResourceModule.instance.LoadResourceSync(
                 luaPath, luaName, luaSuffix,
                 ResourceType.Bytes) as byte[];
 
@@ -301,12 +301,12 @@ namespace ST.Core.Test
         {
             m_ResLoad.DoClose();
 
-            ResourceLoad.useAssetBundle = !ResourceLoad.useAssetBundle;
+            ResourceModule.useAssetBundle = !ResourceModule.useAssetBundle;
 
             m_ResLoad.DoInit();
 
-            m_Log = string.Format("useAssetBundle = {0}", ResourceLoad.useAssetBundle);
-            STLogger.LogInfoF("[TestResourceLoad] 切换 AssetBundle 模式：{0}", ResourceLoad.useAssetBundle);
+            m_Log = string.Format("useAssetBundle = {0}", ResourceModule.useAssetBundle);
+            STLogger.LogInfoF("[TestResourceLoad] 切换 AssetBundle 模式：{0}", ResourceModule.useAssetBundle);
         }
 
         // ══════════════════════════════════════════

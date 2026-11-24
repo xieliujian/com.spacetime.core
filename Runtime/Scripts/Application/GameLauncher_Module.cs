@@ -42,22 +42,22 @@ namespace ST.Core.Launch
                 return;
             }
 
-            AsyncTaskManager asyncTaskManager = new AsyncTaskManager();
+            AsyncTaskModule asyncTaskManager = new AsyncTaskModule();
             modules.Add(asyncTaskManager);
 
-            ResourceLoad resourceLoad = new ResourceLoad();
+            ResourceModule resourceLoad = new ResourceModule();
             resourceLoad.SetConfig(resourceConfig);
             modules.Add(resourceLoad);
 
             UIRoot uiRoot = ResolveUIRoot();
-            UIManager uiManager = new UIManager();
+            UIModule uiManager = new UIModule();
             uiManager.Setup(resourceLoad, uiRoot);
             modules.Add(uiManager);
 
-            MsgDispatcher msgDispatcher = new MsgDispatcher();
+            MsgModule msgDispatcher = new MsgModule();
             modules.Add(msgDispatcher);
 
-            NetManager netManager = new NetManager();
+            NetModule netManager = new NetModule();
             modules.Add(netManager);
 
             LaunchModule launchModule = new LaunchModule();
@@ -71,7 +71,7 @@ namespace ST.Core.Launch
             UIRoot uiRoot = FindObjectOfType<UIRoot>();
             if (uiRoot == null)
             {
-                STLogger.LogWarning("GameLauncher 未找到 UIRoot，UIManager 打开面板时将会失败。");
+                STLogger.LogWarning("GameLauncher 未找到 UIRoot，UIModule 打开面板时将会失败。");
             }
 
             return uiRoot;

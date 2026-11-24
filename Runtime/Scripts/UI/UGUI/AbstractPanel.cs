@@ -1,4 +1,4 @@
-using UnityEngine;
+﻿using UnityEngine;
 
 namespace ST.Core.UI
 {
@@ -35,7 +35,7 @@ namespace ST.Core.UI
 
         /// <summary>
         /// 面板对下层面板的遮挡行为。
-        /// 打开此面板后 <see cref="UIManager"/> 会根据此值自动刷新下层的可见性与交互性。
+        /// 打开此面板后 <see cref="UIModule"/> 会根据此值自动刷新下层的可见性与交互性。
         /// </summary>
         public virtual PanelHideMask hideMask => PanelHideMask.None;
 

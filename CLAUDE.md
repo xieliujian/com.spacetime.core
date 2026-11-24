@@ -1,4 +1,4 @@
-# CLAUDE.md
+﻿# CLAUDE.md
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
@@ -30,9 +30,9 @@ The main framework is structured as follows:
   - **注意**：`Debugger` 类已作为 `STLogger` 的私有嵌套类存在，外部不可直接访问
 
 - **Runtime/Scripts/Network/** - Network communication layer
-  - `NetManager` - Singleton network manager, handles socket connections and message queuing
+  - `NetModule` - Singleton network manager, handles socket connections and message queuing
   - `SocketClient` - TCP socket client implementation
-  - `MsgDispatcher` - Message dispatcher supporting both Protobuf and FlatBuffers
+  - `MsgModule` - Message dispatcher supporting both Protobuf and FlatBuffers
   - `ProtobufProcFun` / `FlatBufferProcFun` - Message processing function interfaces
 
 - **Runtime/Scripts/Middleware/** - Third-party libraries
@@ -86,7 +86,7 @@ Register business modules in `GameLauncher.CollectBusinessModules(List<ILogicMod
 Modules that need a global instance can derive from `TLogicModule<T>` and use `S`.
 
 ### Network Architecture
-- **Message Flow**: SocketClient → NetManager (event queue) → MsgDispatcher → Message handlers
+- **Message Flow**: SocketClient → NetModule (event queue) → MsgModule → Message handlers
 - **Serialization**: Supports both Protobuf and FlatBuffers (configurable via `IMsgType`)
 - **Thread Safety**: Network messages are queued and processed on the main thread
 
@@ -222,7 +222,7 @@ public enum PanelSortLayer : byte { ... }
 /// <summary>
 /// UI 系统总控制器，负责所有面板的打开/关闭/排序/可见性。
 /// </summary>
-public class UIManager : IManager { ... }
+public class UIModule : IManager { ... }
 ```
 
 #### 方法（含私有）
@@ -248,8 +248,8 @@ UIPanelActive FindRunningByUIID(int uiID) { ... }
 单行内联形式（内容能一句话说清时）：
 
 ```csharp
-/// <summary>全局 UIManager 单例引用。</summary>
-static UIManager s_Instance;
+/// <summary>全局 UIModule 单例引用。</summary>
+static UIModule s_Instance;
 
 /// <summary>日志写入器，负责将格式化后的日志持久化。</summary>
 LogFileWriter m_Writer;

@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 namespace ST.Core.Network
 {
     /// <summary>
-    /// 网络消息序列化后端选择，供 <see cref="MsgDispatcher"/> 使用。
+    /// 网络消息序列化后端选择，供 <see cref="MsgModule"/> 使用。
     /// </summary>
     public enum IMsgType
     {

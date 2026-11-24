@@ -6,12 +6,12 @@ using System.IO;
 namespace ST.Core.Network
 {
     /// <summary>
-    /// 网络单例管理器：维护 <see cref="SocketClient"/>、连接事件，并在主线程轮询处理消息队列后分发给 <see cref="MsgDispatcher"/> 与 <see cref="onMsgEvent"/>。
+    /// 网络模块：维护 <see cref="SocketClient"/>、连接事件，并在主线程轮询处理消息队列后分发给 <see cref="MsgModule"/> 与 <see cref="onMsgEvent"/>。
     /// </summary>
-    public class NetManager : ILogicModule
+    public class NetModule : ILogicModule
     {
-        /// <summary>全局 <see cref="NetManager"/> 单例引用。</summary>
-        static NetManager s_Instance;
+        /// <summary>全局 <see cref="NetModule"/> 单例引用。</summary>
+        static NetModule s_Instance;
         /// <summary>主线程待处理的消息队列（消息 ID 与负载字节）。</summary>
         static Queue<KeyValuePair<ulong, byte[]>> m_EventQueue = new Queue<KeyValuePair<ulong, byte[]>>();
 
@@ -21,12 +21,12 @@ namespace ST.Core.Network
         GameEvent m_OnConnectEvent = new GameEvent();
 
         /// <summary>
-        /// 主线程上、在 <see cref="MsgDispatcher.Dispatcher"/> 之后调用的可选回调，参数为消息 ID 与负载字节。
+        /// 主线程上、在 <see cref="MsgModule.Dispatcher"/> 之后调用的可选回调，参数为消息 ID 与负载字节。
         /// </summary>
         public Action<ulong, byte[]> onMsgEvent;
 
-        /// <summary>全局网络管理器实例。</summary>
-        public static NetManager S
+        /// <summary>全局网络模块实例。</summary>
+        public static NetModule S
         {
             get { return s_Instance; }
         }
@@ -49,7 +49,7 @@ namespace ST.Core.Network
         /// <summary>
         /// 构造时注册为全局 <see cref="S"/>，供套接字层等访问。
         /// </summary>
-        public NetManager()
+        public NetModule()
         {
             s_Instance = this;
         }
@@ -63,7 +63,7 @@ namespace ST.Core.Network
             m_SocketClient.OnRegister();
         }
 
-        /// <summary>每帧驱动 <see cref="UpdateEventQueue"/>，将消息队列分发给 <see cref="MsgDispatcher"/> 与 <see cref="onMsgEvent"/>。</summary>
+        /// <summary>每帧驱动 <see cref="UpdateEventQueue"/>，将消息队列分发给 <see cref="MsgModule"/> 与 <see cref="onMsgEvent"/>。</summary>
         public override void DoUpdate()
         {
             UpdateEventQueue();
@@ -133,7 +133,7 @@ namespace ST.Core.Network
             }
         }
 
-        /// <summary>逐条出队并依次调用 <see cref="MsgDispatcher.Dispatcher"/> 与 <see cref="onMsgEvent"/>。</summary>
+        /// <summary>逐条出队并依次调用 <see cref="MsgModule.Dispatcher"/> 与 <see cref="onMsgEvent"/>。</summary>
         void UpdateEventQueue()
         {
             if (m_EventQueue.Count <= 0)
@@ -143,9 +143,9 @@ namespace ST.Core.Network
             {
                 KeyValuePair<ulong, byte[]> keyvaleupair = m_EventQueue.Dequeue();
 
-                if (MsgDispatcher.S != null)
+                if (MsgModule.S != null)
                 {
-                    MsgDispatcher.S.Dispatcher(keyvaleupair.Key, keyvaleupair.Value);
+                    MsgModule.S.Dispatcher(keyvaleupair.Key, keyvaleupair.Value);
                 }
 
                 onMsgEvent?.Invoke(keyvaleupair.Key, keyvaleupair.Value);

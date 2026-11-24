@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -15,14 +15,14 @@ namespace ST.Core.Test
     public class TestNetwork : MonoBehaviour
     {
         /// <summary>示例用网络管理器实例（未挂到全局生命周期时需自行 Update 驱动队列）。</summary>
-        NetManager m_NetManager = new NetManager();
+        NetModule m_NetManager = new NetModule();
         /// <summary>示例用消息分发器。</summary>
-        MsgDispatcher m_MsgDispatcher = new MsgDispatcher();
+        MsgModule m_MsgDispatcher = new MsgModule();
 
         /// <summary>连接目标 IP，可在 Inspector 中修改。</summary>
         public string ipAddress = "127.0.0.1";
 
-        /// <summary>初始化 <see cref="NetManager"/>。</summary>
+        /// <summary>初始化 <see cref="NetModule"/>。</summary>
         private void Start()
         {
             m_NetManager.DoInit();
@@ -33,7 +33,7 @@ namespace ST.Core.Test
         {
             if (GUI.Button(new Rect(0, 0, 300, 100), "SendConnect"))
             {
-                NetManager.S.SendConnect(ipAddress, 3580);
+                NetModule.S.SendConnect(ipAddress, 3580);
             }
 
             if (GUI.Button(new Rect(0, 100, 300, 100), "SendLoginMsg"))
@@ -70,7 +70,7 @@ namespace ST.Core.Test
                 "城中相识尽繁华，日夜经过赵李家。" +
                 "谁怜越女颜如玉，贫贱江头自浣纱。";
 
-            MsgDispatcher.S.SendPBMsg(ReqRegisterAccount.HashID, msg);
+            MsgModule.S.SendPBMsg(ReqRegisterAccount.HashID, msg);
         }
 
         /// <summary>登录消息示例（当前整段为 <c>#if false</c> 占位）。</summary>
@@ -97,7 +97,7 @@ namespace ST.Core.Test
             var orc = fbs.ReqLogin.EndReqLogin(builder);
             builder.Finish(orc.Value);
 
-            MsgDispatcher.instance.SendFBMsg(fbs.ReqLogin.HashID, builder);
+            MsgModule.instance.SendFBMsg(fbs.ReqLogin.HashID, builder);
 #endif
         }
 
@@ -114,7 +114,7 @@ namespace ST.Core.Test
             var orc = fbs.ReqChat.EndReqChat(builder);
             builder.Finish(orc.Value);
 
-            MsgDispatcher.instance.SendFBMsg(fbs.ReqChat.HashID, builder);
+            MsgModule.instance.SendFBMsg(fbs.ReqChat.HashID, builder);
 #endif
         }
     }

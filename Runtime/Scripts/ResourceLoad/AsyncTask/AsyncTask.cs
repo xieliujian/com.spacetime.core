@@ -1,7 +1,8 @@
-namespace ST.Core
+﻿namespace ST.Core
 {
     /// <summary>
-    /// 资源加载异步任务基类：由 <see cref="AsyncTaskManager"/> 每帧驱动 <see cref="Update"/>，经 <see cref="OnStart"/> / <see cref="OnUpdate"/> / <see cref="OnEnd"/> 三阶段完成。
+    /// 资源加载异步任务基类：由 <see cref="AsyncTaskModule"/> 每帧驱动 <see cref="Update"/>，
+    /// 经 <see cref="OnStart"/> / <see cref="OnUpdate"/> / <see cref="OnEnd"/> 三阶段完成。
     /// </summary>
     public abstract class AsyncTask
     {

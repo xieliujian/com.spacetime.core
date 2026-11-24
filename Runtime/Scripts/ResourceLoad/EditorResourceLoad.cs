@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using UnityEngine;
 
 namespace ST.Core
@@ -50,7 +50,7 @@ namespace ST.Core
             AsyncTask asynctask = new EditorAsyncAssetRequest(loadpath, type);
             if (callback != null)
                 asynctask.completeEvent = callback;
-            BaseAsyncTaskManager.instance.AddTask(asynctask);
+            BaseAsyncTaskModule.instance.AddTask(asynctask);
         }
 
         /// <summary>编辑器 Play 模式异步加载场景。</summary>
@@ -61,7 +61,7 @@ namespace ST.Core
             AsyncTask asynctask = new EditorAsyncSceneRequest(loadpath);
             asynctask.progressEvent = progress;
             asynctask.completeEvent = complete;
-            BaseAsyncTaskManager.instance.AddTask(asynctask);
+            BaseAsyncTaskModule.instance.AddTask(asynctask);
 #endif
         }
     }

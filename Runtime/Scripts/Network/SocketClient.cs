@@ -10,7 +10,7 @@ using ST.Core.Logging;
 namespace ST.Core.Network
 {
     /// <summary>
-    /// 基于 <see cref="TcpClient"/> 的异步 TCP 客户端：负责连接、粘包拆包及将完整消息投递到 <see cref="NetManager.AddEvent"/>。
+    /// 基于 <see cref="TcpClient"/> 的异步 TCP 客户端：负责连接、粘包拆包及将完整消息投递到 <see cref="NetModule.AddEvent"/>。
     /// </summary>
     public class SocketClient
     {
@@ -51,14 +51,14 @@ namespace ST.Core.Network
         {
         }
 
-        /// <summary>初始化内存流与 <see cref="BinaryReader"/>，在 <see cref="NetManager.DoInit"/> 中调用。</summary>
+        /// <summary>初始化内存流与 <see cref="BinaryReader"/>，在 <see cref="NetModule.DoInit"/> 中调用。</summary>
         public void OnRegister()
         {
             m_MemStream = new MemoryStream();
             m_Reader = new BinaryReader(m_MemStream);
         }
 
-        /// <summary>关闭 TCP 连接并释放内存流与读取器，在 <see cref="NetManager.DoClose"/> 中调用。</summary>
+        /// <summary>关闭 TCP 连接并释放内存流与读取器，在 <see cref="NetModule.DoClose"/> 中调用。</summary>
         public void OnRemove()
         {
             Close();
@@ -99,7 +99,7 @@ namespace ST.Core.Network
         {
             if (MainThreadTask.S != null)
             {
-                MainThreadTask.S.AddTask(NetManager.S.onConnectEvent);
+                MainThreadTask.S.AddTask(NetModule.S.onConnectEvent);
             }
 
             m_NetStream = m_Client.GetStream();
@@ -231,10 +231,10 @@ namespace ST.Core.Network
             return m_MemStream.Length - m_MemStream.Position;
         }
 
-        /// <summary>将解包后的完整消息投递到 <see cref="NetManager.AddEvent"/> 主线程队列。</summary>
+        /// <summary>将解包后的完整消息投递到 <see cref="NetModule.AddEvent"/> 主线程队列。</summary>
         void OnReceivedMessage(ulong msgid, byte[] bytearray)
         {
-            NetManager.S.AddEvent(msgid, bytearray);
+            NetModule.S.AddEvent(msgid, bytearray);
         }
 
         /// <summary>将已序列化的字节帧提交给 <see cref="WriteMessage"/> 异步发送。</summary>

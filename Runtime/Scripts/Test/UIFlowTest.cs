@@ -1,4 +1,4 @@
-using System.Collections;
+﻿using System.Collections;
 using System.Collections.Generic;
 using ST.Core.UI;
 using UnityEngine;
@@ -174,7 +174,7 @@ namespace ST.Core.Test
 
             // 子页面行
             GUILayout.BeginHorizontal();
-            bool pageAOpen = UIManager.S != null && UIManager.S.IsPageOpen(TestUIID.TestPanel, TestUIID.TestPageA);
+            bool pageAOpen = UIModule.S != null && UIModule.S.IsPageOpen(TestUIID.TestPanel, TestUIID.TestPageA);
             string pageAStr = pageAOpen ? "<color=#4f4>●</color>" : "<color=#666>○</color>";
             GUILayout.Label(string.Format("  {0,-4} {1,-14}  {2}        <color=#aaa>(Page)</color>",
                 TestUIID.TestPageA, "TestPageA", pageAStr), RichStyle());
@@ -182,7 +182,7 @@ namespace ST.Core.Test
 
             // 背包格子数量行
             GUILayout.BeginHorizontal();
-            var bagPanel = UIManager.S != null ? UIManager.S.FindPanel<TestBagPanel>() : null;
+            var bagPanel = UIModule.S != null ? UIModule.S.FindPanel<TestBagPanel>() : null;
             string bagItemStr = bagPanel != null
                 ? string.Format("<color=#ff8>格子数={0}</color>", bagPanel.itemCount)
                 : "<color=#666>（未加载）</color>";
@@ -193,11 +193,11 @@ namespace ST.Core.Test
         /// <summary>绘制单个面板的状态行。</summary>
         void DrawPanelRow(int uiID, string label)
         {
-            if (UIManager.S == null) return;
+            if (UIModule.S == null) return;
 
-            bool open    = UIManager.S.IsOpened(uiID);
-            bool visible = UIManager.S.IsPanelVisible(uiID);
-            bool active  = UIManager.S.IsPanelActive(uiID);
+            bool open    = UIModule.S.IsOpened(uiID);
+            bool visible = UIModule.S.IsPanelVisible(uiID);
+            bool active  = UIModule.S.IsPanelActive(uiID);
 
             string openStr    = open    ? "<color=#4f4>●</color>" : "<color=#666>○</color>";
             string visibleStr = visible ? "<color=#4f4>●</color>" : "<color=#666>○</color>";
@@ -227,8 +227,8 @@ namespace ST.Core.Test
             GUILayout.Space(10);
             if (GUILayout.Button("Close All", GUILayout.Width(80)))
             {
-                UIManager.S.DoClose();
-                UIManager.S.DoInit();
+                UIModule.S.DoClose();
+                UIModule.S.DoInit();
                 GUILog("[操作] Close All");
             }
             GUILayout.EndHorizontal();
@@ -254,8 +254,8 @@ namespace ST.Core.Test
         /// <summary>向 TestPanel 挂载 TestPageA。</summary>
         void DoAttachPageA()
         {
-            if (UIManager.S == null) return;
-            var panel = UIManager.S.FindPanel<TestPanel>();
+            if (UIModule.S == null) return;
+            var panel = UIModule.S.FindPanel<TestPanel>();
             if (panel == null)
             {
                 GUILog("[操作] Attach PageA 失败：TestPanel 未打开或未加载完成");
@@ -268,8 +268,8 @@ namespace ST.Core.Test
         /// <summary>从 TestPanel 卸载 TestPageA。</summary>
         void DoDetachPageA()
         {
-            if (UIManager.S == null) return;
-            var panel = UIManager.S.FindPanel<TestPanel>();
+            if (UIModule.S == null) return;
+            var panel = UIModule.S.FindPanel<TestPanel>();
             if (panel == null)
             {
                 GUILog("[操作] Detach PageA 失败：TestPanel 未打开或未加载完成");
@@ -282,15 +282,15 @@ namespace ST.Core.Test
         /// <summary>打开背包面板并传入格子数量。</summary>
         void DoOpenBag(int count)
         {
-            if (UIManager.S == null) return;
-            int pid = UIManager.S.OpenPanel(TestUIID.TestBagPanel, count);
+            if (UIModule.S == null) return;
+            int pid = UIModule.S.OpenPanel(TestUIID.TestBagPanel, count);
             GUILog(string.Format("[操作] OpenPanel(Bag, {0}) → panelID={1}", count, pid));
         }
 
         /// <summary>刷新背包格子数量（需面板已加载完成）。</summary>
         void DoRefreshBag(int count)
         {
-            var bag = UIManager.S != null ? UIManager.S.FindPanel<TestBagPanel>() : null;
+            var bag = UIModule.S != null ? UIModule.S.FindPanel<TestBagPanel>() : null;
             if (bag == null)
             {
                 GUILog("[操作] RefreshBag 失败：背包未打开或未加载完成");
@@ -302,15 +302,15 @@ namespace ST.Core.Test
 
         void DoOpen(int uiID)
         {
-            if (UIManager.S == null) return;
-            int pid = UIManager.S.OpenPanel(uiID);
+            if (UIModule.S == null) return;
+            int pid = UIModule.S.OpenPanel(uiID);
             GUILog(string.Format("[操作] OpenPanel({0}) → panelID={1}", uiID, pid));
         }
 
         void DoClose(int uiID)
         {
-            if (UIManager.S == null) return;
-            UIManager.S.ClosePanel(uiID);
+            if (UIModule.S == null) return;
+            UIModule.S.ClosePanel(uiID);
             GUILog(string.Format("[操作] ClosePanel({0})", uiID));
         }
 
@@ -514,24 +514,24 @@ namespace ST.Core.Test
             {
                 new Step("清理：关闭 TestPanel（若打开）",
                     "IsOpened=false",
-                    () => { if (UIManager.S.IsOpened(TestUIID.TestPanel)) UIManager.S.ClosePanel(TestUIID.TestPanel); },
-                    () => !UIManager.S.IsOpened(TestUIID.TestPanel)),
+                    () => { if (UIModule.S.IsOpened(TestUIID.TestPanel)) UIModule.S.ClosePanel(TestUIID.TestPanel); },
+                    () => !UIModule.S.IsOpened(TestUIID.TestPanel)),
 
                 new Step("OpenPanel(TestPanel)",
                     "IsOpened=true, panelID≠-1",
-                    () => { m_TmpPanelID1 = UIManager.S.OpenPanel(TestUIID.TestPanel); },
-                    () => m_TmpPanelID1 != -1 && UIManager.S.IsOpened(TestUIID.TestPanel)),
+                    () => { m_TmpPanelID1 = UIModule.S.OpenPanel(TestUIID.TestPanel); },
+                    () => m_TmpPanelID1 != -1 && UIModule.S.IsOpened(TestUIID.TestPanel)),
 
                 new Step("等待 Prefab 异步加载完成",
                     "FindPanel<TestPanel>≠null",
                     null,
-                    () => UIManager.S.FindPanel<TestPanel>() != null,
+                    () => UIModule.S.FindPanel<TestPanel>() != null,
                     waitLoad: true),
 
                 new Step("ClosePanel(TestPanel)",
                     "IsOpened=false",
-                    () => UIManager.S.ClosePanel(TestUIID.TestPanel),
-                    () => !UIManager.S.IsOpened(TestUIID.TestPanel)),
+                    () => UIModule.S.ClosePanel(TestUIID.TestPanel),
+                    () => !UIModule.S.IsOpened(TestUIID.TestPanel)),
             });
         }
 
@@ -542,23 +542,23 @@ namespace ST.Core.Test
             {
                 new Step("清理：关闭 TestPanel",
                     "IsOpened=false",
-                    () => { if (UIManager.S.IsOpened(TestUIID.TestPanel)) UIManager.S.ClosePanel(TestUIID.TestPanel); },
-                    () => !UIManager.S.IsOpened(TestUIID.TestPanel)),
+                    () => { if (UIModule.S.IsOpened(TestUIID.TestPanel)) UIModule.S.ClosePanel(TestUIID.TestPanel); },
+                    () => !UIModule.S.IsOpened(TestUIID.TestPanel)),
 
                 new Step("第一次 OpenPanel(2)",
                     "panelID1≠-1",
-                    () => { m_TmpPanelID1 = UIManager.S.OpenPanel(TestUIID.TestPanel); },
+                    () => { m_TmpPanelID1 = UIModule.S.OpenPanel(TestUIID.TestPanel); },
                     () => m_TmpPanelID1 != -1),
 
                 new Step("第二次 OpenPanel(2)（单例，应返回相同 panelID）",
                     "panelID2 == panelID1",
-                    () => { id2 = UIManager.S.OpenPanel(TestUIID.TestPanel); },
+                    () => { id2 = UIModule.S.OpenPanel(TestUIID.TestPanel); },
                     () => id2 == m_TmpPanelID1),
 
                 new Step("清理：关闭 TestPanel",
                     "IsOpened=false",
-                    () => UIManager.S.ClosePanel(TestUIID.TestPanel),
-                    () => !UIManager.S.IsOpened(TestUIID.TestPanel)),
+                    () => UIModule.S.ClosePanel(TestUIID.TestPanel),
+                    () => !UIModule.S.IsOpened(TestUIID.TestPanel)),
             });
         }
 
@@ -568,48 +568,48 @@ namespace ST.Core.Test
             {
                 new Step("清理：关闭 TestPanel",
                     "IsOpened=false",
-                    () => { if (UIManager.S.IsOpened(TestUIID.TestPanel)) UIManager.S.ClosePanel(TestUIID.TestPanel); },
-                    () => !UIManager.S.IsOpened(TestUIID.TestPanel)),
+                    () => { if (UIModule.S.IsOpened(TestUIID.TestPanel)) UIModule.S.ClosePanel(TestUIID.TestPanel); },
+                    () => !UIModule.S.IsOpened(TestUIID.TestPanel)),
 
                 new Step("第一次 OpenPanel(2)",
                     "IsOpened=true",
-                    () => UIManager.S.OpenPanel(TestUIID.TestPanel),
-                    () => UIManager.S.IsOpened(TestUIID.TestPanel)),
+                    () => UIModule.S.OpenPanel(TestUIID.TestPanel),
+                    () => UIModule.S.IsOpened(TestUIID.TestPanel)),
 
                 new Step("等待加载，记录 GameObject 引用",
                     "panel1≠null，go1 已记录",
                     () =>
                     {
-                        var p = UIManager.S.FindPanel<TestPanel>();
+                        var p = UIModule.S.FindPanel<TestPanel>();
                         if (p != null) m_TmpGO1 = p.gameObject;
                     },
-                    () => { var p = UIManager.S.FindPanel<TestPanel>(); return p != null; },
+                    () => { var p = UIModule.S.FindPanel<TestPanel>(); return p != null; },
                     waitLoad: true),
 
                 new Step("ClosePanel(2)（面板进入缓存，不销毁）",
                     "IsOpened=false",
-                    () => UIManager.S.ClosePanel(TestUIID.TestPanel),
-                    () => !UIManager.S.IsOpened(TestUIID.TestPanel)),
+                    () => UIModule.S.ClosePanel(TestUIID.TestPanel),
+                    () => !UIModule.S.IsOpened(TestUIID.TestPanel)),
 
                 new Step("第二次 OpenPanel(2)（应从缓存复用）",
                     "IsOpened=true",
-                    () => UIManager.S.OpenPanel(TestUIID.TestPanel),
-                    () => UIManager.S.IsOpened(TestUIID.TestPanel)),
+                    () => UIModule.S.OpenPanel(TestUIID.TestPanel),
+                    () => UIModule.S.IsOpened(TestUIID.TestPanel)),
 
                 new Step("等待加载，验证 GameObject 实例相同",
                     "panel2.gameObject == go1",
                     null,
                     () =>
                     {
-                        var p = UIManager.S.FindPanel<TestPanel>();
+                        var p = UIModule.S.FindPanel<TestPanel>();
                         return p != null && ReferenceEquals(m_TmpGO1, p.gameObject);
                     },
                     waitLoad: true),
 
                 new Step("清理：关闭 TestPanel",
                     "IsOpened=false",
-                    () => UIManager.S.ClosePanel(TestUIID.TestPanel),
-                    () => !UIManager.S.IsOpened(TestUIID.TestPanel)),
+                    () => UIModule.S.ClosePanel(TestUIID.TestPanel),
+                    () => !UIModule.S.IsOpened(TestUIID.TestPanel)),
             });
         }
 
@@ -619,40 +619,44 @@ namespace ST.Core.Test
             {
                 new Step("清理：关闭 TestPanel",
                     "IsOpened=false",
-                    () => { if (UIManager.S.IsOpened(TestUIID.TestPanel)) UIManager.S.ClosePanel(TestUIID.TestPanel); },
-                    () => !UIManager.S.IsOpened(TestUIID.TestPanel)),
+                    () => { if (UIModule.S.IsOpened(TestUIID.TestPanel)) UIModule.S.ClosePanel(TestUIID.TestPanel); },
+                    () => !UIModule.S.IsOpened(TestUIID.TestPanel)),
 
                 new Step("第一次 OpenPanel(2)",
                     "IsOpened=true",
-                    () => UIManager.S.OpenPanel(TestUIID.TestPanel),
-                    () => UIManager.S.IsOpened(TestUIID.TestPanel)),
+                    () => UIModule.S.OpenPanel(TestUIID.TestPanel),
+                    () => UIModule.S.IsOpened(TestUIID.TestPanel)),
 
                 new Step("等待加载，记录 openCount",
                     "openCount≥1，m_TmpCountA 已记录",
-                    () => { var p = UIManager.S.FindPanel<TestPanel>(); if (p != null) m_TmpCountA = p.openCount; },
-                    () => { var p = UIManager.S.FindPanel<TestPanel>(); return p != null && p.openCount >= 1; },
+                    () => { var p = UIModule.S.FindPanel<TestPanel>(); if (p != null) m_TmpCountA = p.openCount; },
+                    () => { var p = UIModule.S.FindPanel<TestPanel>(); return p != null && p.openCount >= 1; },
                     waitLoad: true),
 
                 new Step("ClosePanel(2)",
                     "IsOpened=false",
-                    () => UIManager.S.ClosePanel(TestUIID.TestPanel),
-                    () => !UIManager.S.IsOpened(TestUIID.TestPanel)),
+                    () => UIModule.S.ClosePanel(TestUIID.TestPanel),
+                    () => !UIModule.S.IsOpened(TestUIID.TestPanel)),
 
                 new Step("第二次 OpenPanel(2)",
                     "IsOpened=true",
-                    () => UIManager.S.OpenPanel(TestUIID.TestPanel),
-                    () => UIManager.S.IsOpened(TestUIID.TestPanel)),
+                    () => UIModule.S.OpenPanel(TestUIID.TestPanel),
+                    () => UIModule.S.IsOpened(TestUIID.TestPanel)),
 
                 new Step("等待加载，验证 openCount == countA+1",
                     "openCount == m_TmpCountA+1",
                     null,
-                    () => { var p = UIManager.S.FindPanel<TestPanel>(); return p != null && p.openCount == m_TmpCountA + 1; },
+                    () =>
+                    {
+                        var p = UIModule.S.FindPanel<TestPanel>();
+                        return p != null && p.openCount == m_TmpCountA + 1;
+                    },
                     waitLoad: true),
 
                 new Step("清理：关闭 TestPanel",
                     "IsOpened=false",
-                    () => UIManager.S.ClosePanel(TestUIID.TestPanel),
-                    () => !UIManager.S.IsOpened(TestUIID.TestPanel)),
+                    () => UIModule.S.ClosePanel(TestUIID.TestPanel),
+                    () => !UIModule.S.IsOpened(TestUIID.TestPanel)),
             });
         }
 
@@ -662,13 +666,13 @@ namespace ST.Core.Test
             {
                 new Step("OpenPanel(2)",
                     "IsOpened=true",
-                    () => UIManager.S.OpenPanel(TestUIID.TestPanel),
-                    () => UIManager.S.IsOpened(TestUIID.TestPanel)),
+                    () => UIModule.S.OpenPanel(TestUIID.TestPanel),
+                    () => UIModule.S.IsOpened(TestUIID.TestPanel)),
 
-                new Step("UIManager.DoClose() + DoInit()",
+                new Step("UIModule.DoClose() + DoInit()",
                     "IsOpened=false（全部面板已关闭）",
-                    () => { UIManager.S.DoClose(); UIManager.S.DoInit(); },
-                    () => !UIManager.S.IsOpened(TestUIID.TestPanel)),
+                    () => { UIModule.S.DoClose(); UIModule.S.DoInit(); },
+                    () => !UIModule.S.IsOpened(TestUIID.TestPanel)),
             });
         }
 
@@ -678,39 +682,43 @@ namespace ST.Core.Test
             {
                 new Step("清理：关闭 TestPanel",
                     "IsOpened=false",
-                    () => { if (UIManager.S.IsOpened(TestUIID.TestPanel)) UIManager.S.ClosePanel(TestUIID.TestPanel); },
-                    () => !UIManager.S.IsOpened(TestUIID.TestPanel)),
+                    () => { if (UIModule.S.IsOpened(TestUIID.TestPanel)) UIModule.S.ClosePanel(TestUIID.TestPanel); },
+                    () => !UIModule.S.IsOpened(TestUIID.TestPanel)),
 
                 new Step("验证打开前：IsOpened / IsPanelVisible / IsPanelActive 均为 false",
                     "三个查询均=false",
                     null,
-                    () => !UIManager.S.IsOpened(TestUIID.TestPanel)
-                       && !UIManager.S.IsPanelVisible(TestUIID.TestPanel)
-                       && !UIManager.S.IsPanelActive(TestUIID.TestPanel)),
+                    () => !UIModule.S.IsOpened(TestUIID.TestPanel)
+                       && !UIModule.S.IsPanelVisible(TestUIID.TestPanel)
+                       && !UIModule.S.IsPanelActive(TestUIID.TestPanel)),
 
                 new Step("OpenPanel(2)",
                     "IsOpened=true",
-                    () => UIManager.S.OpenPanel(TestUIID.TestPanel),
-                    () => UIManager.S.IsOpened(TestUIID.TestPanel)),
+                    () => UIModule.S.OpenPanel(TestUIID.TestPanel),
+                    () => UIModule.S.IsOpened(TestUIID.TestPanel)),
 
                 new Step("等待加载，验证 IsOpened / IsPanelVisible / IsPanelActive 均为 true",
                     "三个查询均=true",
                     null,
-                    () => UIManager.S.IsOpened(TestUIID.TestPanel)
-                       && UIManager.S.IsPanelVisible(TestUIID.TestPanel)
-                       && UIManager.S.IsPanelActive(TestUIID.TestPanel),
+                    () => UIModule.S.IsOpened(TestUIID.TestPanel)
+                       && UIModule.S.IsPanelVisible(TestUIID.TestPanel)
+                       && UIModule.S.IsPanelActive(TestUIID.TestPanel),
                     waitLoad: true),
 
                 new Step("SetPanelVisible(false)，验证 IsPanelVisible=false 但 IsOpened=true",
                     "IsPanelVisible=false, IsOpened=true",
-                    () => UIManager.S.SetPanelVisible(TestUIID.TestPanel, false),
-                    () => !UIManager.S.IsPanelVisible(TestUIID.TestPanel)
-                       &&  UIManager.S.IsOpened(TestUIID.TestPanel)),
+                    () => UIModule.S.SetPanelVisible(TestUIID.TestPanel, false),
+                    () => !UIModule.S.IsPanelVisible(TestUIID.TestPanel)
+                       &&  UIModule.S.IsOpened(TestUIID.TestPanel)),
 
                 new Step("SetPanelVisible(true) 恢复，清理关闭",
                     "IsPanelVisible=true, 最终 IsOpened=false",
-                    () => { UIManager.S.SetPanelVisible(TestUIID.TestPanel, true); UIManager.S.ClosePanel(TestUIID.TestPanel); },
-                    () => !UIManager.S.IsOpened(TestUIID.TestPanel)),
+                    () =>
+                    {
+                        UIModule.S.SetPanelVisible(TestUIID.TestPanel, true);
+                        UIModule.S.ClosePanel(TestUIID.TestPanel);
+                    },
+                    () => !UIModule.S.IsOpened(TestUIID.TestPanel)),
             });
         }
 
@@ -720,52 +728,52 @@ namespace ST.Core.Test
             {
                 new Step("清理：确保 TestPanel 已打开",
                     "IsOpened(TestPanel)=true",
-                    () => { if (!UIManager.S.IsOpened(TestUIID.TestPanel)) UIManager.S.OpenPanel(TestUIID.TestPanel); },
-                    () => UIManager.S.IsOpened(TestUIID.TestPanel)),
+                    () => { if (!UIModule.S.IsOpened(TestUIID.TestPanel)) UIModule.S.OpenPanel(TestUIID.TestPanel); },
+                    () => UIModule.S.IsOpened(TestUIID.TestPanel)),
 
                 new Step("等待 TestPanel 加载完成",
                     "FindPanel<TestPanel>≠null",
                     null,
-                    () => UIManager.S.FindPanel<TestPanel>() != null,
+                    () => UIModule.S.FindPanel<TestPanel>() != null,
                     waitLoad: true),
 
                 new Step("AttachPage(TestPageA)",
                     "IsPageOpen(TestPanel, TestPageA)=true",
                     () =>
                     {
-                        var p = UIManager.S.FindPanel<TestPanel>();
+                        var p = UIModule.S.FindPanel<TestPanel>();
                         p?.OpenPageA("manual step");
                     },
-                    () => UIManager.S.IsPageOpen(TestUIID.TestPanel, TestUIID.TestPageA)),
+                    () => UIModule.S.IsPageOpen(TestUIID.TestPanel, TestUIID.TestPageA)),
 
                 new Step("等待 TestPageA 加载完成",
                     "IsPageOpen=true（Prefab 就绪）",
                     null,
-                    () => UIManager.S.IsPageOpen(TestUIID.TestPanel, TestUIID.TestPageA),
+                    () => UIModule.S.IsPageOpen(TestUIID.TestPanel, TestUIID.TestPageA),
                     waitLoad: true),
 
                 new Step("DettachPage(TestPageA)",
                     "IsPageOpen(TestPanel, TestPageA)=false",
                     () =>
                     {
-                        var p = UIManager.S.FindPanel<TestPanel>();
+                        var p = UIModule.S.FindPanel<TestPanel>();
                         p?.ClosePageA();
                     },
-                    () => !UIManager.S.IsPageOpen(TestUIID.TestPanel, TestUIID.TestPageA)),
+                    () => !UIModule.S.IsPageOpen(TestUIID.TestPanel, TestUIID.TestPageA)),
 
                 new Step("再次 Attach（验证缓存复用）",
                     "IsPageOpen=true（缓存复用）",
                     () =>
                     {
-                        var p = UIManager.S.FindPanel<TestPanel>();
+                        var p = UIModule.S.FindPanel<TestPanel>();
                         p?.OpenPageA("cached");
                     },
-                    () => UIManager.S.IsPageOpen(TestUIID.TestPanel, TestUIID.TestPageA)),
+                    () => UIModule.S.IsPageOpen(TestUIID.TestPanel, TestUIID.TestPageA)),
 
                 new Step("清理：关闭 TestPanel",
                     "IsOpened=false",
-                    () => UIManager.S.ClosePanel(TestUIID.TestPanel),
-                    () => !UIManager.S.IsOpened(TestUIID.TestPanel)),
+                    () => UIModule.S.ClosePanel(TestUIID.TestPanel),
+                    () => !UIModule.S.IsOpened(TestUIID.TestPanel)),
             });
         }
 
@@ -775,13 +783,13 @@ namespace ST.Core.Test
             {
                 new Step("OpenPanel(TestBagPanel, 50 格子)",
                     "IsOpened=true",
-                    () => UIManager.S.OpenPanel(TestUIID.TestBagPanel, 50),
-                    () => UIManager.S.IsOpened(TestUIID.TestBagPanel)),
+                    () => UIModule.S.OpenPanel(TestUIID.TestBagPanel, 50),
+                    () => UIModule.S.IsOpened(TestUIID.TestBagPanel)),
 
                 new Step("等待背包 Prefab 加载完成",
                     "FindPanel<TestBagPanel>≠null",
                     null,
-                    () => UIManager.S.FindPanel<TestBagPanel>() != null,
+                    () => UIModule.S.FindPanel<TestBagPanel>() != null,
                     waitLoad: true),
 
                 new Step("验证格子数量 = 50",
@@ -789,32 +797,32 @@ namespace ST.Core.Test
                     null,
                     () =>
                     {
-                        var p = UIManager.S.FindPanel<TestBagPanel>();
+                        var p = UIModule.S.FindPanel<TestBagPanel>();
                         return p != null && p.itemCount == 50;
                     }),
 
                 new Step("RefreshItems(10) — 减少格子数量",
                     "itemCount=10",
-                    () => UIManager.S.FindPanel<TestBagPanel>()?.RefreshItems(10),
+                    () => UIModule.S.FindPanel<TestBagPanel>()?.RefreshItems(10),
                     () =>
                     {
-                        var p = UIManager.S.FindPanel<TestBagPanel>();
+                        var p = UIModule.S.FindPanel<TestBagPanel>();
                         return p != null && p.itemCount == 10;
                     }),
 
                 new Step("RefreshItems(100) — 增加格子数量（需滚动查看）",
                     "itemCount=100",
-                    () => UIManager.S.FindPanel<TestBagPanel>()?.RefreshItems(100),
+                    () => UIModule.S.FindPanel<TestBagPanel>()?.RefreshItems(100),
                     () =>
                     {
-                        var p = UIManager.S.FindPanel<TestBagPanel>();
+                        var p = UIModule.S.FindPanel<TestBagPanel>();
                         return p != null && p.itemCount == 100;
                     }),
 
                 new Step("ClosePanel(TestBagPanel) — 格子随面板销毁",
                     "IsOpened=false",
-                    () => UIManager.S.ClosePanel(TestUIID.TestBagPanel),
-                    () => !UIManager.S.IsOpened(TestUIID.TestBagPanel)),
+                    () => UIModule.S.ClosePanel(TestUIID.TestBagPanel),
+                    () => !UIModule.S.IsOpened(TestUIID.TestBagPanel)),
             });
         }
 
@@ -854,16 +862,16 @@ namespace ST.Core.Test
             Print("── TC01 基础开关流程");
             yield return EnsureClosed();
 
-            int panelID = UIManager.S.OpenPanel(TestUIID.TestPanel);
+            int panelID = UIModule.S.OpenPanel(TestUIID.TestPanel);
             Check(panelID != -1, "OpenPanel 返回有效 panelID", ref passed);
-            Check(UIManager.S.IsOpened(TestUIID.TestPanel), "OpenPanel 后 IsOpened=true", ref passed);
+            Check(UIModule.S.IsOpened(TestUIID.TestPanel), "OpenPanel 后 IsOpened=true", ref passed);
 
             yield return WaitForPanel<TestPanel>(k_LoadTimeout);
-            Check(UIManager.S.FindPanel<TestPanel>() != null, "加载完成后 FindPanel≠null", ref passed);
+            Check(UIModule.S.FindPanel<TestPanel>() != null, "加载完成后 FindPanel≠null", ref passed);
 
-            UIManager.S.ClosePanel(TestUIID.TestPanel);
+            UIModule.S.ClosePanel(TestUIID.TestPanel);
             yield return null;
-            Check(!UIManager.S.IsOpened(TestUIID.TestPanel), "ClosePanel 后 IsOpened=false", ref passed);
+            Check(!UIModule.S.IsOpened(TestUIID.TestPanel), "ClosePanel 后 IsOpened=false", ref passed);
 
             ReportTC("TC01_基础开关", passed);
         }
@@ -874,8 +882,8 @@ namespace ST.Core.Test
             Print("── TC02 单例防重");
             yield return EnsureClosed();
 
-            int id1 = UIManager.S.OpenPanel(TestUIID.TestPanel);
-            int id2 = UIManager.S.OpenPanel(TestUIID.TestPanel);
+            int id1 = UIModule.S.OpenPanel(TestUIID.TestPanel);
+            int id2 = UIModule.S.OpenPanel(TestUIID.TestPanel);
             Check(id1 != -1, "首次 OpenPanel 返回有效 ID", ref passed);
             Check(id1 == id2, string.Format("二次 OpenPanel 返回相同 panelID（{0}=={1}）", id1, id2), ref passed);
 
@@ -889,21 +897,21 @@ namespace ST.Core.Test
             Print("── TC03 缓存复用");
             yield return EnsureClosed();
 
-            UIManager.S.OpenPanel(TestUIID.TestPanel);
+            UIModule.S.OpenPanel(TestUIID.TestPanel);
             yield return WaitForPanel<TestPanel>(k_LoadTimeout);
 
-            var p1 = UIManager.S.FindPanel<TestPanel>();
+            var p1 = UIModule.S.FindPanel<TestPanel>();
             Check(p1 != null, "第一次打开后 panel1≠null", ref passed);
             if (p1 != null)
             {
                 var go1 = p1.gameObject;
-                UIManager.S.ClosePanel(TestUIID.TestPanel);
+                UIModule.S.ClosePanel(TestUIID.TestPanel);
                 yield return null;
 
-                UIManager.S.OpenPanel(TestUIID.TestPanel);
+                UIModule.S.OpenPanel(TestUIID.TestPanel);
                 yield return WaitForPanel<TestPanel>(k_LoadTimeout);
 
-                var p2 = UIManager.S.FindPanel<TestPanel>();
+                var p2 = UIModule.S.FindPanel<TestPanel>();
                 Check(p2 != null, "第二次打开后 panel2≠null", ref passed);
                 if (p2 != null)
                     Check(ReferenceEquals(go1, p2.gameObject), "二次打开复用了同一个 GameObject 实例", ref passed);
@@ -919,21 +927,21 @@ namespace ST.Core.Test
             Print("── TC04 OnOpen 计数累加");
             yield return EnsureClosed();
 
-            UIManager.S.OpenPanel(TestUIID.TestPanel);
+            UIModule.S.OpenPanel(TestUIID.TestPanel);
             yield return WaitForPanel<TestPanel>(k_LoadTimeout);
 
-            var p = UIManager.S.FindPanel<TestPanel>();
+            var p = UIModule.S.FindPanel<TestPanel>();
             if (p == null) { Check(false, "加载超时", ref passed); ReportTC("TC04_OpenCount累加", passed); yield break; }
 
             int countA = p.openCount;
             Check(countA >= 1, string.Format("首次打开后 openCount={0}>=1", countA), ref passed);
 
-            UIManager.S.ClosePanel(TestUIID.TestPanel);
+            UIModule.S.ClosePanel(TestUIID.TestPanel);
             yield return null;
-            UIManager.S.OpenPanel(TestUIID.TestPanel);
+            UIModule.S.OpenPanel(TestUIID.TestPanel);
             yield return WaitForPanel<TestPanel>(k_LoadTimeout);
 
-            var p2 = UIManager.S.FindPanel<TestPanel>();
+            var p2 = UIModule.S.FindPanel<TestPanel>();
             if (p2 != null)
                 Check(p2.openCount == countA + 1, string.Format("二次打开 openCount={0}（期望 {1}）", p2.openCount, countA + 1), ref passed);
 
@@ -946,14 +954,14 @@ namespace ST.Core.Test
             bool passed = true;
             Print("── TC05 DoClose 全关");
 
-            UIManager.S.OpenPanel(TestUIID.TestPanel);
+            UIModule.S.OpenPanel(TestUIID.TestPanel);
             yield return null;
-            Check(UIManager.S.IsOpened(TestUIID.TestPanel), "DoClose 前面板已打开", ref passed);
+            Check(UIModule.S.IsOpened(TestUIID.TestPanel), "DoClose 前面板已打开", ref passed);
 
-            UIManager.S.DoClose();
-            UIManager.S.DoInit();
+            UIModule.S.DoClose();
+            UIModule.S.DoInit();
             yield return null;
-            Check(!UIManager.S.IsOpened(TestUIID.TestPanel), "DoClose 后 IsOpened=false", ref passed);
+            Check(!UIModule.S.IsOpened(TestUIID.TestPanel), "DoClose 后 IsOpened=false", ref passed);
 
             ReportTC("TC05_DoClose全关", passed);
         }
@@ -964,23 +972,24 @@ namespace ST.Core.Test
             Print("── TC06 查询 API 准确性");
             yield return EnsureClosed();
 
-            Check(!UIManager.S.IsOpened(TestUIID.TestPanel),      "打开前 IsOpened=false",      ref passed);
-            Check(!UIManager.S.IsPanelVisible(TestUIID.TestPanel), "打开前 IsPanelVisible=false", ref passed);
-            Check(!UIManager.S.IsPanelActive(TestUIID.TestPanel),  "打开前 IsPanelActive=false",  ref passed);
+            Check(!UIModule.S.IsOpened(TestUIID.TestPanel),      "打开前 IsOpened=false",      ref passed);
+            Check(!UIModule.S.IsPanelVisible(TestUIID.TestPanel), "打开前 IsPanelVisible=false", ref passed);
+            Check(!UIModule.S.IsPanelActive(TestUIID.TestPanel),  "打开前 IsPanelActive=false",  ref passed);
 
-            UIManager.S.OpenPanel(TestUIID.TestPanel);
+            UIModule.S.OpenPanel(TestUIID.TestPanel);
             yield return WaitForPanel<TestPanel>(k_LoadTimeout);
 
-            Check(UIManager.S.IsOpened(TestUIID.TestPanel),       "打开后 IsOpened=true",      ref passed);
-            Check(UIManager.S.IsPanelVisible(TestUIID.TestPanel),  "打开后 IsPanelVisible=true", ref passed);
-            Check(UIManager.S.IsPanelActive(TestUIID.TestPanel),   "打开后 IsPanelActive=true",  ref passed);
+            Check(UIModule.S.IsOpened(TestUIID.TestPanel),       "打开后 IsOpened=true",      ref passed);
+            Check(UIModule.S.IsPanelVisible(TestUIID.TestPanel),  "打开后 IsPanelVisible=true", ref passed);
+            Check(UIModule.S.IsPanelActive(TestUIID.TestPanel),   "打开后 IsPanelActive=true",  ref passed);
 
-            UIManager.S.SetPanelVisible(TestUIID.TestPanel, false);
+            UIModule.S.SetPanelVisible(TestUIID.TestPanel, false);
             yield return null;
-            Check(!UIManager.S.IsPanelVisible(TestUIID.TestPanel), "SetVisible(false) 后 IsPanelVisible=false", ref passed);
-            Check(UIManager.S.IsOpened(TestUIID.TestPanel),        "SetVisible(false) 不影响 IsOpened=true",    ref passed);
+            Check(!UIModule.S.IsPanelVisible(TestUIID.TestPanel),
+                "SetVisible(false) 后 IsPanelVisible=false", ref passed);
+            Check(UIModule.S.IsOpened(TestUIID.TestPanel),        "SetVisible(false) 不影响 IsOpened=true",    ref passed);
 
-            UIManager.S.SetPanelVisible(TestUIID.TestPanel, true);
+            UIModule.S.SetPanelVisible(TestUIID.TestPanel, true);
             yield return EnsureClosed();
             ReportTC("TC06_查询API", passed);
         }
@@ -991,37 +1000,37 @@ namespace ST.Core.Test
             Print("── TC07 子页面 Attach/Detach");
 
             // 确保 TestPanel 已打开并加载完成
-            if (!UIManager.S.IsOpened(TestUIID.TestPanel))
-                UIManager.S.OpenPanel(TestUIID.TestPanel);
+            if (!UIModule.S.IsOpened(TestUIID.TestPanel))
+                UIModule.S.OpenPanel(TestUIID.TestPanel);
             yield return WaitForPanel<TestPanel>(k_LoadTimeout);
 
-            var testPanel = UIManager.S.FindPanel<TestPanel>();
+            var testPanel = UIModule.S.FindPanel<TestPanel>();
             Check(testPanel != null, "TestPanel 加载完成", ref passed);
             if (testPanel == null) { ReportTC("TC07_子页面", false); yield break; }
 
             // 确保 PageA 未挂载
-            if (UIManager.S.IsPageOpen(TestUIID.TestPanel, TestUIID.TestPageA))
+            if (UIModule.S.IsPageOpen(TestUIID.TestPanel, TestUIID.TestPageA))
                 testPanel.ClosePageA();
             yield return null;
-            Check(!UIManager.S.IsPageOpen(TestUIID.TestPanel, TestUIID.TestPageA),
+            Check(!UIModule.S.IsPageOpen(TestUIID.TestPanel, TestUIID.TestPageA),
                 "Attach 前 IsPageOpen=false", ref passed);
 
             // AttachPage
             testPanel.OpenPageA("auto-tc07");
             yield return WaitForPage(k_LoadTimeout);
-            Check(UIManager.S.IsPageOpen(TestUIID.TestPanel, TestUIID.TestPageA),
+            Check(UIModule.S.IsPageOpen(TestUIID.TestPanel, TestUIID.TestPageA),
                 "Attach 后 IsPageOpen=true", ref passed);
 
             // DettachPage
             testPanel.ClosePageA();
             yield return null;
-            Check(!UIManager.S.IsPageOpen(TestUIID.TestPanel, TestUIID.TestPageA),
+            Check(!UIModule.S.IsPageOpen(TestUIID.TestPanel, TestUIID.TestPageA),
                 "Detach 后 IsPageOpen=false", ref passed);
 
             // 再次 Attach，验证缓存复用
             testPanel.OpenPageA("cached");
             yield return WaitForPage(k_LoadTimeout);
-            Check(UIManager.S.IsPageOpen(TestUIID.TestPanel, TestUIID.TestPageA),
+            Check(UIModule.S.IsPageOpen(TestUIID.TestPanel, TestUIID.TestPageA),
                 "缓存复用后 IsPageOpen=true", ref passed);
 
             // 清理
@@ -1034,19 +1043,19 @@ namespace ST.Core.Test
             bool passed = true;
             Print("── TC08 背包 ScrollView");
 
-            if (UIManager.S.IsOpened(TestUIID.TestBagPanel))
-                UIManager.S.ClosePanel(TestUIID.TestBagPanel);
+            if (UIModule.S.IsOpened(TestUIID.TestBagPanel))
+                UIModule.S.ClosePanel(TestUIID.TestBagPanel);
             yield return null;
 
-            UIManager.S.OpenPanel(TestUIID.TestBagPanel, 50);
+            UIModule.S.OpenPanel(TestUIID.TestBagPanel, 50);
             float elapsed = 0f;
-            while (UIManager.S.FindPanel<TestBagPanel>() == null && elapsed < k_LoadTimeout)
+            while (UIModule.S.FindPanel<TestBagPanel>() == null && elapsed < k_LoadTimeout)
             {
                 elapsed += Time.deltaTime;
                 yield return null;
             }
 
-            var bag = UIManager.S.FindPanel<TestBagPanel>();
+            var bag = UIModule.S.FindPanel<TestBagPanel>();
             Check(bag != null, "TestBagPanel 加载完成", ref passed);
             if (bag == null) { ReportTC("TC08_背包ScrollView", false); yield break; }
 
@@ -1066,9 +1075,9 @@ namespace ST.Core.Test
                 string.Format("增加为 100 格子（实际 {0}）", bag.itemCount), ref passed);
 
             // 关闭，格子随面板销毁
-            UIManager.S.ClosePanel(TestUIID.TestBagPanel);
+            UIModule.S.ClosePanel(TestUIID.TestBagPanel);
             yield return null;
-            Check(!UIManager.S.IsOpened(TestUIID.TestBagPanel), "关闭后 IsOpened=false", ref passed);
+            Check(!UIModule.S.IsOpened(TestUIID.TestBagPanel), "关闭后 IsOpened=false", ref passed);
 
             ReportTC("TC08_背包ScrollView", passed);
         }
@@ -1077,9 +1086,9 @@ namespace ST.Core.Test
 
         IEnumerator EnsureClosed()
         {
-            if (UIManager.S.IsOpened(TestUIID.TestPanel))
+            if (UIModule.S.IsOpened(TestUIID.TestPanel))
             {
-                UIManager.S.ClosePanel(TestUIID.TestPanel);
+                UIModule.S.ClosePanel(TestUIID.TestPanel);
                 yield return null;
             }
         }
@@ -1087,12 +1096,12 @@ namespace ST.Core.Test
         IEnumerator WaitForPanel<T>(float timeout) where T : AbstractPanel
         {
             float elapsed = 0f;
-            while (UIManager.S.FindPanel<T>() == null && elapsed < timeout)
+            while (UIModule.S.FindPanel<T>() == null && elapsed < timeout)
             {
                 elapsed += Time.deltaTime;
                 yield return null;
             }
-            if (UIManager.S.FindPanel<T>() == null)
+            if (UIModule.S.FindPanel<T>() == null)
                 Print(string.Format("[超时] 等待 {0} 超过 {1}s", typeof(T).Name, timeout));
         }
 
@@ -1100,12 +1109,12 @@ namespace ST.Core.Test
         IEnumerator WaitForPage(float timeout)
         {
             float elapsed = 0f;
-            while (!UIManager.S.IsPageOpen(TestUIID.TestPanel, TestUIID.TestPageA) && elapsed < timeout)
+            while (!UIModule.S.IsPageOpen(TestUIID.TestPanel, TestUIID.TestPageA) && elapsed < timeout)
             {
                 elapsed += Time.deltaTime;
                 yield return null;
             }
-            if (!UIManager.S.IsPageOpen(TestUIID.TestPanel, TestUIID.TestPageA))
+            if (!UIModule.S.IsPageOpen(TestUIID.TestPanel, TestUIID.TestPageA))
                 Print(string.Format("[超时] 等待 TestPageA 超过 {0}s", timeout));
         }
 

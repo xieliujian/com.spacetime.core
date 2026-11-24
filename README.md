@@ -1,4 +1,4 @@
-# com.spacetime.core
+﻿# com.spacetime.core
 
 Unity游戏核心框架，提供网络通信、数据表、事件系统等基础功能。
 
@@ -19,7 +19,7 @@ TCP网络通信层，支持Protobuf和FlatBuffers消息序列化，提供连接�
 ### [日志系统](readme/Logging/Logging.md)
 文件日志系统，支持批量刷新、文件轮转、Unity 日志捕获，提供解耦的接口抽象设计。
 
-### [资源加载系统](readme/ResourceLoad/ResourceLoad.md)
+### [资源加载系统](readme/ResourceLoad/ResourceModule.md)
 统一资源加载框架，支持 AssetBundle 与编辑器 AssetDatabase 双模式、同步/异步加载、场景加载、Lua 资产处理，以及编辑器打包工具。
 
 ### [原始文件访问](readme/File/File.md)

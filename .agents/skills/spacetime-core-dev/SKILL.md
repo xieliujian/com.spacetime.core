@@ -1,11 +1,11 @@
----
+﻿---
 name: spacetime-core-dev
 description: >-
   编写、修改或审查 com.spacetime.core（命名空间 ST.Core）框架本身，以及调用它的 Unity C# 代码时使用。
   覆盖项目强制的编码规范（m_/s_ 前缀、camelCase 属性、禁止 ?. 与 UnityEngine.Debug、中文 XML 注释、枚举成员行尾注释、两行式空值守卫、代码块后空行），
-  以及框架特有陷阱：单例靠构造函数赋值、异步加载没有取消与失败回调、UIManager 的 DoUpdate 是空的需手动驱动、
+  以及框架特有陷阱：单例靠构造函数赋值、异步加载没有取消与失败回调、UIModule 的 DoUpdate 是空的需手动驱动、
   Launch 节点全是空壳、AssetBundle 名等于资源相对路径。Use whenever editing C# under Packages/com.spacetime.core,
-  or any code touching NetManager / MsgDispatcher / UIManager / ResourceLoad / TableLoader / STLogger / LaunchModule,
+  or any code touching NetModule / MsgModule / UIModule / ResourceModule / TableLoader / STLogger / LaunchModule,
   including adding a new manager, panel, launch node, or protocol message.
 ---
 
@@ -161,13 +161,13 @@ public enum LogLevel
 
 ### 1. 单例靠构造函数赋值，没有懒加载
 
-`NetManager`、`MsgDispatcher`、`UIManager`、`ResourceLoad`、`AsyncTaskManager`、`MainThreadTask` 全部在构造函数里写静态字段（`s_Instance = this` / 基类 `IMainThreadTask()` 里赋值）。
+`NetModule`、`MsgModule`、`UIModule`、`ResourceModule`、`AsyncTaskModule`、`MainThreadTask` 全部在构造函数里写静态字段（`s_Instance = this` / 基类 `IMainThreadTask()` 里赋值）。
 
 推论：
 
 - **谁最后 `new` 谁生效**，没有幂等保护。永远不要为了"拿个实例"而 `new` 一个管理器。
 - **漏 `new` 就是 null**，不会自动创建。所以不要假设 `X.S` / `X.instance` 非空，用前判空。
-- `IMainThreadTask.S` 在当前工程里**恒为 null** —— 全项目没有任何一处 `new MainThreadTask()`。`SocketClient` 连接成功时会 `if (MainThreadTask.S != null)` 才投递事件，所以 `NetManager.onConnectEvent` 是永远不会触发的空事件。要接入网络，必须先在某处创建并每帧驱动它。
+- `IMainThreadTask.S` 在当前工程里**恒为 null** —— 全项目没有任何一处 `new MainThreadTask()`。`SocketClient` 连接成功时会 `if (MainThreadTask.S != null)` 才投递事件，所以 `NetModule.onConnectEvent` 是永远不会触发的空事件。要接入网络，必须先在某处创建并每帧驱动它。
 - `IResourceConfig` / `IResourceConfig` 类配置要走 `SetConfig()`，不是构造函数注入。
 
 ### 2. 只有注册进 GameWorld 的模块才自动被驱动
@@ -177,12 +177,12 @@ public enum LogLevel
 - `GameLauncher.CollectBusinessModules` 是生产代码的注册入口，列表顺序就是初始化与更新顺序；`GameWorld.gameKernel.GetModule<T>()` 按运行时类型精确查找已注册模块。
 - `Runtime/Scripts/Test/` 下的演示脚本自己 `new` 管理器并手动调用生命周期，不受 GameWorld 驱动。
 - 新增需要逐帧逻辑的模块必须加进模块列表，不要假设别的脚本会调用它。
-- `UIManager.DoInit/DoUpdate/DoLateUpdate` 仍是空实现，`ResourceLoad.DoUpdate` 也是空的。
-- 硬依赖：`AsyncTaskManager` 必须在 `ResourceLoad` 之前创建，因为 `EditorResourceLoad` 会读 `BaseAsyncTaskManager.instance` 且不判空。
+- `UIModule.DoInit/DoUpdate/DoLateUpdate` 仍是空实现，`ResourceModule.DoUpdate` 也是空的。
+- 硬依赖：`AsyncTaskModule` 必须在 `ResourceModule` 之前创建，因为 `EditorResourceLoad` 会读 `BaseAsyncTaskModule.instance` 且不判空。
 
 ### 3. 异步加载没有取消 / 超时 / 失败回调
 
-`BaseResourceLoad.LoadResourceAsync(...)` 返回 `void`，没有句柄。失败时回调收到 `null`，没有 errorCode、没有异常、没有超时。
+`BaseResourceModule.LoadResourceAsync(...)` 返回 `void`，没有句柄。失败时回调收到 `null`，没有 errorCode、没有异常、没有超时。
 
 推论：
 
@@ -212,7 +212,7 @@ public enum LogLevel
 - `UIData.path` 的注释写"末尾不含斜杠"，但拼接是裸串接 `path + filename`，**实际必须带尾斜杠**（现有注册全部写 `"ui/uiprefab/"`）。注释是错的。
 - `UIData.type` 是死字段，从未被读取；运行时类型靠 `GetComponent<AbstractPanel>()` 反查。
 - `AbstractPanel.PlayOpenAnimation` 从不被调用（只有 Page 会走）；`PanelCloseTween.Scale/Fade` 有枚举值无实现。
-- `UIDataTable` 是静态类，`UIManager.DoClose()` **不会**清它；`UIPanelActive.s_PanelIDCounter` 也永不重置，所以 `DoClose()` + `DoInit()` 无法回到初始状态。
+- `UIDataTable` 是静态类，`UIModule.DoClose()` **不会**清它；`UIPanelActive.s_PanelIDCounter` 也永不重置，所以 `DoClose()` + `DoInit()` 无法回到初始状态。
 
 ### 6. AssetBundle 模式的约定与坑
 
@@ -223,18 +223,18 @@ public enum LogLevel
 - **索引文件 `assetbundledb.txt` 带 UTF-8 BOM**（`Packager` 用 `Encoding.UTF8`），而 `AssetBundleDBMgr` 读取时不剥 BOM —— 索引 0 的 bundle 名带上了 `\uFEFF`，运行时查不到且**静默返回 null 无任何日志**。改打包或读取任一侧时注意。
 - **Android 上整个资源模块不可用**：`AssetBundleDBMgr` 用 `File.Exists`/`File.ReadAllBytes` 读 `streamingAssetsPath`，`Bundle` 用 `AssetBundle.LoadFromFile`，从不构造 `jar:file://...!/assets` 前缀，APK 内路径 `File.Exists` 直接 false → `m_BundleDict` 为空 → 之后所有加载静默 null。
 - **卸载只有"全局清空"一档**：`Unload(false)` 硬编码、无引用计数、无 `Resources.UnloadUnusedAssets()`。prefab 一旦加载就常驻内存。
-- 资源加载无去重：同一 `(bundle, resname)` 并发 N 次会产生 N 个请求和 N 次回调。编辑器下 `ResourceLoad.useAssetBundle` 是唯一的模式开关。
+- 资源加载无去重：同一 `(bundle, resname)` 并发 N 次会产生 N 个请求和 N 次回调。编辑器下 `ResourceModule.useAssetBundle` 是唯一的模式开关。
 
 ### 7. 网络：默认 Protobuf，未注册的消息被静默丢弃
 
-- `MsgDispatcher.m_MsgType` 默认 `Protobuf`，`RegisterMsgType` 在整个工程**零调用点**，所以 `RegisterFBMsg` 注册的处理器永远不会触发。
+- `MsgModule.m_MsgType` 默认 `Protobuf`，`RegisterMsgType` 在整个工程**零调用点**，所以 `RegisterFBMsg` 注册的处理器永远不会触发。
 - **未注册的 msgid 被静默丢弃，没有 "unhandled" 日志。** 新协议消息必须 `RegisterPBMsg<T>(handler)`，否则表现为"服务端发了、客户端毫无反应"。
 - 注册靠反射取生成类的 `HashID` 常量字段，类型上没有该字段会直接 NRE。
 - 帧格式 `[uint16 长度][uint64 msgid][payload]`，小端，长度字段是 `8 + payload.Length`，UInt16，**payload ≥ 65528 字节会静默回绕**成错误长度并让整条流错位。
-- 主线程队列 `NetManager.m_EventQueue` **只在生产端加锁、消费端 `Count`/`Dequeue` 无锁**，`Queue<T>` 并发下会丢消息或抛 `IndexOutOfRangeException`。改网络代码时不要假设它线程安全。
-- `ProtobufProcFun.Invoke` 的 `ParseFrom` 在 try **之外**，畸形包会抛穿 `NetManager.DoUpdate` 打断整帧消息泵（业务回调反而有 try/catch，保护优先级搞反了）。改这里时应把解析纳入 try。
+- 主线程队列 `NetModule.m_EventQueue` **只在生产端加锁、消费端 `Count`/`Dequeue` 无锁**，`Queue<T>` 并发下会丢消息或抛 `IndexOutOfRangeException`。改网络代码时不要假设它线程安全。
+- `ProtobufProcFun.Invoke` 的 `ParseFrom` 在 try **之外**，畸形包会抛穿 `NetModule.DoUpdate` 打断整帧消息泵（业务回调反而有 try/catch，保护优先级搞反了）。改这里时应把解析纳入 try。
 - 无重连、无心跳、无超时。`SocketClient` 设的 `SendTimeout/ReceiveTimeout` 对 `BeginRead/BeginWrite` 无效（只作用于同步 API），所以连一个不回 ACK 的服务器可以无限挂起。`OnConnect` 不调用 `EndConnect`，因此**连接失败永远拿不到异常，且失败时照样投递"连接成功"事件**。
-- `NetManager.DoClose` 先 `RemoveAllListeners()` 再 `Invoke()`，意图是通知关闭但写反了，该 Invoke 是空操作。
+- `NetModule.DoClose` 先 `RemoveAllListeners()` 再 `Invoke()`，意图是通知关闭但写反了，该 Invoke 是空操作。
 
 ### 8. Launch 节点树全是空壳，且跑完就没有帧驱动
 
@@ -255,7 +255,7 @@ public enum LogLevel
 
 ### 10. 几个跨模块的通用约定
 
-- `ByteBuffer` 有**两个同名类**（`ST.Core.ByteBuffer` 与 `Google.FlatBuffers.ByteBuffer`）。`MsgDispatcher` 用裸名 `new ByteBuffer()`，靠命名空间优先级解析 —— 在该文件里加 `using FlatBuffers;` 会静默换掉实现。
+- `ByteBuffer` 有**两个同名类**（`ST.Core.ByteBuffer` 与 `Google.FlatBuffers.ByteBuffer`）。`MsgModule` 用裸名 `new ByteBuffer()`，靠命名空间优先级解析 —— 在该文件里加 `using FlatBuffers;` 会静默换掉实现。
 - `ST.Core.ByteBuffer` 字节序是混的：`WriteInt/WriteShort/WriteLong` 走 `BinaryWriter`（小端），而 `WriteFloat/WriteDouble` 先 `Array.Reverse`（大端）。类注释承认了但没说清，别想当然。
 - 命名语义错误的历史包袱：`IMsgType` 是**枚举**却带 `I` 前缀；`IProtobufProcFun` / `IFlatBufferProcFun` 是**类**却用接口命名（能被 `new`）。别照着它们猜"这是个接口"。
 - `STLogger` 未初始化时 `EnableUnityLogCapture` / `Flush` / `Close` 全部静默 no-op，不报错。
@@ -271,7 +271,7 @@ Launch 调度器   ✅ 完整，有单测      Launch 具体节点  ❌ 20/20 �
 Table 读取端    ✅ 可用              STBL 写入端      ❌ 不存在
 Logging 门面    ✅ 可用              轮转/回调/线程安全 ❌ 有缺陷
 Network         ⚠️ 帧格式对，无重连/心跳/超时，handler 注册零调用
-ResourceLoad    ⚠️ 编辑器模式可跑，失败路径全缺，Android 不可用
+ResourceModule    ⚠️ 编辑器模式可跑，失败路径全缺，Android 不可用
 UI              ⚠️ 骨架完整，HideMask/排序/取消机制半边未实现
 Diagnostics     ✅ 可用              未接入任何场景
 ```

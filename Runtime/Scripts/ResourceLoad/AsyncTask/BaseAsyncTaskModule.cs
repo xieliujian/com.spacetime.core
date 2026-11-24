@@ -1,21 +1,21 @@
 ﻿namespace ST.Core
 {
     /// <summary>
-    /// 异步任务管理器抽象基类：维护全局 <see cref="instance"/>，由 <see cref="AsyncTaskManager"/> 具体实现任务的增删与每帧更新。
+    /// 异步任务模块抽象基类：维护全局 <see cref="instance"/>，由 <see cref="AsyncTaskModule"/> 具体实现任务的增删与每帧更新。
     /// </summary>
-    public abstract class BaseAsyncTaskManager : ILogicModule
+    public abstract class BaseAsyncTaskModule : ILogicModule
     {
-        /// <summary>当前全局管理器引用。</summary>
-        protected static BaseAsyncTaskManager s_Instance;
+        /// <summary>当前全局异步任务模块引用。</summary>
+        protected static BaseAsyncTaskModule s_Instance;
 
-        /// <summary>全局异步任务管理器。</summary>
-        public static BaseAsyncTaskManager instance
+        /// <summary>全局异步任务模块。</summary>
+        public static BaseAsyncTaskModule instance
         {
             get { return s_Instance; }
         }
 
         /// <summary>构造时注册为全局 <see cref="instance"/>。</summary>
-        public BaseAsyncTaskManager()
+        public BaseAsyncTaskModule()
         {
             s_Instance = this;
         }

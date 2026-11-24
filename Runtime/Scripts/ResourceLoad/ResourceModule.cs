@@ -6,9 +6,9 @@ namespace ST.Core
 {
     /// <summary>
     /// 默认资源加载实现：编辑器下可选 AssetDatabase 直读或走 AssetBundle；真机始终走 Bundle。
-    /// 须在 <see cref="BaseResourceLoad.SetConfig"/> 之后再调用 <see cref="ILogicModule.DoInit"/>。
+    /// 须在 <see cref="BaseResourceModule.SetConfig"/> 之后再调用 <see cref="ILogicModule.DoInit"/>。
     /// </summary>
-    public class ResourceLoad : BaseResourceLoad
+    public class ResourceModule : BaseResourceModule
     {
         /// <summary>为 <c>true</c> 时编辑器也使用 AssetBundle 路径加载（用于本地验证包体）。</summary>
         public static bool useAssetBundle = false;

@@ -1,4 +1,4 @@
-# UI 管理系统
+﻿# UI 管理系统
 
 [← 返回主页](../../README.md)
 
@@ -8,16 +8,16 @@
 
 ## 一、系统概述
 
-**UIManager** 是 `com.spacetime.core` 提供的 UI 管理系统，负责所有面板（Panel）和页面（Page）的生命周期管理、层级排序、资源加载、可见性控制和交互管理。
+**UIModule** 是 `com.spacetime.core` 提供的 UI 管理系统，负责所有面板（Panel）和页面（Page）的生命周期管理、层级排序、资源加载、可见性控制和交互管理。
 
 | 特性 | 说明 |
 |------|------|
-| 单例管理 | 继承 `ILogicModule`，全局唯一实例 `UIManager.S` |
+| 单例管理 | 继承 `ILogicModule`，全局唯一实例 `UIModule.S` |
 | 面板缓存 | 支持面板关闭后缓存，避免重复加载 |
 | 层级管理 | 三层排序（Bottom / Auto / Top），自动分配 `sortingOrder` |
 | 页面挂载 | 支持动态挂载/卸载子页面，内部页面自动发现 |
 | 可见性控制 | 支持 HideMask 隐藏下层面板，优化渲染 |
-| 资源加载 | 依赖注入 `BaseResourceLoad`，支持异步加载与缓存复用 |
+| 资源加载 | 依赖注入 `BaseResourceModule`，支持异步加载与缓存复用 |
 | UIID 类型 | 框架层使用 `int`，上层工程定义 `enum UIID : int` |
 
 ---
@@ -27,7 +27,7 @@
 ```
 Runtime/Scripts/UI/
 ├── UIDefine.cs                  枚举：PanelSortLayer / PanelHideMask / PanelCloseTween
-├── UIManager.cs                 总控（ILogicModule，单例 S）
+├── UIModule.cs                 总控（ILogicModule，单例 S）
 ├── Data/
 │   ├── UIData.cs                面板/页面静态配置数据
 │   ├── UIDataTable.cs           配置注册表（静态）
@@ -56,9 +56,9 @@ UIDataTable.Register(new UIData
     cacheCount = 1,
 });
 
-// 2. 创建并初始化 UIManager
-var uiManager = new UIManager();
-uiManager.Setup(BaseResourceLoad.instance, uiRoot);  // 注入依赖
+// 2. 创建并初始化 UIModule
+var uiManager = new UIModule();
+uiManager.Setup(BaseResourceModule.instance, uiRoot);  // 注入依赖
 uiManager.DoInit();
 ```
 
@@ -66,30 +66,30 @@ uiManager.DoInit();
 
 ```csharp
 // 打开面板（可传参数）
-UIManager.S.OpenPanel((int)UIID.BagPanel);
-UIManager.S.OpenPanel((int)UIID.ShopPanel, itemID, tabIndex);
+UIModule.S.OpenPanel((int)UIID.BagPanel);
+UIModule.S.OpenPanel((int)UIID.ShopPanel, itemID, tabIndex);
 
 // 强制指定层级打开
-UIManager.S.OpenTopPanel((int)UIID.LoadingPanel);
-UIManager.S.OpenBottomPanel((int)UIID.MainBgPanel);
+UIModule.S.OpenTopPanel((int)UIID.LoadingPanel);
+UIModule.S.OpenBottomPanel((int)UIID.MainBgPanel);
 
 // 关闭面板
-UIManager.S.ClosePanel((int)UIID.BagPanel);
+UIModule.S.ClosePanel((int)UIID.BagPanel);
 
 // 关闭特定实例（非单例场景）
-int panelID = UIManager.S.OpenPanel((int)UIID.TipsPanel);
-UIManager.S.ClosePanelByPanelID(panelID);
+int panelID = UIModule.S.OpenPanel((int)UIID.TipsPanel);
+UIModule.S.ClosePanelByPanelID(panelID);
 ```
 
 ### 3.3 查询状态
 
 ```csharp
-bool opened  = UIManager.S.IsOpened((int)UIID.BagPanel);
-bool visible = UIManager.S.IsPanelVisible((int)UIID.BagPanel);
-bool active  = UIManager.S.IsPanelActive((int)UIID.BagPanel);  // 打开且可见
+bool opened  = UIModule.S.IsOpened((int)UIID.BagPanel);
+bool visible = UIModule.S.IsPanelVisible((int)UIID.BagPanel);
+bool active  = UIModule.S.IsPanelActive((int)UIID.BagPanel);  // 打开且可见
 
-AbstractPanel panel = UIManager.S.FindPanel((int)UIID.BagPanel);
-BagPanel bagPanel   = UIManager.S.FindPanel<BagPanel>();
+AbstractPanel panel = UIModule.S.FindPanel((int)UIID.BagPanel);
+BagPanel bagPanel   = UIModule.S.FindPanel<BagPanel>();
 ```
 
 ### 3.4 实现自定义面板
@@ -133,19 +133,19 @@ public class BagPanel : AbstractPanel
 
 ## 四、核心类说明
 
-### 4.1 UIManager
+### 4.1 UIModule
 
-**文件**：`Runtime/Scripts/UI/UIManager.cs`
+**文件**：`Runtime/Scripts/UI/UIModule.cs`
 
 **职责**：UI 系统总控制器，管理所有面板的打开/关闭/排序。
 
 ```csharp
-public class UIManager : ILogicModule
+public class UIModule : ILogicModule
 {
-    public static UIManager S { get; }
+    public static UIModule S { get; }
 
     // 依赖注入（必须在 DoInit 之前调用）
-    public void Setup(BaseResourceLoad resourceLoad, UIRoot uiRoot);
+    public void Setup(BaseResourceModule resourceLoad, UIRoot uiRoot);
 
     // 打开面板
     public int OpenPanel(int uiID, params object[] args);
@@ -406,7 +406,7 @@ UIDataTable.Register(new UIData
 ### 9.3 内部子页面（Inner Page）
 
 在面板 Prefab 的子节点上直接挂载 `AbstractPage` 并设置 `uiID`，
-UIManager 在面板加载完成后会自动扫描并执行 `OnCreate()`，无需代码挂载。
+UIModule 在面板加载完成后会自动扫描并执行 `OnCreate()`，无需代码挂载。
 
 ```
 BagPanel (Prefab)
@@ -432,14 +432,14 @@ BagPanel (Prefab)
 
 > 详细说明请参阅子文档 **[→ UI 测试系统](../UI_Test/UI_Test.md)**，以下为快速摘要。
 
-`Runtime/Scripts/Test/` 提供了开箱即用的测试组件，无需编写任何启动代码即可在编辑器场景中验证 UIManager 的完整流程。
+`Runtime/Scripts/Test/` 提供了开箱即用的测试组件，无需编写任何启动代码即可在编辑器场景中验证 UIModule 的完整流程。
 
 ### 11.1 测试文件
 
 | 文件 | 职责 |
 |------|------|
 | `TestGMBoxPanel.cs` | 可拖拽的 OnGUI GM 指令窗口，支持指令注册、执行、历史记录（PlayerPrefs 持久化） |
-| `TestUIBoot.cs` | 场景引导类：初始化 ResourceLoad → UIManager → UIDataTable，并向 GMBox 注册 UI 调试指令 |
+| `TestUIBoot.cs` | 场景引导类：初始化 ResourceModule → UIModule → UIDataTable，并向 GMBox 注册 UI 调试指令 |
 
 ### 11.2 场景搭建
 
@@ -518,10 +518,10 @@ var gm = FindObjectOfType<TestGMBoxPanel>();
 
 gm.RegisterCommand("reloadui", (args) =>
 {
-    UIManager.S.DoClose();
-    UIManager.S.DoInit();
-    gm.AppendOutput("[reloadui] UIManager 已重置。");
-}, "重置 UIManager");
+    UIModule.S.DoClose();
+    UIModule.S.DoInit();
+    gm.AppendOutput("[reloadui] UIModule 已重置。");
+}, "重置 UIModule");
 ```
 
 ---

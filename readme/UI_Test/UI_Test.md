@@ -1,4 +1,4 @@
-# UI 测试系统
+﻿# UI 测试系统
 
 [← 返回 UI 管理系统](../UI/UI.md)
 
@@ -23,14 +23,14 @@
 ```
 Runtime/Scripts/Test/
 ├── TestUIID.cs             UI ID 常量表（1~5）
-├── GMBoxPanel.cs           GM Box 的 UIManager 适配层（AbstractPanel 包装）
+├── GMBoxPanel.cs           GM Box 的 UIModule 适配层（AbstractPanel 包装）
 ├── TestPanel.cs            通用测试面板（AbstractPanel，Auto 层，含子页面操作方法）
 ├── TestModalPanel.cs       模态测试面板（hideMask=HideAndUnInteractive，Auto 层）
 ├── TestPageA.cs            测试子页面 A（AbstractPage，无 Canvas，挂载于 TestPanel）
 ├── TestBagItem.cs          背包格子单元（MonoBehaviour，由 TestBagPanel 克隆模板生成）
 ├── TestBagPanel.cs         背包测试面板（ScrollView + GridLayout + 模板克隆，Auto 层）
 ├── TestGMBoxPanel.cs       全屏 IMGUI GM 指令窗口（F1 开关）
-├── TestUIBoot.cs           场景引导类（初始化 UIManager + 注册 GM 指令）
+├── TestUIBoot.cs           场景引导类（初始化 UIModule + 注册 GM 指令）
 └── UIFlowTest.cs           测试运行器（F2 自动 / F3 手动调试 GUI）
 
 Editor/Scripts/Test/
@@ -167,7 +167,7 @@ Hierarchy
 | 4 | `TestPageA` | `ui_page_test_a.prefab` | **Page** | — | TestPanel 的子页面，无独立 Canvas |
 | 5 | `TestBagPanel` | `ui_panel_test_bag.prefab` | Panel | Auto | ScrollView + GridLayout 背包，支持 `openbag` / `refreshbag` |
 
-> **Page 与 Panel 的区别**：Page 没有独立 Canvas，无法通过 `UIManager.OpenPanel` 打开，只能通过父面板的 `panelActive.AttachPage` / `DettachPage` 管理。
+> **Page 与 Panel 的区别**：Page 没有独立 Canvas，无法通过 `UIModule.OpenPanel` 打开，只能通过父面板的 `panelActive.AttachPage` / `DettachPage` 管理。
 
 ---
 
@@ -223,7 +223,7 @@ Hierarchy
 
 **快速操作区**
 
-- 面板行：直接调用 `UIManager.S.OpenPanel` / `ClosePanel`。
+- 面板行：直接调用 `UIModule.S.OpenPanel` / `ClosePanel`。
 - **Page 行**：
   - `[Attach PageA]`：调用 `TestPanel.OpenPageA()`，向已打开的 TestPanel 动态挂载子页面 A。
   - `[Detach PageA]`：调用 `TestPanel.ClosePageA()`，卸载子页面 A（根据 `cacheCount` 决定是否缓存 GameObject）。
@@ -263,7 +263,7 @@ Hierarchy
 | TC02 | 单例防重 | 同一 uiID 连续打开两次，返回相同 `panelID` |
 | TC03 | 缓存复用 | 关闭后（进缓存）再次打开，复用同一个 `GameObject` 实例 |
 | TC04 | OnOpen 计数累加 | 每次 `OpenPanel` 都触发 `OnOpen`，`openCount` 正确递增 |
-| TC05 | DoClose 全关 | `UIManager.DoClose()` 后所有面板 `IsOpened=false` |
+| TC05 | DoClose 全关 | `UIModule.DoClose()` 后所有面板 `IsOpened=false` |
 | TC06 | 查询 API 准确性 | `IsOpened` / `IsPanelVisible` / `IsPanelActive` / `SetPanelVisible` 返回值符合预期 |
 | **TC07** | **子页面 Attach/Detach** | `AttachPage(TestPageA)` → `IsPageOpen=true` → `DettachPage` → `IsPageOpen=false` → 再次 Attach（缓存复用）|
 | **TC08** | **背包 ScrollView** | 打开(50格) → `itemCount=50` → `RefreshItems(10)` → `itemCount=10` → `RefreshItems(100)` → `itemCount=100` → 关闭 → `IsOpened=false` |
@@ -326,7 +326,7 @@ public static class TestUIID
 
 `ui_panel_gm_box.prefab` 的 AbstractPanel 适配层。
 
-- 注册于 `TestUIID.GMBoxPanel = 1`，`openui 1` 可通过 UIManager 加载
+- 注册于 `TestUIID.GMBoxPanel = 1`，`openui 1` 可通过 UIModule 加载
 - `OnOpen` 调用 `TestGMBoxPanel.Show()`，`OnClose` 调用 `TestGMBoxPanel.Hide()`
 - 实际 GM 指令输入/输出由场景中的 `TestGMBoxPanel`（IMGUI）负责
 
@@ -339,7 +339,7 @@ public static class TestUIID
 | 成员 | 说明 |
 |------|------|
 | `Text m_TitleText` | 打开时更新为 `"TestPanel #N"` |
-| `Button m_CloseButton` | 点击调用 `UIManager.S.ClosePanel` |
+| `Button m_CloseButton` | 点击调用 `UIModule.S.ClosePanel` |
 | `int openCount` | 只读，记录被打开的累计次数（供 TC04 断言）|
 | `void OpenPageA(params object[] args)` | 调用 `panelActive.AttachPage(TestUIID.TestPageA, args)` |
 | `void ClosePageA(bool useCache = false)` | 调用 `panelActive.DettachPage(TestUIID.TestPageA, useCache)` |
@@ -385,10 +385,10 @@ public static class TestUIID
 |-|-------|------|
 | 基类 | `AbstractPanel` | `AbstractPage` |
 | 需要 Canvas | 是（`[RequireComponent]`）| **否** |
-| 打开方式 | `UIManager.OpenPanel(uiID)` | `panelActive.AttachPage(pageID)` |
-| 关闭方式 | `UIManager.ClosePanel(uiID)` | `panelActive.DettachPage(pageID)` |
+| 打开方式 | `UIModule.OpenPanel(uiID)` | `panelActive.AttachPage(pageID)` |
+| 关闭方式 | `UIModule.ClosePanel(uiID)` | `panelActive.DettachPage(pageID)` |
 | 挂载位置 | `PanelRoot` 子节点 | **父面板的 Transform 子节点** |
-| sortingOrder | 由 UIManager 统一管理 | 继承父面板 Canvas |
+| sortingOrder | 由 UIModule 统一管理 | 继承父面板 Canvas |
 
 生命周期日志：
 ```
@@ -490,7 +490,7 @@ OnDispose → 取消按钮监听
 
 **文件**：`Runtime/Scripts/Test/TestUIBoot.cs`
 
-按序初始化：`AsyncTaskManager` → `ResourceLoad` → `UIManager` → `UIDataTable` 注册 → GM 指令注册。
+按序初始化：`AsyncTaskModule` → `ResourceModule` → `UIModule` → `UIDataTable` 注册 → GM 指令注册。
 
 ```csharp
 public class TestUIBoot : MonoBehaviour
@@ -612,10 +612,10 @@ IEnumerator TC08_MyCustomCase()
 
     yield return EnsureClosed();
 
-    UIManager.S.OpenPanel(TestUIID.TestPanel);
+    UIModule.S.OpenPanel(TestUIID.TestPanel);
     yield return WaitForPanel<TestPanel>(k_LoadTimeout);
 
-    Check(UIManager.S.IsOpened(TestUIID.TestPanel), "已打开", ref passed);
+    Check(UIModule.S.IsOpened(TestUIID.TestPanel), "已打开", ref passed);
 
     yield return EnsureClosed();
     ReportTC("TC08_自定义测试", passed);
@@ -635,18 +635,18 @@ ManualTC BuildManualTC08()
     {
         new Step("清理：关闭 TestPanel",
             "IsOpened=false",
-            () => { if (UIManager.S.IsOpened(TestUIID.TestPanel)) UIManager.S.ClosePanel(TestUIID.TestPanel); },
-            () => !UIManager.S.IsOpened(TestUIID.TestPanel)),
+            () => { if (UIModule.S.IsOpened(TestUIID.TestPanel)) UIModule.S.ClosePanel(TestUIID.TestPanel); },
+            () => !UIModule.S.IsOpened(TestUIID.TestPanel)),
 
         new Step("OpenPanel(2)",
             "IsOpened=true",
-            () => UIManager.S.OpenPanel(TestUIID.TestPanel),
-            () => UIManager.S.IsOpened(TestUIID.TestPanel)),
+            () => UIModule.S.OpenPanel(TestUIID.TestPanel),
+            () => UIModule.S.IsOpened(TestUIID.TestPanel)),
 
         new Step("等待加载完成",
             "FindPanel≠null",
             null,
-            () => UIManager.S.FindPanel<TestPanel>() != null,
+            () => UIModule.S.FindPanel<TestPanel>() != null,
             waitLoad: true),
 
         // 在此添加更多步骤...
@@ -681,8 +681,8 @@ gm.RegisterCommand("myCmd", (args) =>
 6. **异步加载超时**：`WaitForPanel` / `WaitForPage` 与手动步骤均默认等待 **5 秒**；低性能机器可修改 `UIFlowTest.k_LoadTimeout`。
 7. **openCount 跨测试累积**：缓存复用时 `openCount` 不归零，TC04 通过记录初始值再比对增量来断言，而非直接比对绝对值。
 8. **TC05 调用 DoClose**：会清空所有运行中的面板（但不清除 `UIDataTable` 静态注册），后续 TC 可正常继续。
-9. **手动 GUI 与 UGUI 层级**：IMGUI 默认渲染在 UGUI 上方，手动 GUI 窗口不受 UIManager 层级管理影响。
-10. **GMBoxPanel 与 TestGMBoxPanel 关系**：`GMBoxPanel`（UGUI）是 UIManager 适配层，实际 GM 功能由场景中的 `TestGMBoxPanel`（IMGUI）提供，两者通过 `Show()` / `Hide()` 接口联动。
+9. **手动 GUI 与 UGUI 层级**：IMGUI 默认渲染在 UGUI 上方，手动 GUI 窗口不受 UIModule 层级管理影响。
+10. **GMBoxPanel 与 TestGMBoxPanel 关系**：`GMBoxPanel`（UGUI）是 UIModule 适配层，实际 GM 功能由场景中的 `TestGMBoxPanel`（IMGUI）提供，两者通过 `Show()` / `Hide()` 接口联动。
 
 ---
 

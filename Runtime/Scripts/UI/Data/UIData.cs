@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 
 namespace ST.Core.UI
 {
@@ -13,7 +13,9 @@ namespace ST.Core.UI
         /// <summary>UI 名称，用于调试日志。</summary>
         public string name;
 
-        /// <summary>Prefab 所在目录（末尾不含斜杠），对应 <see cref="BaseResourceLoad.LoadResourceAsync"/> 的 <c>path</c> 参数。</summary>
+        /// <summary>
+        /// Prefab 所在目录（末尾不含斜杠），对应 <see cref="BaseResourceModule.LoadResourceAsync"/> 的 <c>path</c> 参数。
+        /// </summary>
         public string path;
 
         /// <summary>Prefab 文件名（不含扩展名），对应 <c>filename</c> 参数。</summary>

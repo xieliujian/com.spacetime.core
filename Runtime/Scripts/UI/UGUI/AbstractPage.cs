@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using UnityEngine;
 
 namespace ST.Core.UI
@@ -18,14 +18,14 @@ namespace ST.Core.UI
         bool         m_IsCreated;
         bool         m_IsOpened;
 
-        /// <summary>UI 整型标识，由 <see cref="UIManager"/> 在加载后赋值。</summary>
+        /// <summary>UI 整型标识，由 <see cref="UIModule"/> 在加载后赋值。</summary>
         public int uiID
         {
             get { return m_UIID; }
             set { m_UIID = value; }
         }
 
-        /// <summary>所属面板的生命周期容器，由 <see cref="UIManager"/> 在加载后赋值。</summary>
+        /// <summary>所属面板的生命周期容器，由 <see cref="UIModule"/> 在加载后赋值。</summary>
         public UIPanelActive panelActive
         {
             get { return m_PanelActive; }

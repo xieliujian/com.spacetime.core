@@ -8,24 +8,24 @@ namespace ST.Core.UI
     /// <para>
     /// 使用方式：
     /// <list type="number">
-    ///   <item>在启动时调用 <see cref="Setup"/> 注入 <see cref="BaseResourceLoad"/> 与 <see cref="UIRoot"/>。</item>
+    ///   <item>在启动时调用 <see cref="Setup"/> 注入 <see cref="BaseResourceModule"/> 与 <see cref="UIRoot"/>。</item>
     ///   <item>调用 <see cref="UIDataTable.Register"/> 注册所有面板/页面配置。</item>
     ///   <item>通过 <see cref="S"/> 单例调用 <see cref="OpenPanel"/> / <see cref="ClosePanel"/> 等 API。</item>
     /// </list>
     /// </para>
     /// </summary>
-    public class UIManager : ILogicModule
+    public class UIModule : ILogicModule
     {
         // ─── 单例 ──────────────────────────────────────────────────────────
 
-        static UIManager s_Instance;
+        static UIModule s_Instance;
 
-        /// <summary>全局 <see cref="UIManager"/> 单例引用。</summary>
-        public static UIManager S { get { return s_Instance; } }
+        /// <summary>全局 <see cref="UIModule"/> 单例引用。</summary>
+        public static UIModule S { get { return s_Instance; } }
 
         // ─── 依赖 ──────────────────────────────────────────────────────────
 
-        BaseResourceLoad m_ResourceLoad;
+        BaseResourceModule m_ResourceLoad;
         UIRoot           m_UIRoot;
 
         // ─── 运行状态 ──────────────────────────────────────────────────────
@@ -46,7 +46,7 @@ namespace ST.Core.UI
 
         // ─── 构造 ──────────────────────────────────────────────────────────
 
-        public UIManager()
+        public UIModule()
         {
             s_Instance = this;
         }
@@ -56,7 +56,7 @@ namespace ST.Core.UI
         /// </summary>
         /// <param name="resourceLoad">已初始化的资源加载器。</param>
         /// <param name="uiRoot">场景中的 <see cref="UIRoot"/> 组件。</param>
-        public void Setup(BaseResourceLoad resourceLoad, UIRoot uiRoot)
+        public void Setup(BaseResourceModule resourceLoad, UIRoot uiRoot)
         {
             m_ResourceLoad = resourceLoad;
             m_UIRoot       = uiRoot;
@@ -111,7 +111,7 @@ namespace ST.Core.UI
             UIData data = UIDataTable.GetData(uiID);
             if (data == null)
             {
-                Debug.LogWarning($"[UIManager] UIData not registered, uiID={uiID}");
+                Debug.LogWarning($"[UIModule] UIData not registered, uiID={uiID}");
                 return -1;
             }
 

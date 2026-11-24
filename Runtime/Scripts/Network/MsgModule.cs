@@ -14,10 +14,10 @@ namespace ST.Core.Network
     /// <summary>
     /// 消息分发中心：按 <see cref="IMsgType"/> 注册 Protobuf / FlatBuffers 处理器，封装组包发送与主线程上的反序列化回调。
     /// </summary>
-    public class MsgDispatcher : ILogicModule
+    public class MsgModule : ILogicModule
     {
         /// <summary>全局分发器实例。</summary>
-        static MsgDispatcher s_Instance;
+        static MsgModule s_Instance;
 
         /// <summary>当前使用的消息序列化后端（Protobuf 或 FlatBuffer）。</summary>
         IMsgType m_MsgType = IMsgType.Protobuf;
@@ -34,7 +34,7 @@ namespace ST.Core.Network
         Dictionary<ulong, IProtobufProcFun> m_PbMsgProcDict = new Dictionary<ulong, IProtobufProcFun>(CommonDefine.s_ListConst_100);
 
         /// <summary>全局消息分发器引用。</summary>
-        public static MsgDispatcher S
+        public static MsgModule S
         {
             get { return s_Instance; }
         }
@@ -52,7 +52,7 @@ namespace ST.Core.Network
         }
 
         /// <summary>构造时注册为 <see cref="S"/>。</summary>
-        public MsgDispatcher()
+        public MsgModule()
         {
             s_Instance = this;
         }
@@ -176,7 +176,7 @@ namespace ST.Core.Network
         }
 
         /// <summary>
-        /// 将 Protobuf 消息序列化后写入长度前缀与 <paramref name="msgid"/>，经 <see cref="NetManager.SendMessage"/> 发出。
+        /// 将 Protobuf 消息序列化后写入长度前缀与 <paramref name="msgid"/>，经 <see cref="NetModule.SendMessage"/> 发出。
         /// </summary>
         /// <param name="msgid">消息 ID</param>
         /// <param name="message">已填充的消息实例</param>
@@ -202,9 +202,9 @@ namespace ST.Core.Network
             buff.WriteUlong(msgid);
             buff.WriteBytes(msgbytes);
 
-            if (NetManager.S != null)
+            if (NetModule.S != null)
             {
-                NetManager.S.SendMessage(buff);
+                NetModule.S.SendMessage(buff);
             }
         }
 
@@ -231,9 +231,9 @@ namespace ST.Core.Network
             buff.WriteUlong(msgid);
             buff.WriteBytes(builder.DataBuffer.RawBuffer, msgpos, msglen);
 
-            if (NetManager.S != null)
+            if (NetModule.S != null)
             {
-                NetManager.S.SendMessage(buff);
+                NetModule.S.SendMessage(buff);
             }
         }
 

@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -106,7 +106,7 @@ namespace ST.Core
                 }
 
                 AsyncTask asynctask = new AsyncBundleRequest(this, m_Path, m_FilePathHelper, OnAsyncLoaded);
-                BaseAsyncTaskManager.instance.AddTask(asynctask);
+                BaseAsyncTaskModule.instance.AddTask(asynctask);
             }
         }
 
@@ -151,7 +151,7 @@ namespace ST.Core
 
             AsyncTask asynctask = new AsyncAssetRequest(this, resname, type, callback);
             if (isLoaded)
-                BaseAsyncTaskManager.instance.AddTask(asynctask);
+                BaseAsyncTaskModule.instance.AddTask(asynctask);
             else
                 m_PendingLoadList.Add(asynctask);
         }
@@ -163,7 +163,7 @@ namespace ST.Core
 
             AsyncTask asynctask = new AsyncSceneRequest(this, resname, progress, complete);
             if (isLoaded)
-                BaseAsyncTaskManager.instance.AddTask(asynctask);
+                BaseAsyncTaskModule.instance.AddTask(asynctask);
             else
                 m_PendingLoadList.Add(asynctask);
         }
@@ -190,7 +190,7 @@ namespace ST.Core
 
         /// <summary>
         /// <see cref="AsyncBundleRequest"/> 完成后的回调：更新状态、缓存 <see cref="m_AssetBundle"/>，
-        /// 并将 <see cref="m_PendingLoadList"/> 中所有挂起任务提交给 <see cref="BaseAsyncTaskManager"/>。
+        /// 并将 <see cref="m_PendingLoadList"/> 中所有挂起任务提交给 <see cref="BaseAsyncTaskModule"/>。
         /// </summary>
         void OnAsyncLoaded(object obj)
         {
@@ -204,7 +204,7 @@ namespace ST.Core
             foreach (var load in m_PendingLoadList)
             {
                 if (load == null) continue;
-                BaseAsyncTaskManager.instance.AddTask(load);
+                BaseAsyncTaskModule.instance.AddTask(load);
             }
 
             m_PendingLoadList.Clear();

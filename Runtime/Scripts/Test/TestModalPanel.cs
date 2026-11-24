@@ -1,4 +1,4 @@
-using ST.Core.UI;
+﻿using ST.Core.UI;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -8,7 +8,7 @@ namespace ST.Core.Test
     /// 模态测试面板。
     /// <para>
     /// 继承 <see cref="AbstractPanel"/>，覆盖 <see cref="hideMask"/> 为
-    /// <see cref="PanelHideMask.HideAndUnInteractive"/>，用于验证 UIManager
+    /// <see cref="PanelHideMask.HideAndUnInteractive"/>，用于验证 UIModule
     /// HideMask 机制：打开本面板后，下层所有面板将被隐藏且不可交互。
     /// </para>
     /// <para>
@@ -67,7 +67,7 @@ namespace ST.Core.Test
                 m_InfoText.text = "HideMask = HideAndUnInteractive\n下层面板已隐藏且不可交互\n点击关闭按钮恢复";
         }
 
-        /// <summary>关闭时：打印日志（下层面板将由 UIManager 自动恢复可见与交互）。</summary>
+        /// <summary>关闭时：打印日志（下层面板将由 UIModule 自动恢复可见与交互）。</summary>
         protected override void OnClose()
         {
             Debug.Log("[TestModalPanel] OnClose  下层面板即将恢复可见与交互");
@@ -93,8 +93,8 @@ namespace ST.Core.Test
         /// <summary>关闭按钮点击回调。</summary>
         void OnClickClose()
         {
-            if (UIManager.S != null)
-                UIManager.S.ClosePanel(uiID);
+            if (UIModule.S != null)
+                UIModule.S.ClosePanel(uiID);
         }
     }
 }

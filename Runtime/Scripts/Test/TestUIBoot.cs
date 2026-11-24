@@ -1,4 +1,4 @@
-using ST.Core.UI;
+﻿using ST.Core.UI;
 using UnityEngine;
 
 namespace ST.Core.Test
@@ -8,8 +8,8 @@ namespace ST.Core.Test
     /// <para>
     /// 负责在测试场景中完整初始化以下模块并将它们串联：
     /// <list type="bullet">
-    ///   <item><see cref="ResourceLoad"/> — 资源加载器（编辑器 AssetDatabase 模式）</item>
-    ///   <item><see cref="UIManager"/> — UI 系统总控</item>
+    ///   <item><see cref="ResourceModule"/> — 资源加载器（编辑器 AssetDatabase 模式）</item>
+    ///   <item><see cref="UIModule"/> — UI 系统总控</item>
     ///   <item><see cref="UIDataTable"/> — 面板配置注册表</item>
     ///   <item><see cref="TestGMBoxPanel"/> — GM 指令面板，注册 UI 相关调试指令</item>
     /// </list>
@@ -42,18 +42,18 @@ namespace ST.Core.Test
         // ─── 私有字段 ────────────────────────────────────────────────────
 
         /// <summary>异步任务管理器实例，异步资源加载依赖此管理器驱动。</summary>
-        AsyncTaskManager m_AsyncTaskManager;
+        AsyncTaskModule m_AsyncTaskManager;
 
         /// <summary>资源加载器实例，由 Start 创建并持有。</summary>
-        ResourceLoad m_ResourceLoad;
+        ResourceModule m_ResourceLoad;
 
         /// <summary>UI 管理器实例，由 Start 创建并持有。</summary>
-        UIManager m_UIManager;
+        UIModule m_UIManager;
 
         // ─── Unity 生命周期 ──────────────────────────────────────────────
 
         /// <summary>
-        /// 按顺序初始化：AsyncTaskManager → ResourceLoad → UIManager → UIDataTable 注册 → GM 指令注册。
+        /// 按顺序初始化：AsyncTaskModule → ResourceModule → UIModule → UIDataTable 注册 → GM 指令注册。
         /// </summary>
         void Start()
         {
@@ -69,7 +69,7 @@ namespace ST.Core.Test
             m_GMBox.AppendOutput("[TestUIBoot] 初始化完成，按 F1 打开 GM 面板，输入 help 查看指令。");
         }
 
-        /// <summary>每帧驱动 <see cref="AsyncTaskManager"/> 与 <see cref="UIManager"/> 的帧更新。</summary>
+        /// <summary>每帧驱动 <see cref="AsyncTaskModule"/> 与 <see cref="UIModule"/> 的帧更新。</summary>
         void Update()
         {
             if (m_AsyncTaskManager != null)
@@ -79,7 +79,7 @@ namespace ST.Core.Test
                 m_UIManager.DoUpdate();
         }
 
-        /// <summary>销毁时依次关闭 UIManager 与 AsyncTaskManager，释放资源。</summary>
+        /// <summary>销毁时依次关闭 UIModule 与 AsyncTaskModule，释放资源。</summary>
         void OnDestroy()
         {
             if (m_UIManager != null)
@@ -113,33 +113,33 @@ namespace ST.Core.Test
         }
 
         /// <summary>
-        /// 创建并初始化 <see cref="AsyncTaskManager"/>。
+        /// 创建并初始化 <see cref="AsyncTaskModule"/>。
         /// 异步资源加载（<see cref="EditorResourceLoad.LoadAsync"/>）依赖
-        /// <see cref="BaseAsyncTaskManager.instance"/> 不为 null，必须在 ResourceLoad 之前初始化。
+        /// <see cref="BaseAsyncTaskModule.instance"/> 不为 null，必须在 ResourceModule 之前初始化。
         /// </summary>
         void InitAsyncTaskManager()
         {
-            m_AsyncTaskManager = new AsyncTaskManager();
+            m_AsyncTaskManager = new AsyncTaskModule();
             m_AsyncTaskManager.DoInit();
         }
 
         /// <summary>
-        /// 创建并初始化 <see cref="ResourceLoad"/>，使用内嵌的 <see cref="TestResourceConfig"/>。
+        /// 创建并初始化 <see cref="ResourceModule"/>，使用内嵌的 <see cref="TestResourceConfig"/>。
         /// 编辑器下走 AssetDatabase 模式，无需打 AssetBundle。
         /// </summary>
         void InitResourceLoad()
         {
-            m_ResourceLoad = new ResourceLoad();
+            m_ResourceLoad = new ResourceModule();
             m_ResourceLoad.SetConfig(new TestResourceConfig());
             m_ResourceLoad.DoInit();
         }
 
         /// <summary>
-        /// 创建 <see cref="UIManager"/>，注入资源加载器与 UIRoot，完成初始化。
+        /// 创建 <see cref="UIModule"/>，注入资源加载器与 UIRoot，完成初始化。
         /// </summary>
         void InitUIManager()
         {
-            m_UIManager = new UIManager();
+            m_UIManager = new UIModule();
             m_UIManager.Setup(m_ResourceLoad, m_UIRoot);
             m_UIManager.DoInit();
         }
@@ -238,7 +238,7 @@ namespace ST.Core.Test
         // ─── GM 指令实现 ─────────────────────────────────────────────────
 
         /// <summary>
-        /// 指令 <c>openui</c>：解析 uiID 并调用 <see cref="UIManager.OpenPanel"/>。
+        /// 指令 <c>openui</c>：解析 uiID 并调用 <see cref="UIModule.OpenPanel"/>。
         /// 用法：<c>openui 1</c>
         /// </summary>
         void CmdOpenUI(string[] args)
@@ -255,12 +255,12 @@ namespace ST.Core.Test
                 return;
             }
 
-            int panelID = UIManager.S.OpenPanel(uiID);
+            int panelID = UIModule.S.OpenPanel(uiID);
             m_GMBox.AppendOutput(string.Format("[openui] uiID={0}  panelID={1}", uiID, panelID));
         }
 
         /// <summary>
-        /// 指令 <c>closeui</c>：解析 uiID 并调用 <see cref="UIManager.ClosePanel"/>。
+        /// 指令 <c>closeui</c>：解析 uiID 并调用 <see cref="UIModule.ClosePanel"/>。
         /// 用法：<c>closeui 1</c>
         /// </summary>
         void CmdCloseUI(string[] args)
@@ -277,12 +277,12 @@ namespace ST.Core.Test
                 return;
             }
 
-            UIManager.S.ClosePanel(uiID);
+            UIModule.S.ClosePanel(uiID);
             m_GMBox.AppendOutput(string.Format("[closeui] uiID={0} 已关闭", uiID));
         }
 
         /// <summary>
-        /// 指令 <c>closeall</c>：调用 <see cref="UIManager.DoClose"/> 后重新 <see cref="UIManager.DoInit"/>。
+        /// 指令 <c>closeall</c>：调用 <see cref="UIModule.DoClose"/> 后重新 <see cref="UIModule.DoInit"/>。
         /// </summary>
         void CmdCloseAll(string[] args)
         {
@@ -309,9 +309,9 @@ namespace ST.Core.Test
                 return;
             }
 
-            bool opened  = UIManager.S.IsOpened(uiID);
-            bool visible = UIManager.S.IsPanelVisible(uiID);
-            bool active  = UIManager.S.IsPanelActive(uiID);
+            bool opened  = UIModule.S.IsOpened(uiID);
+            bool visible = UIModule.S.IsPanelVisible(uiID);
+            bool active  = UIModule.S.IsPanelActive(uiID);
 
             m_GMBox.AppendOutput(string.Format(
                 "[isopen] uiID={0}  IsOpened={1}  IsVisible={2}  IsActive={3}",
@@ -337,7 +337,7 @@ namespace ST.Core.Test
         /// </summary>
         void CmdOpenPage(string[] args)
         {
-            var testPanel = UIManager.S != null ? UIManager.S.FindPanel<TestPanel>() : null;
+            var testPanel = UIModule.S != null ? UIModule.S.FindPanel<TestPanel>() : null;
             if (testPanel == null)
             {
                 m_GMBox.AppendOutput("[openpage] TestPanel 未打开或尚未加载完成，请先 openui 2");
@@ -354,7 +354,7 @@ namespace ST.Core.Test
         /// </summary>
         void CmdClosePage(string[] args)
         {
-            var testPanel = UIManager.S != null ? UIManager.S.FindPanel<TestPanel>() : null;
+            var testPanel = UIModule.S != null ? UIModule.S.FindPanel<TestPanel>() : null;
             if (testPanel == null)
             {
                 m_GMBox.AppendOutput("[closepage] TestPanel 未打开或尚未加载完成");
@@ -375,7 +375,7 @@ namespace ST.Core.Test
             if (args.Length >= 2 && int.TryParse(args[1], out int n))
                 count = n;
 
-            int panelID = UIManager.S.OpenPanel(TestUIID.TestBagPanel, count);
+            int panelID = UIModule.S.OpenPanel(TestUIID.TestBagPanel, count);
             m_GMBox.AppendOutput(string.Format("[openbag] count={0}  panelID={1}", count, panelID));
         }
 
@@ -397,7 +397,7 @@ namespace ST.Core.Test
                 return;
             }
 
-            var bag = UIManager.S != null ? UIManager.S.FindPanel<TestBagPanel>() : null;
+            var bag = UIModule.S != null ? UIModule.S.FindPanel<TestBagPanel>() : null;
             if (bag == null)
             {
                 m_GMBox.AppendOutput("[refreshbag] 背包面板未打开或未加载完成，请先 openbag");

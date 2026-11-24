@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Text;
 using UnityEngine;
@@ -124,13 +124,13 @@ namespace ST.Core.Test
 
         // ─── 公开 API ────────────────────────────────────────────────────
 
-        /// <summary>强制显示 GM 面板（由 <see cref="GMBoxPanel"/> UIManager 适配层调用）。</summary>
+        /// <summary>强制显示 GM 面板（由 <see cref="GMBoxPanel"/> UIModule 适配层调用）。</summary>
         public void Show()
         {
             m_IsVisible = true;
         }
 
-        /// <summary>强制隐藏 GM 面板（由 <see cref="GMBoxPanel"/> UIManager 适配层调用）。</summary>
+        /// <summary>强制隐藏 GM 面板（由 <see cref="GMBoxPanel"/> UIModule 适配层调用）。</summary>
         public void Hide()
         {
             m_IsVisible = false;

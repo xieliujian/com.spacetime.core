@@ -1,4 +1,4 @@
-using ST.Core.UI;
+﻿using ST.Core.UI;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -7,7 +7,7 @@ namespace ST.Core.Test
     /// <summary>
     /// 通用测试面板，挂载到 <c>ui_panel_test.prefab</c> 根节点（需同时挂载 <c>Canvas</c> 组件）。
     /// <para>
-    /// 在 <see cref="OnOpen"/> 中打印传入参数，便于验证 UIManager 打开/关闭流程。
+    /// 在 <see cref="OnOpen"/> 中打印传入参数，便于验证 UIModule 打开/关闭流程。
     /// 按场景需要在此类中添加临时调试逻辑。
     /// </para>
     /// </summary>
@@ -107,13 +107,13 @@ namespace ST.Core.Test
 
         // ─── 私有方法 ────────────────────────────────────────────────────
 
-        /// <summary>关闭按钮点击回调，通过 UIManager 关闭自身。</summary>
+        /// <summary>关闭按钮点击回调，通过 UIModule 关闭自身。</summary>
         void CloseSelf()
         {
-            if (UIManager.S == null)
+            if (UIModule.S == null)
                 return;
 
-            UIManager.S.ClosePanel(uiID);
+            UIModule.S.ClosePanel(uiID);
         }
 
         /// <summary>将 args 数组格式化为可读字符串，null 或空时返回 "(none)"。</summary>

@@ -1,4 +1,4 @@
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System;
 using UnityEngine;
 
@@ -72,7 +72,7 @@ namespace ST.Core
             bundle.LoadAsync(filename, type, callback);
         }
 
-        /// <summary>异步加载场景（<paramref name="suffix"/> 参与路径拼接规则由上层 <see cref="ResourceLoad"/> 决定）。</summary>
+        /// <summary>异步加载场景（<paramref name="suffix"/> 参与路径拼接规则由上层 <see cref="ResourceModule"/> 决定）。</summary>
         public void LoadSceneAsync(string realpath, string filename, string suffix, ResourceLoadProgress progress = null, ResourceLoadComplete complete = null)
         {
             var fullpath = realpath + m_Config.bundleSuffix;
