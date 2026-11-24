@@ -11,8 +11,10 @@ Runtime/Scripts/ResourceLoad/
     Asset/           IAssetDecorator、LuaAssetDecorator、LuaScriptableObject
     AsyncTask/       AsyncTask、AsyncTaskModule、BaseAsyncTaskModule 与各请求实现
     Bundle/          AssetBundleLoad、Bundle、AssetBundleDBMgr
+    Config/          IResourceConfig、FilePathHelper
     Define/          ResourceDefine、ResourceType、ResourceLoadDelegate
-    Module/          BaseResourceModule、ResourceModule、IResourceConfig、FilePathHelper、EditorResourceLoad
+    Loader/          EditorResourceLoad
+    Module/          ResourceModule（ResourceModule.cs、ResourceModule_Define.cs、ResourceModule_Load.cs）
 Editor/Scripts/ResourceLoad/
     Packager.cs      菜单打包入口、AB 数据库生成与清单清理
 ```
@@ -49,7 +51,7 @@ protected override IResourceConfig CreateResourceConfig()
 }
 ```
 
-`CollectBaseModules` 先创建异步任务模块，再调用 `SetConfig` 注入配置，随后加入模块列表，由 `GameWorld` 按注册顺序调用 `DoInit`、`DoUpdate` 与 `DoClose`。
+`CollectBaseModules` 先创建异步任务模块，再调用 `SetConfig` 注入配置，随后加入模块列表，由 `GameWorld` 按注册顺序调用 `DoInit` 与 `DoClose`，并只对重写了 `DoUpdate` 的模块逐帧调用。
 
 ### 3. 手动初始化
 
@@ -67,7 +69,7 @@ resourceModule.DoInit();
 asyncTaskModule.DoUpdate();
 ```
 
-`ResourceModule.DoUpdate` 自身没有异步任务逻辑，异步请求由 `AsyncTaskModule` 驱动。
+`ResourceModule` 不注册逐帧逻辑，异步请求由 `AsyncTaskModule` 驱动。
 
 ### 4. 加载资源
 
@@ -172,30 +174,22 @@ BuildRes/
 
 ## API 一览
 
-### BaseResourceModule（抽象基类）
-
-定义加载接口、装饰器链与配置注入，派生类实现具体的加载分支。
+### ResourceModule
 
 | 成员 | 说明 |
 |------|------|
-| `static instance` | 最后一次构造的派生实例 |
+| `static instance` | 最后一次构造的实例 |
 | `SetConfig(IResourceConfig)` | 注入配置并创建 `FilePathHelper`，必须在 `DoInit` 前调用 |
 | `InstallDecorator(IAssetDecorator)` | 注册装饰器，相同实例不重复添加 |
 | `LoadResourceSync(path, filename, suffix, type)` | 同步加载单个资源 |
 | `LoadAllResourceSync(path, filename, suffix)` | 同步加载路径下全部资源 |
 | `LoadResourceAsync(path, filename, suffix, callback, type)` | 异步加载单个资源 |
 | `LoadSceneAsync(path, filename, suffix, progress, complete)` | 异步加载场景 |
-
-### ResourceModule（默认实现）
-
-| 成员 | 说明 |
-|------|------|
 | `static useAssetBundle` | 编辑器下是否强制走 AssetBundle 模式 |
 | `DoInit()` | 创建编辑器与 Bundle 加载器，按平台初始化 Bundle 字典，安装 `LuaAssetDecorator` |
-| `DoUpdate()` | 空实现，异步任务由 `AsyncTaskModule` 驱动 |
 | `DoClose()` | 卸载全部已加载 Bundle，释放字典 |
 
-编辑器下只有 `useAssetBundle` 为 `true` 时才初始化 Bundle 字典，避免未打包时反复输出数据库缺失日志。真机在 `DoInit` 时直接初始化。
+异步请求由 `AsyncTaskModule` 驱动。编辑器下只有 `useAssetBundle` 为 `true` 时才初始化 Bundle 字典，避免未打包时反复输出数据库缺失日志。真机在 `DoInit` 时直接初始化。
 
 ### IResourceConfig（接口）
 

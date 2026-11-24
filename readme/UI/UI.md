@@ -17,7 +17,7 @@
 | 层级管理 | 三层排序（Bottom / Auto / Top），自动分配 `sortingOrder` |
 | 页面挂载 | 支持动态挂载/卸载子页面，内部页面自动发现 |
 | 可见性控制 | 支持 HideMask 隐藏下层面板，优化渲染 |
-| 资源加载 | 依赖注入 `BaseResourceModule`，支持异步加载与缓存复用 |
+| 资源加载 | 依赖注入 `ResourceModule`，支持异步加载与缓存复用 |
 | UIID 类型 | 框架层使用 `int`，上层工程定义 `enum UIID : int` |
 
 ---
@@ -60,7 +60,7 @@ UIDataTable.Register(new UIData
 
 // 2. 创建并初始化 UIModule
 var uiManager = new UIModule();
-uiManager.Setup(BaseResourceModule.instance, uiRoot);  // 注入依赖
+uiManager.Setup(ResourceModule.instance, uiRoot);  // 注入依赖
 uiManager.DoInit();
 ```
 
@@ -147,7 +147,7 @@ public class UIModule : ILogicModule
     public static UIModule S { get; }
 
     // 依赖注入（必须在 DoInit 之前调用）
-    public void Setup(BaseResourceModule resourceLoad, UIRoot uiRoot);
+    public void Setup(ResourceModule resourceLoad, UIRoot uiRoot);
 
     // 打开面板
     public int OpenPanel(int uiID, params object[] args);

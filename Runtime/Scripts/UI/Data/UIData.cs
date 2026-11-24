@@ -14,7 +14,7 @@ namespace ST.Core.UI
         public string name;
 
         /// <summary>
-        /// Prefab 所在目录（末尾不含斜杠），对应 <see cref="BaseResourceModule.LoadResourceAsync"/> 的 <c>path</c> 参数。
+        /// Prefab 所在目录（末尾不含斜杠），对应 <see cref="ResourceModule.LoadResourceAsync"/> 的 <c>path</c> 参数。
         /// </summary>
         public string path;
 

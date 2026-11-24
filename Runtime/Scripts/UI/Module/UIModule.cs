@@ -8,7 +8,7 @@ namespace ST.Core.UI
     /// <para>
     /// 使用方式：
     /// <list type="number">
-    ///   <item>在启动时调用 <see cref="Setup"/> 注入 <see cref="BaseResourceModule"/> 与 <see cref="UIRoot"/>。</item>
+    ///   <item>在启动时调用 <see cref="Setup"/> 注入 <see cref="ResourceModule"/> 与 <see cref="UIRoot"/>。</item>
     ///   <item>调用 <see cref="UIDataTable.Register"/> 注册所有面板/页面配置。</item>
     ///   <item>通过 <see cref="S"/> 单例调用 <see cref="OpenPanel"/> / <see cref="ClosePanel"/> 等 API。</item>
     /// </list>
@@ -25,8 +25,8 @@ namespace ST.Core.UI
 
         // ─── 依赖 ──────────────────────────────────────────────────────────
 
-        BaseResourceModule m_ResourceLoad;
-        UIRoot           m_UIRoot;
+        ResourceModule m_ResourceLoad;
+        UIRoot         m_UIRoot;
 
         // ─── 运行状态 ──────────────────────────────────────────────────────
 
@@ -56,7 +56,7 @@ namespace ST.Core.UI
         /// </summary>
         /// <param name="resourceLoad">已初始化的资源加载器。</param>
         /// <param name="uiRoot">场景中的 <see cref="UIRoot"/> 组件。</param>
-        public void Setup(BaseResourceModule resourceLoad, UIRoot uiRoot)
+        public void Setup(ResourceModule resourceLoad, UIRoot uiRoot)
         {
             m_ResourceLoad = resourceLoad;
             m_UIRoot       = uiRoot;

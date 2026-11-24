@@ -15,11 +15,11 @@ namespace ST.Core.UI
     {
         static int s_PanelIDCounter = 0;
 
-        readonly int           m_PanelID;
-        readonly int           m_UIID;
+        readonly int            m_PanelID;
+        readonly int            m_UIID;
         readonly PanelSortLayer m_SortLayer;
-        readonly BaseResourceModule m_ResourceLoad;
-        readonly UIRoot        m_UIRoot;
+        readonly ResourceModule m_ResourceLoad;
+        readonly UIRoot         m_UIRoot;
 
         AbstractPanel m_Panel;
         bool          m_IsVisible  = true;
@@ -73,7 +73,7 @@ namespace ST.Core.UI
         // ─── 构造 ──────────────────────────────────────────────────────────
 
         internal UIPanelActive(int uiID, PanelSortLayer sortLayer,
-                               BaseResourceModule resourceLoad, UIRoot uiRoot)
+                               ResourceModule resourceLoad, UIRoot uiRoot)
         {
             m_PanelID      = ++s_PanelIDCounter;
             m_UIID         = uiID;
