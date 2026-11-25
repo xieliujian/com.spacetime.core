@@ -1,29 +1,28 @@
 // Unity built-in shader source. Copyright (c) 2016 Unity Technologies. MIT license (see license.txt)
 // 包内版本，顶点与片元实现拆分在 UIDefault 目录下的 hlsl 文件中。
+// 材质面板使用 LWGUI，需要工程内存在 LWGUI-2.x 包。
 
 Shader "SpaceTime/UI/Default"
 {
     Properties
     {
-        [PerRendererData] _MainTex ("Sprite Texture", 2D) = "white" {}
-        _Color ("Tint", Color) = (1,1,1,1)
+        [Main(UITint, _, on, off)] _FoldoutTint("基础", Float) = 0
+        [PerRendererData] [Tex(UITint, _Color)] _MainTex("精灵贴图", 2D) = "white" {}
+        [HideInInspector] _Color("颜色", Color) = (1,1,1,1)
 
-        _StencilComp ("Stencil Comparison", Float) = 8
-        _Stencil ("Stencil ID", Float) = 0
-        _StencilOp ("Stencil Operation", Float) = 0
-        _StencilWriteMask ("Stencil Write Mask", Float) = 255
-        _StencilReadMask ("Stencil Read Mask", Float) = 255
+        [Main(UIState, _, off, off)] _FoldoutState("混合与裁剪", Float) = 0
+        [SubEnum(UIState, UnityEngine.Rendering.BlendMode)] _SrcBlendCustom("源混合", Float) = 1
+        [SubEnum(UIState, UnityEngine.Rendering.BlendMode)] _DstBlendCustom("目标混合", Float) = 10
+        [SubEnum(UIState, UnityEngine.Rendering.ColorWriteMask)] _ColorMask("写颜色通道", Float) = 15
+        [SubToggle(UIState, UNITY_UI_ALPHACLIP)] _UseUIAlphaClip("Alpha 裁剪", Float) = 0
+        [SubToggle(UIState, UNITY_UI_NOALPHAMUL)] _NotUseUIAlphaMul("不做 Alpha 预乘", Float) = 0
 
-        _ColorMask ("Color Mask", Float) = 15
-
-        [Toggle(UNITY_UI_ALPHACLIP)] _UseUIAlphaClip ("Use Alpha Clip", Float) = 0
-        [Toggle(UNITY_UI_NOALPHAMUL)] _NotUseUIAlphaMul ("Not Use Alpha Multiply", Float) = 0
-
-        //blend mode
-        [Enum(UnityEngine.Rendering.BlendMode)]
-        _SrcBlendCustom("SrcBlend", Float) = 1 // One
-        [Enum(UnityEngine.Rendering.BlendMode)]
-        _DstBlendCustom("DstBlend", Float) = 10 // OneMinusSrcAlpha
+        [Main(UIStencil, _, off, off)] _FoldoutStencil("模板", Float) = 0
+        [SubEnum(UIStencil, UnityEngine.Rendering.CompareFunction)] _StencilComp("比较方式", Float) = 8
+        [Sub(UIStencil)] _Stencil("模板值", Float) = 0
+        [SubEnum(UIStencil, UnityEngine.Rendering.StencilOp)] _StencilOp("通过操作", Float) = 0
+        [Sub(UIStencil)] _StencilWriteMask("写掩码", Float) = 255
+        [Sub(UIStencil)] _StencilReadMask("读掩码", Float) = 255
 
         // 运行时由 UI 系统写入，声明为隐藏属性以满足 SRP Batcher 的 UnityPerMaterial 校验。
         [HideInInspector] _ClipRect ("Clip Rect", Vector) = (0,0,0,0)
@@ -79,4 +78,6 @@ Shader "SpaceTime/UI/Default"
             ENDHLSL
         }
     }
+
+    CustomEditor "LWGUI.LWGUI"
 }

@@ -140,6 +140,8 @@ return !opaque && untaggedShaderName == "UI/Default" && shader == Canvas.GetDefa
 
 包内命名已按工程约定统一，shader 名为 `SpaceTime/UI/Default`，文件为 `Shaders/UI/UIDefault.shader`，include 目录为 `Shaders/UI/UIDefault/`，GUID 保持 `63f678fcbc0a93d4b91dd00e027dcdc3` 不变。改名后 `Shader.Find("UI/Default")` 稳定返回 Unity 内置 shader，两份资源不再互相遮蔽。
 
+材质面板通过 `CustomEditor "LWGUI.LWGUI"` 使用 LWGUI 分组，属性按基础、混合与裁剪、模板三组排布，依赖工程内的 LWGUI-2.x 包。工程缺少 LWGUI 时 Unity 回退默认材质面板，shader 渲染不受影响。
+
 接入工程时按下面的顺序处理。
 
 1. 删除工程副本 `Assets/LingRen/Shader/UI/UI-Default.shader` 和对应的 `.meta`，GUID 相同的引用会自动指向包内 shader。
