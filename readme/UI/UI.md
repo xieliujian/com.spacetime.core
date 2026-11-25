@@ -537,6 +537,7 @@ gm.RegisterCommand("reloadui", (args) =>
 | 文档 | 说明 |
 |------|------|
 | [UI 测试系统](../UI_Test/UI_Test.md) | 测试场景搭建、自动化测试用例、GM 指令手册、扩展指南 |
+| [UI 默认 Shader 替换与改名](UIDefaultShader.md) | 默认材质替换链路、改名影响面、迁移步骤与验证清单 |
 
 ---
 

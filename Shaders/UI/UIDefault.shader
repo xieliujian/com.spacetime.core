@@ -1,7 +1,7 @@
 // Unity built-in shader source. Copyright (c) 2016 Unity Technologies. MIT license (see license.txt)
-// 包内版本，顶点与片元实现拆分在 UI-Default 目录下的 hlsl 文件中。
+// 包内版本，顶点与片元实现拆分在 UIDefault 目录下的 hlsl 文件中。
 
-Shader "UI/Default"
+Shader "SpaceTime/UI/Default"
 {
     Properties
     {
@@ -74,8 +74,8 @@ Shader "UI/Default"
             #pragma multi_compile_local _ UNITY_UI_ALPHACLIP
             #pragma multi_compile_local _ UNITY_UI_NOALPHAMUL
 
-            #include "UI-Default/UI-DefaultInput.hlsl"
-            #include "UI-Default/UI-DefaultForwardPass.hlsl"
+            #include "UIDefault/UIDefaultInput.hlsl"
+            #include "UIDefault/UIDefaultForwardPass.hlsl"
             ENDHLSL
         }
     }
